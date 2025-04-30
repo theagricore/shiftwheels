@@ -10,6 +10,7 @@ abstract class FirebaseAuthService {
   Future<bool> isLoggedin();
   Future<Either> logout();
   Future<Either> passwordResetEmail(String email);
+  Future<Either> getUser();
 }
 
 class AuthFirebaseServiceImpl extends FirebaseAuthService {
@@ -110,4 +111,29 @@ class AuthFirebaseServiceImpl extends FirebaseAuthService {
       return Left("An unexpected error occurred: $e");
     }
   }
+
+   @override
+  Future<Either> getUser() async {
+    try {
+      var currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        return Left("User not logged in");
+      }
+      
+      var userData = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(currentUser.uid)
+          .get()
+          .then((value) => value.data());
+          
+      if (userData == null) {
+        return Left("User data not found");
+      }
+      
+      return Right(userData);
+    } catch (e) {
+      return Left("Failed to get user data: $e");
+    }
+  }
 }
+

@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:shiftwheels/data/auth/dataSource/firebase_auth_service.dart';
+import 'package:shiftwheels/data/auth/models/get_user_data.dart';
 import 'package:shiftwheels/data/auth/models/user_model.dart';
 import 'package:shiftwheels/data/auth/models/user_sigin_model.dart';
 import 'package:shiftwheels/domain/auth/repository/auth_repository.dart';
@@ -29,5 +30,10 @@ class AuthRepositoryImpl extends AuthRepository {
   @override
   Future<Either> passwordResetEmail(String email) async {
     return await sl<FirebaseAuthService>().passwordResetEmail(email);
+  }
+
+  @override
+  Future<Either> getUser() async {
+    return await sl<FirebaseAuthService>().getUser();
   }
 }

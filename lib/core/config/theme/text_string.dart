@@ -1,6 +1,7 @@
 /* -- COMMEN TEXT -- */
 const String zSignIn = "Sign In";
 const String zSignUp = "Sign Up";
+const String zSignOut = "Sign Out";
 const String zNext="Next";
 const String zContinue="Continue";
 const String zContinueWithGoogle="Continue with Google";

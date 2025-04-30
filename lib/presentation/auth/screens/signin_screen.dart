@@ -34,6 +34,8 @@ class SigninScreen extends StatelessWidget {
               message: state.message,
               backgroundColor: Colors.green,
             ).show(context);
+            emailController.clear();
+            passwordController.clear();
               AppNavigator.pushReplacement(context, const MainScreens());
           } else if (state is AuthFailure) {
             BasicSnackbar(

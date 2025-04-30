@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "472779404725",
+    "project_id": "shiftwheels-8019f",
+    "storage_bucket": "shiftwheels-8019f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:472779404725:android:6f1d0c6af838fa272115fc",
+        "android_client_info": {
+          "package_name": "com.example.shiftwheels"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCx3ZW6YP4_-T0NeoYjAxdiyKQgn6tr_lw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

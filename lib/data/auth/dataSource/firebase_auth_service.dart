@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shiftwheels/data/auth/models/user_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,6 +12,7 @@ abstract class FirebaseAuthService {
   Future<Either> logout();
   Future<Either> passwordResetEmail(String email);
   Future<Either> getUser();
+   Future<Either> signInWithGoogle();
 }
 
 class AuthFirebaseServiceImpl extends FirebaseAuthService {
@@ -135,5 +137,49 @@ class AuthFirebaseServiceImpl extends FirebaseAuthService {
       return Left("Failed to get user data: $e");
     }
   }
+  
+ @override
+Future<Either> signInWithGoogle() async {
+  try {
+    final GoogleSignIn googleSignIn = GoogleSignIn();
+    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+    if (googleUser == null) {
+      return Left("Google sign-in was cancelled");
+    }
+
+    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    final UserCredential userCredential = 
+        await FirebaseAuth.instance.signInWithCredential(credential);
+
+    final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
+
+    if (isNewUser) {
+      await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(userCredential.user!.uid)
+          .set({
+        'fullName': userCredential.user!.displayName ?? '',
+        'email': userCredential.user!.email ?? '',
+        'phoneNo': userCredential.user!.phoneNumber ?? '',
+        'uid': userCredential.user!.uid,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    return const Right("Google sign-in successful");
+  } on FirebaseAuthException catch (e) {
+    return Left(e.message ?? "Google sign-in failed");
+  } catch (e) {
+    return Left("An unexpected error occurred: ${e.toString()}");
+  }
 }
+}
+
 

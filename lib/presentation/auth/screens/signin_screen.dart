@@ -11,6 +11,7 @@ import 'package:shiftwheels/core/config/theme/text_string.dart';
 import 'package:shiftwheels/data/auth/models/user_sigin_model.dart';
 import 'package:shiftwheels/presentation/MainScreen/main_screen.dart';
 import 'package:shiftwheels/presentation/auth/AuthBloc/auth_bloc.dart';
+import 'package:shiftwheels/presentation/auth/GoogleAuth/google_auth_bloc.dart';
 import 'package:shiftwheels/presentation/auth/screens/forgot_password_screen.dart';
 import 'package:shiftwheels/presentation/auth/screens/siginup_screen.dart';
 
@@ -26,8 +27,9 @@ class SigninScreen extends StatelessWidget {
 
     return Scaffold(
       body: BlocListener<AuthBloc, AuthState>(
-        listenWhen: (previous, current) =>
-            current is AuthSuccess || current is AuthFailure,
+        listenWhen:
+            (previous, current) =>
+                current is AuthSuccess || current is AuthFailure,
         listener: (context, state) {
           if (state is AuthSuccess) {
             BasicSnackbar(
@@ -36,7 +38,7 @@ class SigninScreen extends StatelessWidget {
             ).show(context);
             emailController.clear();
             passwordController.clear();
-              AppNavigator.pushReplacement(context, const MainScreens());
+            AppNavigator.pushReplacement(context, const MainScreens());
           } else if (state is AuthFailure) {
             BasicSnackbar(
               message: state.errorMessage,
@@ -88,12 +90,13 @@ class SigninScreen extends StatelessWidget {
                             builder: (context, state) {
                               return BasicElevatedAppButton(
                                 onPressed: () {
-                                  if (_formKey.currentState!.validate() && 
+                                  if (_formKey.currentState!.validate() &&
                                       !(state is AuthLoading)) {
                                     final email = emailController.text.trim();
-                                    final password = passwordController.text.trim();
+                                    final password =
+                                        passwordController.text.trim();
                                     final user = UserSiginModel(
-                                      email: email, 
+                                      email: email,
                                       password: password,
                                     );
                                     context.read<AuthBloc>().add(
@@ -108,13 +111,42 @@ class SigninScreen extends StatelessWidget {
                             },
                           ),
                           SizedBox(height: size.height * 0.02),
-                          BasicOutlinedAppButton(
-                            image: zGoogleLogo,
-                            onPressed: () {
-                              AppNavigator.push(context, const MainScreens());
+                          // Replace the Google Sign-In button with this:
+                          BlocListener<GoogleAuthBloc, GoogleAuthState>(
+                            listener: (context, state) {
+                              if (state is GoogleAuthSuccess) {
+                                BasicSnackbar(
+                                  message: state.message,
+                                  backgroundColor: Colors.green,
+                                ).show(context);
+                                AppNavigator.pushReplacement(
+                                  context,
+                                  const MainScreens(),
+                                );
+                              } else if (state is GoogleAuthFailure) {
+                                BasicSnackbar(
+                                  message: state.errorMessage,
+                                  backgroundColor: Colors.red,
+                                ).show(context);
+                              }
                             },
-                            title: zContinueWithGoogle,
-                            height: size.height * 0.07,
+                            child: BlocBuilder<GoogleAuthBloc, GoogleAuthState>(
+                              builder: (context, state) {
+                                return BasicOutlinedAppButton(
+                                  image: zGoogleLogo,
+                                  onPressed: () {
+                                    if (state is! GoogleAuthLoading) {
+                                      context.read<GoogleAuthBloc>().add(
+                                        GoogleSignInRequested(),
+                                      );
+                                    }
+                                  },
+                                  title: zContinueWithGoogle,
+                                  height: size.height * 0.07,
+                                  isLoading: state is GoogleAuthLoading,
+                                );
+                              },
+                            ),
                           ),
                           SizedBox(height: size.height * 0.04),
                           Align(
@@ -136,38 +168,39 @@ class SigninScreen extends StatelessWidget {
 
   Widget _createAccount(BuildContext context) {
     return RichText(
-      text: TextSpan(children: [
-        TextSpan(
-          text: zDontHaveAnAccount,
-          style: Theme.of(context).textTheme.labelLarge,
-        ),
-        TextSpan(
-          recognizer: TapGestureRecognizer()
-            ..onTap = () {
-              AppNavigator.pushReplacement(context, SiginupScreen());
-            },
-          text: zCreateOne,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.blue,
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: zDontHaveAnAccount,
+            style: Theme.of(context).textTheme.labelLarge,
           ),
-        )
-      ]),
+          TextSpan(
+            recognizer:
+                TapGestureRecognizer()
+                  ..onTap = () {
+                    AppNavigator.pushReplacement(context, SiginupScreen());
+                  },
+            text: zCreateOne,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.blue,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _forgotPassword(BuildContext context) {
     return RichText(
       text: TextSpan(
-        recognizer: TapGestureRecognizer()
-          ..onTap = () {
-            AppNavigator.push(context, ForgotPasswordPage());
-          },
+        recognizer:
+            TapGestureRecognizer()
+              ..onTap = () {
+                AppNavigator.push(context, ForgotPasswordPage());
+              },
         text: zForgetPassord,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          color: Colors.blue,
-        ),
+        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
       ),
     );
   }

@@ -3,12 +3,14 @@ import 'package:shiftwheels/data/auth/dataSource/firebase_auth_service.dart';
 import 'package:shiftwheels/data/auth/repository/auth_repository_impl.dart';
 import 'package:shiftwheels/domain/auth/repository/auth_repository.dart';
 import 'package:shiftwheels/domain/auth/usecase/get_user_data_usecase.dart';
+import 'package:shiftwheels/domain/auth/usecase/google_signin_usecase.dart';
 import 'package:shiftwheels/domain/auth/usecase/is_loggedin.dart';
 import 'package:shiftwheels/domain/auth/usecase/logout_usecase.dart';
 import 'package:shiftwheels/domain/auth/usecase/password_reset_email.dart';
 import 'package:shiftwheels/domain/auth/usecase/sigin_usecase.dart';
 import 'package:shiftwheels/domain/auth/usecase/siginup_usecase.dart';
 import 'package:shiftwheels/presentation/MainScreen/ScreenProfile/ProfileBloc/profile_bloc.dart';
+import 'package:shiftwheels/presentation/auth/GoogleAuth/google_auth_bloc.dart';
 
 final sl = GetIt.instance;
 Future<void> initializeDependencies() async {
@@ -42,6 +44,13 @@ Future<void> initializeDependencies() async {
    sl.registerSingleton<GetUserDataUsecase>(
     GetUserDataUsecase(),
   );
+
+   sl.registerSingleton<GoogleSignInUsecase>(
+    GoogleSignInUsecase(),
+  );
+  sl.registerFactory<GoogleAuthBloc>(
+  () => GoogleAuthBloc(),
+);
   sl.registerFactory<ProfileBloc>(
   () => ProfileBloc(getUserDataUsecase: sl<GetUserDataUsecase>()),
 );

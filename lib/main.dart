@@ -1,6 +1,7 @@
 import 'package:shiftwheels/core/config/theme/theme.dart';
 import 'package:shiftwheels/presentation/MainScreen/ScreenProfile/ProfileBloc/profile_bloc.dart';
 import 'package:shiftwheels/presentation/auth/AuthBloc/auth_bloc.dart';
+import 'package:shiftwheels/presentation/auth/GoogleAuth/google_auth_bloc.dart';
 import 'package:shiftwheels/presentation/splash/SplashBloc/splash_bloc.dart';
 import 'package:shiftwheels/presentation/splash/screen/splash_screen.dart';
 import 'package:shiftwheels/firebase_options.dart';
@@ -32,8 +33,9 @@ class MyApp extends StatelessWidget {
             BlocProvider<SplashBloc>(
               create: (context) => SplashBloc()..add(AppStarted()),
             ),
-            BlocProvider<AuthBloc>(
-              create: (context) => AuthBloc(),
+            BlocProvider<AuthBloc>(create: (context) => AuthBloc()),
+            BlocProvider<GoogleAuthBloc>(
+              create: (context) => sl<GoogleAuthBloc>(),
             ),
             BlocProvider<ProfileBloc>(
               create: (context) => sl<ProfileBloc>()..add(FetchUserProfile()),

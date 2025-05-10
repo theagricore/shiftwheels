@@ -1,6 +1,12 @@
 import 'package:get_it/get_it.dart';
-import 'package:shiftwheels/data/auth/dataSource/firebase_auth_service.dart';
+import 'package:shiftwheels/data/add_post/data_source/firebase_post_service.dart';
+import 'package:shiftwheels/data/add_post/repository/post_repository_impl.dart';
+import 'package:shiftwheels/data/auth/data_dource/firebase_auth_service.dart';
 import 'package:shiftwheels/data/auth/repository/auth_repository_impl.dart';
+import 'package:shiftwheels/domain/add_post/repository/post_repository.dart';
+import 'package:shiftwheels/domain/add_post/usecase/get_brand_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/get_fuels_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/get_models_usecase.dart';
 import 'package:shiftwheels/domain/auth/repository/auth_repository.dart';
 import 'package:shiftwheels/domain/auth/usecase/get_user_data_usecase.dart';
 import 'package:shiftwheels/domain/auth/usecase/google_signin_usecase.dart';
@@ -9,49 +15,73 @@ import 'package:shiftwheels/domain/auth/usecase/logout_usecase.dart';
 import 'package:shiftwheels/domain/auth/usecase/password_reset_email.dart';
 import 'package:shiftwheels/domain/auth/usecase/sigin_usecase.dart';
 import 'package:shiftwheels/domain/auth/usecase/siginup_usecase.dart';
-import 'package:shiftwheels/presentation/MainScreen/ScreenProfile/ProfileBloc/profile_bloc.dart';
-import 'package:shiftwheels/presentation/auth/GoogleAuth/google_auth_bloc.dart';
+import 'package:shiftwheels/presentation/main_screen/screen_profile/ProfileBloc/profile_bloc.dart';
+import 'package:shiftwheels/presentation/add_post/add_post_bloc/add_post_bloc.dart';
+import 'package:shiftwheels/presentation/auth/google_auth/google_auth_bloc.dart';
+import 'package:shiftwheels/presentation/add_post/get_fuels_bloc/get_fuels_bloc.dart';
 
 final sl = GetIt.instance;
+
 Future<void> initializeDependencies() async {
   //Service
   sl.registerSingleton<FirebaseAuthService>(
     AuthFirebaseServiceImpl(),
   );
-
+  sl.registerSingleton<FirebasePostService>(
+    PostFirebaseServiceImpl(),
+  );
 
   //Repositories
   sl.registerSingleton<AuthRepository>(
     AuthRepositoryImpl(),
   );
-  
+  sl.registerSingleton<PostRepository>(
+    PostRepositoryImpl(),
+  );
+
   //UseCase
   sl.registerSingleton<SiginupUsecase>(
     SiginupUsecase(),
   );
-   sl.registerSingleton<SiginUsecase>(
+  sl.registerSingleton<SiginUsecase>(
     SiginUsecase(),
   );
-   sl.registerSingleton<IsLoggedinusecase>(
+  sl.registerSingleton<IsLoggedinusecase>(
     IsLoggedinusecase(),
   );
-   sl.registerSingleton<LogoutUsecase>(
+  sl.registerSingleton<LogoutUsecase>(
     LogoutUsecase(),
   );
-    sl.registerSingleton<PasswordResetEmailUsecase>(
+  sl.registerSingleton<PasswordResetEmailUsecase>(
     PasswordResetEmailUsecase(),
   );
-   sl.registerSingleton<GetUserDataUsecase>(
+  sl.registerSingleton<GetUserDataUsecase>(
     GetUserDataUsecase(),
   );
-
-   sl.registerSingleton<GoogleSignInUsecase>(
+  sl.registerSingleton<GoogleSignInUsecase>(
     GoogleSignInUsecase(),
   );
+  sl.registerSingleton<GetBrandUsecase>(
+    GetBrandUsecase(),
+  );
+  sl.registerSingleton<GetModelsUsecase>(
+    GetModelsUsecase(),
+  );
+  sl.registerSingleton<GetFuelsUsecase>(
+    GetFuelsUsecase(),
+  );
+
+  // Blocs
   sl.registerFactory<GoogleAuthBloc>(
-  () => GoogleAuthBloc(),
-);
+    () => GoogleAuthBloc(),
+  );
   sl.registerFactory<ProfileBloc>(
-  () => ProfileBloc(getUserDataUsecase: sl<GetUserDataUsecase>()),
-);
+    () => ProfileBloc(getUserDataUsecase: sl<GetUserDataUsecase>()),
+  );
+  sl.registerFactory<AddPostBloc>(
+    () => AddPostBloc(sl<GetBrandUsecase>(), sl<GetModelsUsecase>()),
+  );
+  sl.registerFactory<GetFuelsBloc>(
+    () => GetFuelsBloc(getFuelsUsecase: sl<GetFuelsUsecase>()),
+  );
 }

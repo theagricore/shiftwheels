@@ -1,19 +1,19 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shiftwheels/core/commonWidget/Widget/basic_elevated_app_button.dart';
-import 'package:shiftwheels/core/commonWidget/Widget/basic_outlined_app_button.dart';
-import 'package:shiftwheels/core/commonWidget/Widget/basic_snakbar.dart';
-import 'package:shiftwheels/core/commonWidget/text_form_feald_widget.dart';
+import 'package:shiftwheels/core/common_widget/text_form_feald_widget.dart';
+import 'package:shiftwheels/core/common_widget/widget/basic_elevated_app_button.dart';
+import 'package:shiftwheels/core/common_widget/widget/basic_outlined_app_button.dart';
+import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
 import 'package:shiftwheels/core/config/helper/navigator/app_navigator.dart';
 import 'package:shiftwheels/core/config/theme/image_string.dart';
 import 'package:shiftwheels/core/config/theme/text_string.dart';
 import 'package:shiftwheels/data/auth/models/user_sigin_model.dart';
-import 'package:shiftwheels/presentation/MainScreen/main_screen.dart';
-import 'package:shiftwheels/presentation/auth/AuthBloc/auth_bloc.dart';
-import 'package:shiftwheels/presentation/auth/GoogleAuth/google_auth_bloc.dart';
+import 'package:shiftwheels/presentation/auth/auth_bloc/auth_bloc.dart';
+import 'package:shiftwheels/presentation/auth/google_auth/google_auth_bloc.dart';
 import 'package:shiftwheels/presentation/auth/screens/forgot_password_screen.dart';
 import 'package:shiftwheels/presentation/auth/screens/siginup_screen.dart';
+import 'package:shiftwheels/presentation/main_screen/main_screen.dart';
 
 class SigninScreen extends StatelessWidget {
   SigninScreen({super.key});
@@ -91,7 +91,7 @@ class SigninScreen extends StatelessWidget {
                               return BasicElevatedAppButton(
                                 onPressed: () {
                                   if (_formKey.currentState!.validate() &&
-                                      !(state is AuthLoading)) {
+                                      state is! AuthLoading) {
                                     final email = emailController.text.trim();
                                     final password =
                                         passwordController.text.trim();
@@ -111,7 +111,6 @@ class SigninScreen extends StatelessWidget {
                             },
                           ),
                           SizedBox(height: size.height * 0.02),
-                          // Replace the Google Sign-In button with this:
                           BlocListener<GoogleAuthBloc, GoogleAuthState>(
                             listener: (context, state) {
                               if (state is GoogleAuthSuccess) {

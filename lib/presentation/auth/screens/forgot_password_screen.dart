@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shiftwheels/core/commonWidget/Widget/basic_elevated_app_button.dart';
-import 'package:shiftwheels/core/commonWidget/Widget/basic_snakbar.dart';
-import 'package:shiftwheels/core/commonWidget/basic_app_bar.dart';
-import 'package:shiftwheels/core/commonWidget/text_form_feald_widget.dart';
+import 'package:shiftwheels/core/common_widget/widget/basic_elevated_app_button.dart';
+import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
+import 'package:shiftwheels/core/common_widget/basic_app_bar.dart';
+import 'package:shiftwheels/core/common_widget/text_form_feald_widget.dart';
 import 'package:shiftwheels/core/config/theme/image_string.dart';
 import 'package:shiftwheels/core/config/theme/text_string.dart';
-import 'package:shiftwheels/presentation/auth/AuthBloc/auth_bloc.dart';
+import 'package:shiftwheels/presentation/auth/auth_bloc/auth_bloc.dart';
 
 class ForgotPasswordPage extends StatelessWidget {
   ForgotPasswordPage({super.key});

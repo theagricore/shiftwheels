@@ -1,10 +1,10 @@
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
-import 'package:shiftwheels/core/config/widgetTheme/elevated_butten_theme.dart';
+import 'package:shiftwheels/core/config/widget_theme/elevated_butten_theme.dart';
 
-import 'package:shiftwheels/core/config/widgetTheme/input_decoration_theme.dart';
-import 'package:shiftwheels/core/config/widgetTheme/outlined_butten_theme.dart';
+import 'package:shiftwheels/core/config/widget_theme/input_decoration_theme.dart';
+import 'package:shiftwheels/core/config/widget_theme/outlined_butten_theme.dart';
 
-import 'package:shiftwheels/core/config/widgetTheme/text_theme.dart';
+import 'package:shiftwheels/core/config/widget_theme/text_theme.dart';
 import 'package:flutter/material.dart';
 
 

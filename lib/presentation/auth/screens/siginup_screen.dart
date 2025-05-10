@@ -1,16 +1,17 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shiftwheels/core/commonWidget/Widget/basic_elevated_app_button.dart';
-import 'package:shiftwheels/core/commonWidget/Widget/basic_outlined_app_button.dart';
-import 'package:shiftwheels/core/commonWidget/Widget/basic_snakbar.dart';
-import 'package:shiftwheels/core/commonWidget/text_form_feald_widget.dart';
+import 'package:shiftwheels/core/common_widget/widget/basic_elevated_app_button.dart';
+import 'package:shiftwheels/core/common_widget/widget/basic_outlined_app_button.dart';
+import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
+import 'package:shiftwheels/core/common_widget/text_form_feald_widget.dart';
 import 'package:shiftwheels/core/config/helper/navigator/app_navigator.dart';
 import 'package:shiftwheels/core/config/theme/image_string.dart';
 import 'package:shiftwheels/core/config/theme/text_string.dart';
 import 'package:shiftwheels/data/auth/models/user_model.dart';
-import 'package:shiftwheels/presentation/MainScreen/main_screen.dart';
-import 'package:shiftwheels/presentation/auth/AuthBloc/auth_bloc.dart';
+import 'package:shiftwheels/presentation/auth/auth_bloc/auth_bloc.dart';
+import 'package:shiftwheels/presentation/auth/google_auth/google_auth_bloc.dart';
+import 'package:shiftwheels/presentation/main_screen/main_screen.dart';
 import 'package:shiftwheels/presentation/auth/screens/signIn_screen.dart';
 
 class SiginupScreen extends StatelessWidget {
@@ -115,14 +116,42 @@ class SiginupScreen extends StatelessWidget {
                               isLoading: state is AuthLoading,
                             ),
                             SizedBox(height: size.height * 0.02),
-                            BasicOutlinedAppButton(
-                              image: zGoogleLogo,
-                              onPressed: () {
-                                // Handle Google sign in
+                           BlocListener<GoogleAuthBloc, GoogleAuthState>(
+                            listener: (context, state) {
+                              if (state is GoogleAuthSuccess) {
+                                BasicSnackbar(
+                                  message: state.message,
+                                  backgroundColor: Colors.green,
+                                ).show(context);
+                                AppNavigator.pushReplacement(
+                                  context,
+                                  const MainScreens(),
+                                );
+                              } else if (state is GoogleAuthFailure) {
+                                BasicSnackbar(
+                                  message: state.errorMessage,
+                                  backgroundColor: Colors.red,
+                                ).show(context);
+                              }
+                            },
+                            child: BlocBuilder<GoogleAuthBloc, GoogleAuthState>(
+                              builder: (context, state) {
+                                return BasicOutlinedAppButton(
+                                  image: zGoogleLogo,
+                                  onPressed: () {
+                                    if (state is! GoogleAuthLoading) {
+                                      context.read<GoogleAuthBloc>().add(
+                                        GoogleSignInRequested(),
+                                      );
+                                    }
+                                  },
+                                  title: zContinueWithGoogle,
+                                  height: size.height * 0.07,
+                                  isLoading: state is GoogleAuthLoading,
+                                );
                               },
-                              title: zContinueWithGoogle,
-                              height: size.height * 0.07,
                             ),
+                          ),
                             SizedBox(height: size.height * 0.04),
                             Align(
                               alignment: Alignment.center,

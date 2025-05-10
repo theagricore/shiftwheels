@@ -3,9 +3,9 @@ import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/core/config/theme/image_string.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shiftwheels/presentation/MainScreen/main_screen.dart';
+import 'package:shiftwheels/presentation/main_screen/main_screen.dart';
 import 'package:shiftwheels/presentation/auth/screens/signIn_screen.dart';
-import 'package:shiftwheels/presentation/splash/SplashBloc/splash_bloc.dart';
+import 'package:shiftwheels/presentation/splash/splash_bloc/splash_bloc.dart';
 
 
 class SplashScreen extends StatelessWidget {

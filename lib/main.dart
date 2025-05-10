@@ -1,8 +1,10 @@
 import 'package:shiftwheels/core/config/theme/theme.dart';
-import 'package:shiftwheels/presentation/MainScreen/ScreenProfile/ProfileBloc/profile_bloc.dart';
-import 'package:shiftwheels/presentation/auth/AuthBloc/auth_bloc.dart';
-import 'package:shiftwheels/presentation/auth/GoogleAuth/google_auth_bloc.dart';
-import 'package:shiftwheels/presentation/splash/SplashBloc/splash_bloc.dart';
+import 'package:shiftwheels/presentation/add_post/get_fuels_bloc/get_fuels_bloc.dart';
+import 'package:shiftwheels/presentation/main_screen/screen_profile/ProfileBloc/profile_bloc.dart';
+import 'package:shiftwheels/presentation/add_post/add_post_bloc/add_post_bloc.dart';
+import 'package:shiftwheels/presentation/auth/auth_bloc/auth_bloc.dart';
+import 'package:shiftwheels/presentation/auth/google_auth/google_auth_bloc.dart';
+import 'package:shiftwheels/presentation/splash/splash_bloc/splash_bloc.dart';
 import 'package:shiftwheels/presentation/splash/screen/splash_screen.dart';
 import 'package:shiftwheels/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -39,6 +41,12 @@ class MyApp extends StatelessWidget {
             ),
             BlocProvider<ProfileBloc>(
               create: (context) => sl<ProfileBloc>()..add(FetchUserProfile()),
+            ),
+            BlocProvider<AddPostBloc>(
+              create: (context) => sl<AddPostBloc>(),
+            ),
+            BlocProvider<GetFuelsBloc>(
+              create: (context) => sl<GetFuelsBloc>(),
             ),
           ],
           child: MaterialApp(

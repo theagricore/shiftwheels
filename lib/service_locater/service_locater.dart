@@ -6,6 +6,7 @@ import 'package:shiftwheels/data/auth/repository/auth_repository_impl.dart';
 import 'package:shiftwheels/domain/add_post/repository/post_repository.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_brand_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_fuels_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/get_location_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_models_usecase.dart';
 import 'package:shiftwheels/domain/auth/repository/auth_repository.dart';
 import 'package:shiftwheels/domain/auth/usecase/get_user_data_usecase.dart';
@@ -15,6 +16,7 @@ import 'package:shiftwheels/domain/auth/usecase/logout_usecase.dart';
 import 'package:shiftwheels/domain/auth/usecase/password_reset_email.dart';
 import 'package:shiftwheels/domain/auth/usecase/sigin_usecase.dart';
 import 'package:shiftwheels/domain/auth/usecase/siginup_usecase.dart';
+import 'package:shiftwheels/presentation/add_post/get_location_bloc/get_location_bloc.dart';
 import 'package:shiftwheels/presentation/main_screen/screen_profile/ProfileBloc/profile_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/add_post_bloc/add_post_bloc.dart';
 import 'package:shiftwheels/presentation/auth/google_auth/google_auth_bloc.dart';
@@ -70,6 +72,9 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<GetFuelsUsecase>(
     GetFuelsUsecase(),
   );
+  sl.registerSingleton<GetLocationUsecase>(
+  GetLocationUsecase(),
+  );
 
   // Blocs
   sl.registerFactory<GoogleAuthBloc>(
@@ -84,4 +89,10 @@ Future<void> initializeDependencies() async {
   sl.registerFactory<GetFuelsBloc>(
     () => GetFuelsBloc(getFuelsUsecase: sl<GetFuelsUsecase>()),
   );
+  sl.registerFactory<GetLocationBloc>(
+  () => GetLocationBloc(
+     getLocationUsecase: sl<GetLocationUsecase>(),
+     
+  )
+);
 }

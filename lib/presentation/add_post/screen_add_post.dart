@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shiftwheels/core/common_widget/text_form_feald_widget.dart';
-import 'package:shiftwheels/core/common_widget/widget/basic_drop_down_list.dart';
-import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
 import 'package:shiftwheels/core/common_widget/basic_app_bar.dart';
+import 'package:shiftwheels/core/common_widget/text_form_feald_widget.dart';
+import 'package:shiftwheels/core/common_widget/widget/app_bottom_sheet.dart';
+import 'package:shiftwheels/core/common_widget/widget/basic_elevated_app_button.dart';
+import 'package:shiftwheels/core/common_widget/widget/drop_down_sheet.dart';
+import 'package:shiftwheels/core/common_widget/widget/list_widget.dart';
+import 'package:shiftwheels/core/config/helper/navigator/app_navigator.dart';
 import 'package:shiftwheels/data/add_post/models/brand_model.dart';
 import 'package:shiftwheels/data/add_post/models/fuels_model.dart';
 import 'package:shiftwheels/presentation/add_post/add_post_bloc/add_post_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/get_fuels_bloc/get_fuels_bloc.dart';
+import 'package:shiftwheels/presentation/add_post/screen_select_location.dart';
 
 class ScreenAddPost extends StatefulWidget {
   const ScreenAddPost({super.key});
@@ -20,10 +24,7 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
   BrandModel? selectedBrand;
   String? selectedModel;
   FuelsModel? selectedFuel;
-  bool _brandsLoading = false;
-  bool _modelsLoading = false;
-  bool _fuelsLoading = false;
-
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController yearController = TextEditingController();
   final TextEditingController kmController = TextEditingController();
   final TextEditingController noOfOwnersController = TextEditingController();
@@ -32,148 +33,207 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: BasicAppbar(title: const Text("Include Some Details")),
-      body: MultiBlocListener(
-        listeners: [
-          BlocListener<AddPostBloc, AddPostState>(
-            listener: (context, state) {
-              if (state is BrandsError || state is ModelsError) {
-                BasicSnackbar(
-                  message: state is BrandsError 
-                    ? state.message 
-                    : (state as ModelsError).message,
-                  backgroundColor: Colors.red,
-                ).show(context);
-              }
-            },
-          ),
-          BlocListener<GetFuelsBloc, GetFuelsState>(
-            listener: (context, state) {
-              if (state is GetFuelsError) {
-                BasicSnackbar(
-                  message: state.message,
-                  backgroundColor: Colors.red,
-                ).show(context);
-              }
-            },
-          ),
-        ],
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            child: Column(
-              children: [
-                BlocBuilder<AddPostBloc, AddPostState>(
-                  builder: (context, state) {
-                    _brandsLoading = state is BrandsLoading;
-                    return _buildBrandDropdown(state);
-                  },
-                ),
-                const SizedBox(height: 20),
-                BlocBuilder<AddPostBloc, AddPostState>(
-                  builder: (context, state) {
-                    _modelsLoading = state is ModelsLoading;
-                    return _buildModelDropdown(state);
-                  },
-                ),
-                const SizedBox(height: 20),
-                BlocBuilder<GetFuelsBloc, GetFuelsState>(
-                  builder: (context, state) {
-                    _fuelsLoading = state is GetFuelsLoading;
-                    return _buildFuelsDropdown(state);
-                  },
-                ),
-                const SizedBox(height: 20),
-                TextFormFieldWidget(label: "Year*", controller: yearController),
-                const SizedBox(height: 20),
-                TextFormFieldWidget(label: "KM driven*", controller: kmController),
-                const SizedBox(height: 20),
-                TextFormFieldWidget(label: "No.of Owners*", controller: noOfOwnersController),
-                const SizedBox(height: 20),
-                TextFormFieldWidget(label: "Describe what you are selling*", controller: discribeController),
-                const SizedBox(height: 20),
-              ],
-            ),
+      appBar: BasicAppbar(
+        title: Text(
+          "Include Some Details",
+          style: Theme.of(context).textTheme.displayLarge,
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              _buildBrandBottomSheet(),
+              const SizedBox(height: 20),
+              _buildModelBottomSheet(),
+              const SizedBox(height: 20),
+              _buildFuelsBottomSheet(),
+              const SizedBox(height: 20),
+              _buildYearWidget(),
+              const SizedBox(height: 20),
+              _buildKmDrivenWidget(),
+              const SizedBox(height: 20),
+              _buildNoOfOwnersWidget(),
+              const SizedBox(height: 20),
+              _buildDiscribtionWidget(),
+              const SizedBox(height: 20),
+              _buildContinueWidget(context),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildBrandDropdown(AddPostState state) {
-    List<BrandModel> brands = [];
-    if (state is BrandsLoaded) {
-      brands = state.brands;
-    } else if (state is BrandsLoading && state.previousBrands != null) {
-      brands = state.previousBrands!;
-    }
+  Widget _buildBrandBottomSheet() {
+    return BlocBuilder<AddPostBloc, AddPostState>(
+      builder: (context, state) {
+        return GestureDetector(
+          onTap: () {
+            context.read<AddPostBloc>().add(FetchBrandsEvent());
+            AppBottomSheet.display(
+              context,
+              BlocProvider.value(
+                value: BlocProvider.of<AddPostBloc>(context),
+                child: BlocBuilder<AddPostBloc, AddPostState>(
+                  builder: (context, state) {
+                    final sheetIsLoading = state is BrandsLoading;
+                    final List<BrandModel> sheetBrands =
+                        state is BrandsLoaded ? state.brands : [];
+                    final sheetError =
+                        state is BrandsError ? state.message : null;
 
-    return BasicDropDownList<BrandModel>(
-      hintText: "Select Brand",
-      items: brands,
-      value: selectedBrand,
-      displayItem: (brand) => brand.brandName ?? 'Unknown Brand',
-      onChanged: (BrandModel? newValue) {
-        if (newValue != null) {
-          setState(() {
-            selectedBrand = newValue;
-            selectedModel = null;
-          });
-          context.read<AddPostBloc>().add(FetchModelsEvent(newValue.id!));
-        }
+                    return DropdownSheet<BrandModel>(
+                      title: 'Select Brand',
+                      items: sheetBrands,
+                      itemText:
+                          (BrandModel brand) => brand.brandName ?? 'Unknown',
+                      onSelected: (BrandModel brand) {
+                        setState(() {
+                          selectedBrand = brand;
+                          selectedModel = null;
+                        });
+                        context.read<AddPostBloc>().add(
+                          FetchModelsEvent(brand.id!),
+                        );
+                      },
+                      isLoading: sheetIsLoading,
+                      error: sheetError,
+                    );
+                  },
+                ),
+              ),
+            );
+          },
+          child: ListWidget(text: selectedBrand?.brandName ?? 'Select Brand*'),
+        );
       },
-      enabled: !_brandsLoading,
-      isLoading: _brandsLoading,
     );
   }
 
-  Widget _buildModelDropdown(AddPostState state) {
-    List<String> models = [];
-    if (state is ModelsLoaded) {
-      models = state.models;
-    } else if (state is ModelsLoading && state.previousModels != null) {
-      models = state.previousModels!;
-    }
+  Widget _buildModelBottomSheet() {
+    return BlocBuilder<AddPostBloc, AddPostState>(
+      builder: (context, state) {
+        final isDisabled = selectedBrand == null;
 
-    return BasicDropDownList<String>(
-      hintText: "Select Model",
-      items: models,
-      value: selectedModel,
-      displayItem: (model) => model,
-      onChanged: (String? newValue) {
-        setState(() {
-          selectedModel = newValue;
-        });
+        return GestureDetector(
+          onTap: () {
+            if (isDisabled) return;
+
+            context.read<AddPostBloc>().add(
+              FetchModelsEvent(selectedBrand!.id!),
+            );
+
+            AppBottomSheet.display(
+              context,
+              BlocProvider.value(
+                value: BlocProvider.of<AddPostBloc>(context),
+                child: BlocBuilder<AddPostBloc, AddPostState>(
+                  builder: (context, state) {
+                    final sheetIsLoading = state is ModelsLoading;
+                    final List<String> sheetModels =
+                        state is ModelsLoaded ? state.models : [];
+                    final sheetError =
+                        state is ModelsError ? state.message : null;
+
+                    return DropdownSheet<String>(
+                      title: 'Select Model',
+                      items: sheetModels,
+                      itemText: (String model) => model,
+                      onSelected: (String model) {
+                        setState(() {
+                          selectedModel = model;
+                        });
+                      },
+                      isLoading: sheetIsLoading,
+                      error: sheetError,
+                    );
+                  },
+                ),
+              ),
+            );
+          },
+          child: ListWidget(text: selectedModel ?? 'Select Model*'),
+        );
       },
-      enabled: !_modelsLoading && selectedBrand != null,
-      isLoading: _modelsLoading,
     );
   }
 
-  Widget _buildFuelsDropdown(GetFuelsState state) {
-    List<FuelsModel> fuels = [];
-    if (state is GetFuelsLoaded) {
-      fuels = state.fuels;
-    } 
-    return BasicDropDownList<FuelsModel>(
-      hintText: "Select Fuel Type",
-      items: fuels,
-      value: selectedFuel,
-      displayItem: (fuel) => fuel.fuels ?? 'Unknown Fuel',
-      onChanged: (FuelsModel? newValue) {
-        setState(() {
-          selectedFuel = newValue;
-        });
+  Widget _buildFuelsBottomSheet() {
+    return BlocBuilder<GetFuelsBloc, GetFuelsState>(
+      builder: (context, state) {
+        return GestureDetector(
+          onTap: () {
+            context.read<GetFuelsBloc>().add(FetchFuels());
+
+            AppBottomSheet.display(
+              context,
+              BlocProvider.value(
+                value: BlocProvider.of<GetFuelsBloc>(context),
+                child: BlocBuilder<GetFuelsBloc, GetFuelsState>(
+                  builder: (context, state) {
+                    final sheetIsLoading = state is GetFuelsLoading;
+                    final List<FuelsModel> sheetFuels =
+                        state is GetFuelsLoaded ? state.fuels : [];
+                    final sheetError =
+                        state is GetFuelsError ? state.message : null;
+
+                    return DropdownSheet<FuelsModel>(
+                      title: 'Select Fuel Type',
+                      items: sheetFuels,
+                      itemText: (FuelsModel fuel) => fuel.fuels ?? 'Unknown',
+                      onSelected: (FuelsModel fuel) {
+                        setState(() {
+                          selectedFuel = fuel;
+                        });
+                      },
+                      isLoading: sheetIsLoading,
+                      error: sheetError,
+                    );
+                  },
+                ),
+              ),
+            );
+          },
+          child: ListWidget(text: selectedFuel?.fuels ?? 'Select Fuel Type*'),
+        );
       },
-      enabled: !_fuelsLoading,
-      isLoading: _fuelsLoading,
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    context.read<AddPostBloc>().add(FetchBrandsEvent());
-    context.read<GetFuelsBloc>().add(FetchFuels());
+  Widget _buildYearWidget() {
+    return TextFormFieldWidget(label: "Year*",
+     controller: yearController);
+  }
+
+  Widget _buildKmDrivenWidget() {
+    return TextFormFieldWidget(label: "KM driven*",
+     controller: kmController);
+  }
+
+  Widget _buildNoOfOwnersWidget() {
+    return TextFormFieldWidget(
+      label: "No.of Owners*",
+      controller: noOfOwnersController,
+    );
+  }
+
+  Widget _buildDiscribtionWidget() {
+    return TextFormFieldWidget(
+      label: "Describe what you are selling*",
+      controller: discribeController,
+      multiline: true,
+    );
+  }
+
+  Widget _buildContinueWidget(BuildContext context) {
+    return BasicElevatedAppButton(
+      onPressed: () {
+        AppNavigator.push(context, ScreenSelectLocation());
+      },
+      title: "Continue",
+    );
   }
 }

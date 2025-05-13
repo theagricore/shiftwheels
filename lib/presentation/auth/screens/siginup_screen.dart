@@ -99,7 +99,7 @@ class SiginupScreen extends StatelessWidget {
                             BasicElevatedAppButton(
                               onPressed: () {
                                 if (_formKey.currentState!.validate() &&
-                                    !(state is AuthLoading)) {
+                                    state is! AuthLoading) {
                                   final newUser = UserModel(
                                     email: emailController.text.trim(),
                                     password: passwordController.text.trim(),

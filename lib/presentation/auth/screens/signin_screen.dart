@@ -66,92 +66,19 @@ class SigninScreen extends StatelessWidget {
                   key: _formKey,
                   child: Column(
                     children: [
-                      TextFormFieldWidget(
-                        label: zEnterEmail,
-                        controller: emailController,
-                        keyboardType: TextInputType.emailAddress,
-                      ),
+                      _buildEmailWidget(),
                       SizedBox(height: size.height * 0.03),
-                      TextFormFieldWidget(
-                        label: zEnterPassword,
-                        controller: passwordController,
-                        keyboardType: TextInputType.visiblePassword,
-                        isPassword: true,
-                      ),
+                      _buildPasswordWidget(),
                       SizedBox(height: size.height * 0.02),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: _forgotPassword(context),
-                      ),
+                      _forgotPassword(context),
                       SizedBox(height: size.height * 0.05),
                       Column(
                         children: [
-                          BlocBuilder<AuthBloc, AuthState>(
-                            builder: (context, state) {
-                              return BasicElevatedAppButton(
-                                onPressed: () {
-                                  if (_formKey.currentState!.validate() &&
-                                      state is! AuthLoading) {
-                                    final email = emailController.text.trim();
-                                    final password =
-                                        passwordController.text.trim();
-                                    final user = UserSiginModel(
-                                      email: email,
-                                      password: password,
-                                    );
-                                    context.read<AuthBloc>().add(
-                                      SignInEvent(userSiginModel: user),
-                                    );
-                                  }
-                                },
-                                title: zContinue,
-                                height: size.height * 0.07,
-                                isLoading: state is AuthLoading,
-                              );
-                            },
-                          ),
+                          _buildEmailPasswordSigninWidget(size),
                           SizedBox(height: size.height * 0.02),
-                          BlocListener<GoogleAuthBloc, GoogleAuthState>(
-                            listener: (context, state) {
-                              if (state is GoogleAuthSuccess) {
-                                BasicSnackbar(
-                                  message: state.message,
-                                  backgroundColor: Colors.green,
-                                ).show(context);
-                                AppNavigator.pushReplacement(
-                                  context,
-                                  const MainScreens(),
-                                );
-                              } else if (state is GoogleAuthFailure) {
-                                BasicSnackbar(
-                                  message: state.errorMessage,
-                                  backgroundColor: Colors.red,
-                                ).show(context);
-                              }
-                            },
-                            child: BlocBuilder<GoogleAuthBloc, GoogleAuthState>(
-                              builder: (context, state) {
-                                return BasicOutlinedAppButton(
-                                  image: zGoogleLogo,
-                                  onPressed: () {
-                                    if (state is! GoogleAuthLoading) {
-                                      context.read<GoogleAuthBloc>().add(
-                                        GoogleSignInRequested(),
-                                      );
-                                    }
-                                  },
-                                  title: zContinueWithGoogle,
-                                  height: size.height * 0.07,
-                                  isLoading: state is GoogleAuthLoading,
-                                );
-                              },
-                            ),
-                          ),
+                          _buildGoogleSigininWidget(size),
                           SizedBox(height: size.height * 0.04),
-                          Align(
-                            alignment: Alignment.center,
-                            child: _createAccount(context),
-                          ),
+                          _createAccount(context),
                         ],
                       ),
                     ],
@@ -165,41 +92,121 @@ class SigninScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildGoogleSigininWidget(Size size) {
+    return BlocListener<GoogleAuthBloc, GoogleAuthState>(
+      listener: (context, state) {
+        if (state is GoogleAuthSuccess) {
+          BasicSnackbar(
+            message: state.message,
+            backgroundColor: Colors.green,
+          ).show(context);
+          AppNavigator.pushReplacement(context, const MainScreens());
+        } else if (state is GoogleAuthFailure) {
+          BasicSnackbar(
+            message: state.errorMessage,
+            backgroundColor: Colors.red,
+          ).show(context);
+        }
+      },
+      child: BlocBuilder<GoogleAuthBloc, GoogleAuthState>(
+        builder: (context, state) {
+          return BasicOutlinedAppButton(
+            image: zGoogleLogo,
+            onPressed: () {
+              if (state is! GoogleAuthLoading) {
+                context.read<GoogleAuthBloc>().add(GoogleSignInRequested());
+              }
+            },
+            title: zContinueWithGoogle,
+            height: size.height * 0.07,
+            isLoading: state is GoogleAuthLoading,
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmailPasswordSigninWidget(Size size) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        return BasicElevatedAppButton(
+          onPressed: () {
+            if (_formKey.currentState!.validate() && state is! AuthLoading) {
+              final email = emailController.text.trim();
+              final password = passwordController.text.trim();
+              final user = UserSiginModel(email: email, password: password);
+              context.read<AuthBloc>().add(SignInEvent(userSiginModel: user));
+            }
+          },
+          title: zContinue,
+          height: size.height * 0.07,
+          isLoading: state is AuthLoading,
+        );
+      },
+    );
+  }
+
+  Widget _buildPasswordWidget() {
+    return TextFormFieldWidget(
+      label: zEnterPassword,
+      controller: passwordController,
+      keyboardType: TextInputType.visiblePassword,
+      isPassword: true,
+    );
+  }
+
+  Widget _buildEmailWidget() {
+    return TextFormFieldWidget(
+      label: zEnterEmail,
+      controller: emailController,
+      keyboardType: TextInputType.emailAddress,
+    );
+  }
+
   Widget _createAccount(BuildContext context) {
-    return RichText(
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: zDontHaveAnAccount,
-            style: Theme.of(context).textTheme.labelLarge,
-          ),
-          TextSpan(
-            recognizer:
-                TapGestureRecognizer()
-                  ..onTap = () {
-                    AppNavigator.pushReplacement(context, SiginupScreen());
-                  },
-            text: zCreateOne,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.blue,
+    return Align(
+      alignment: Alignment.center,
+      child: RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: zDontHaveAnAccount,
+              style: Theme.of(context).textTheme.labelLarge,
             ),
-          ),
-        ],
+            TextSpan(
+              recognizer:
+                  TapGestureRecognizer()
+                    ..onTap = () {
+                      AppNavigator.pushReplacement(context, SiginupScreen());
+                    },
+              text: zCreateOne,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _forgotPassword(BuildContext context) {
-    return RichText(
-      text: TextSpan(
-        recognizer:
-            TapGestureRecognizer()
-              ..onTap = () {
-                AppNavigator.push(context, ForgotPasswordPage());
-              },
-        text: zForgetPassord,
-        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+    return Align(
+      alignment: Alignment.centerRight,
+      child: RichText(
+        text: TextSpan(
+          recognizer:
+              TapGestureRecognizer()
+                ..onTap = () {
+                  AppNavigator.push(context, ForgotPasswordPage());
+                },
+          text: zForgetPassord,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.blue,
+          ),
+        ),
       ),
     );
   }

@@ -5,6 +5,7 @@ class TextFormFieldWidget extends StatefulWidget {
   final TextEditingController controller;
   final TextInputType keyboardType;
   final bool isPassword;
+  final bool multiline; 
   final String? Function(String?)? validator;
 
   const TextFormFieldWidget({
@@ -13,6 +14,7 @@ class TextFormFieldWidget extends StatefulWidget {
     required this.controller,
     this.keyboardType = TextInputType.text,
     this.isPassword = false,
+    this.multiline = false, 
     this.validator,
   });
 
@@ -48,7 +50,11 @@ class _TextFormFieldWidgetState extends State<TextFormFieldWidget> {
         keyboardType: widget.keyboardType,
         obscureText: widget.isPassword ? _obscureText : false,
         autovalidateMode: AutovalidateMode.onUserInteraction,
+        maxLines: widget.multiline ? null : 1, 
+        minLines: widget.multiline ? 4 : null, 
         decoration: InputDecoration(
+          labelStyle: Theme.of(context).textTheme.titleSmall,
+          hintStyle: Theme.of(context).textTheme.titleSmall,
           labelText: !_hasFocus && _showLabel ? widget.label : null,
           hintText: _hasFocus || !_showLabel ? widget.label : null,
           suffixIcon: widget.isPassword
@@ -66,8 +72,8 @@ class _TextFormFieldWidgetState extends State<TextFormFieldWidget> {
         ),
         validator: widget.validator ??
             (value) {
-              if (value == null || value.isEmpty) {
-                return '${widget.label} cannot be empty';
+              if (value == null || value.isEmpty || value.trim().isEmpty) {
+                return '${widget.label} cannot be empty or just spaces';
               }
               if (widget.keyboardType == TextInputType.emailAddress &&
                   !RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')

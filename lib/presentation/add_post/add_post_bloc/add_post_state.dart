@@ -1,4 +1,3 @@
-// add_post_state.dart (updated)
 part of 'add_post_bloc.dart';
 
 @immutable

@@ -1,5 +1,6 @@
 import 'package:shiftwheels/core/config/theme/theme.dart';
 import 'package:shiftwheels/presentation/add_post/get_fuels_bloc/get_fuels_bloc.dart';
+import 'package:shiftwheels/presentation/add_post/get_location_bloc/get_location_bloc.dart';
 import 'package:shiftwheels/presentation/main_screen/screen_profile/ProfileBloc/profile_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/add_post_bloc/add_post_bloc.dart';
 import 'package:shiftwheels/presentation/auth/auth_bloc/auth_bloc.dart';
@@ -42,11 +43,10 @@ class MyApp extends StatelessWidget {
             BlocProvider<ProfileBloc>(
               create: (context) => sl<ProfileBloc>()..add(FetchUserProfile()),
             ),
-            BlocProvider<AddPostBloc>(
-              create: (context) => sl<AddPostBloc>(),
-            ),
-            BlocProvider<GetFuelsBloc>(
-              create: (context) => sl<GetFuelsBloc>(),
+            BlocProvider<AddPostBloc>(create: (context) => sl<AddPostBloc>()),
+            BlocProvider<GetFuelsBloc>(create: (context) => sl<GetFuelsBloc>()),
+            BlocProvider<GetLocationBloc>(
+              create: (context) => sl<GetLocationBloc>(),
             ),
           ],
           child: MaterialApp(

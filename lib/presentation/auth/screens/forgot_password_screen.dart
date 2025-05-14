@@ -22,11 +22,11 @@ class ForgotPasswordPage extends StatelessWidget {
         listener: (context, state) {
           if (state is AuthPasswordResetState) {
             emailController.clear();
-             BasicSnackbar(
+            BasicSnackbar(
               message: state.message,
               backgroundColor: Colors.green,
             ).show(context);
-            Navigator.pop(context); 
+            Navigator.pop(context);
           } else if (state is AuthFailure) {
             BasicSnackbar(
               message: state.errorMessage,
@@ -46,38 +46,12 @@ class ForgotPasswordPage extends StatelessWidget {
                       key: _formKey,
                       child: Column(
                         children: [
-                          Center(
-                            child: Image(
-                              image: const AssetImage(zLogo),
-                              height: size.height * 0.2,
-                              width: size.height * 0.2,
-                            ),
-                          ),
-                          Text(
-                            zForgetPassord,
-                            style: Theme.of(context).textTheme.headlineLarge,
-                          ),
+                          _buildLogo(size),
+                          _buildForgotPasswordText(context),
                           SizedBox(height: size.height * 0.04),
-                          TextFormFieldWidget(
-                            label: zEnterEmail,
-                            controller: emailController,
-                            keyboardType: TextInputType.emailAddress,
-                          ),
+                          _buildEmailWidget(),
                           SizedBox(height: size.height * 0.04),
-                          BasicElevatedAppButton(
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                context.read<AuthBloc>().add(
-                                  ForgotPasswordEvent(
-                                    email: emailController.text.trim(),
-                                  ),
-                                );
-                              }
-                            },
-                            title: zContinue,
-                            height: size.height * 0.07,
-                            isLoading: state is AuthLoading,
-                          ),
+                          _buildContinueButton(context, size, state),
                           SizedBox(height: size.height * 0.02),
                         ],
                       ),
@@ -89,6 +63,49 @@ class ForgotPasswordPage extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+
+  Widget _buildForgotPasswordText(BuildContext context) {
+    return Text(
+      zForgetPassord,
+      style: Theme.of(context).textTheme.headlineLarge,
+    );
+  }
+
+  Widget _buildLogo(Size size) {
+    return Center(
+      child: Image(
+        image: const AssetImage(zLogo),
+        height: size.height * 0.2,
+        width: size.height * 0.2,
+      ),
+    );
+  }
+Widget _buildContinueButton(
+    BuildContext context,
+    Size size,
+    AuthState state,
+  ) {
+    return BasicElevatedAppButton(
+      onPressed: () {
+        if (_formKey.currentState!.validate()) {
+          context.read<AuthBloc>().add(
+            ForgotPasswordEvent(email: emailController.text.trim()),
+          );
+        }
+      },
+      title: zContinue,
+      height: size.height * 0.07,
+      isLoading: state is AuthLoading,
+    );
+  }
+
+  Widget _buildEmailWidget() {
+    return TextFormFieldWidget(
+      label: zEnterEmail,
+      controller: emailController,
+      keyboardType: TextInputType.emailAddress,
     );
   }
 }

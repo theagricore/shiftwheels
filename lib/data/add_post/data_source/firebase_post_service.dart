@@ -1,20 +1,24 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
-import 'package:location/location.dart';
+import 'package:flutter/services.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:location/location.dart' as loc;
 import 'package:shiftwheels/data/add_post/models/brand_model.dart';
 import 'package:shiftwheels/data/add_post/models/fuels_model.dart';
 import 'package:shiftwheels/data/add_post/models/location_model.dart';
 
 abstract class FirebasePostService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   Future<Either<String, List<BrandModel>>> getBrands();
   Future<Either<String, List<String>>> getModels(String brandId);
   Future<Either<String, List<FuelsModel>>> getFuel();
   Future<Either<String, LocationModel>> getCurrentLocation();
+  Future<Either<String, List<LocationModel>>> searchLocation(String query);
 }
 
 class PostFirebaseServiceImpl extends FirebasePostService {
-  final Location _location = Location();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final loc.Location _location = loc.Location();
+
   @override
   Future<Either<String, List<BrandModel>>> getBrands() async {
     try {
@@ -85,46 +89,130 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   @override
   Future<Either<String, LocationModel>> getCurrentLocation() async {
     try {
-      print('Checking location service...');
       bool serviceEnabled = await _location.serviceEnabled();
       if (!serviceEnabled) {
-        print('Requesting location service...');
         serviceEnabled = await _location.requestService();
         if (!serviceEnabled) {
-          print('Location services disabled');
           return Left('Location services are disabled');
         }
       }
 
-      print('Checking location permissions...');
-      PermissionStatus permissionGranted = await _location.hasPermission();
-      if (permissionGranted == PermissionStatus.denied) {
-        print('Requesting location permissions...');
+      loc.PermissionStatus permissionGranted = await _location.hasPermission();
+      if (permissionGranted == loc.PermissionStatus.denied) {
         permissionGranted = await _location.requestPermission();
-        if (permissionGranted != PermissionStatus.granted) {
-          print('Location permissions denied');
+        if (permissionGranted != loc.PermissionStatus.granted) {
           return Left('Location permissions are denied');
         }
       }
 
-      print('Getting current location...');
       final locationData = await _location.getLocation();
-      print('Location data received: $locationData');
-
       if (locationData.latitude == null || locationData.longitude == null) {
-        print('Invalid location data received');
         return Left('Failed to get valid location coordinates');
       }
+
+      final placeDetails = await _getPlaceDetails(
+        locationData.latitude!,
+        locationData.longitude!,
+      );
 
       return Right(
         LocationModel(
           latitude: locationData.latitude!,
           longitude: locationData.longitude!,
+          placeName: placeDetails['placeName'],
+          address: placeDetails['address'],
+          city: placeDetails['city'],
+          country: placeDetails['country'],
         ),
       );
+    } on PlatformException catch (e) {
+      if (e.code == 'SERVICE_STATUS_ERROR') {
+        return Left('Location services are disabled');
+      } else if (e.code == 'PERMISSION_DENIED') {
+        return Left('Location permissions are denied');
+      }
+      return Left('Failed to get location: ${e.message}');
     } catch (e) {
-      print('Location error: $e');
       return Left('Failed to get location: ${e.toString()}');
     }
   }
+
+  Future<Map<String, String?>> _getPlaceDetails(double lat, double lng) async {
+    try {
+      final placemarks = await placemarkFromCoordinates(lat, lng);
+      if (placemarks.isEmpty) return {};
+
+      final place = placemarks.first;
+      return {
+        'placeName': place.name,
+        'address': _buildAddress(place),
+        'city': place.locality ?? place.subAdministrativeArea,
+        'country': place.country,
+      };
+    } catch (e) {
+      print('Reverse geocoding error: $e');
+      return {};
+    }
+  }
+
+  String _buildAddress(Placemark place) {
+    final addressParts =
+        [
+          place.subLocality,
+          place.locality,
+          place.administrativeArea,
+          place.postalCode,
+        ].where((part) => part != null && part.isNotEmpty).toList();
+
+    return addressParts.join(', ');
+  }
+
+  @override
+Future<Either<String, List<LocationModel>>> searchLocation(String query) async {
+  try {
+    if (query.isEmpty) {
+      return Left('Search query cannot be empty');
+    }
+
+    final locations = await locationFromAddress(query);
+    if (locations.isEmpty) {
+      return Left('No locations found for "$query"');
+    }
+
+    final results = <LocationModel>[];
+    for (final location in locations) {
+      try {
+        final placeDetails = await _getPlaceDetails(
+          location.latitude,
+          location.longitude,
+        );
+        
+        results.add(LocationModel(
+          latitude: location.latitude,
+          longitude: location.longitude,
+          placeName: placeDetails['placeName'] ?? 'Unknown place',
+          address: placeDetails['address'] ?? query, 
+          city: placeDetails['city'],
+          country: placeDetails['country'],
+        ));
+      } catch (e) {
+        results.add(LocationModel(
+          latitude: location.latitude,
+          longitude: location.longitude,
+          address: query,
+        ));
+        continue;
+      }
+    }
+
+    if (results.isEmpty) {
+      return Left('Found locations but couldn\'t get details');
+    }
+    return Right(results);
+  } on PlatformException catch (e) {
+    return Left('Location service error: ${e.message ?? 'Unknown error'}');
+  } catch (e) {
+    return Left('Failed to search location');
+  }
+}
 }

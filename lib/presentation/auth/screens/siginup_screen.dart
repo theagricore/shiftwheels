@@ -27,15 +27,16 @@ class SiginupScreen extends StatelessWidget {
     var size = MediaQuery.of(context).size;
     return Scaffold(
       body: BlocConsumer<AuthBloc, AuthState>(
-        listenWhen: (previous, current) =>
-            current is AuthSuccess || current is AuthFailure,
+        listenWhen:
+            (previous, current) =>
+                current is AuthSuccess || current is AuthFailure,
         listener: (context, state) {
           if (state is AuthSuccess) {
             BasicSnackbar(
               message: state.message,
               backgroundColor: Colors.green,
             ).show(context);
-              AppNavigator.pushReplacement(context, const MainScreens());
+            AppNavigator.pushReplacement(context, const MainScreens());
           } else if (state is AuthFailure) {
             BasicSnackbar(
               message: state.errorMessage,
@@ -52,111 +53,27 @@ class SiginupScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   SizedBox(height: size.height * 0.08),
-                  Center(
-                    child: Image(
-                      image: const AssetImage(zLogo),
-                      height: size.height * 0.2,
-                      width: size.height * 0.2,
-                    ),
-                  ),
+                  _buildLogoWidget(size),
                   Form(
                     key: _formKey,
                     child: Column(
                       children: [
                         SizedBox(height: size.height * 0.05),
-                        TextFormFieldWidget(
-                          label: zEnterName,
-                          controller: nameController,
-                          keyboardType: TextInputType.name,
-
-                        ),
+                        _buildTextFormName(),
                         SizedBox(height: size.height * 0.02),
-                        TextFormFieldWidget(
-                          label: zEnterEmail,
-                          controller: emailController,
-                          keyboardType: TextInputType.emailAddress,
-             
-                        ),
+                        _buildTextFormEmail(),
                         SizedBox(height: size.height * 0.02),
-                        TextFormFieldWidget(
-                          label: zEnterPhoneNo,
-                          controller: phoneNoController,
-                          keyboardType: TextInputType.phone,
-                         
-                        ),
+                        _buildTextFormPhoneNo(),
                         SizedBox(height: size.height * 0.02),
-                        TextFormFieldWidget(
-                          label: zEnterPassword,
-                          controller: passwordController,
-                          isPassword: true,
-                          keyboardType: TextInputType.visiblePassword,
-                
-                        ),
-                        SizedBox(height: size.height * 0.02),
-                        SizedBox(height: size.height * 0.05),
+                        _buildTextFormPassword(),
+                        SizedBox(height: size.height * 0.07),
                         Column(
                           children: [
-                            BasicElevatedAppButton(
-                              onPressed: () {
-                                if (_formKey.currentState!.validate() &&
-                                    state is! AuthLoading) {
-                                  final newUser = UserModel(
-                                    email: emailController.text.trim(),
-                                    password: passwordController.text.trim(),
-                                    fullName: nameController.text.trim(),
-                                    phoneNo: phoneNoController.text.trim(),
-                                  );
-                                  context.read<AuthBloc>().add(
-                                        SignUpEvent(user: newUser),
-                                      );
-                                }
-                              },
-                              title: zContinue,
-                              height: size.height * 0.07,
-                              isLoading: state is AuthLoading,
-                            ),
+                            _buildEmailPasswordButton(state, context, size),
                             SizedBox(height: size.height * 0.02),
-                           BlocListener<GoogleAuthBloc, GoogleAuthState>(
-                            listener: (context, state) {
-                              if (state is GoogleAuthSuccess) {
-                                BasicSnackbar(
-                                  message: state.message,
-                                  backgroundColor: Colors.green,
-                                ).show(context);
-                                AppNavigator.pushReplacement(
-                                  context,
-                                  const MainScreens(),
-                                );
-                              } else if (state is GoogleAuthFailure) {
-                                BasicSnackbar(
-                                  message: state.errorMessage,
-                                  backgroundColor: Colors.red,
-                                ).show(context);
-                              }
-                            },
-                            child: BlocBuilder<GoogleAuthBloc, GoogleAuthState>(
-                              builder: (context, state) {
-                                return BasicOutlinedAppButton(
-                                  image: zGoogleLogo,
-                                  onPressed: () {
-                                    if (state is! GoogleAuthLoading) {
-                                      context.read<GoogleAuthBloc>().add(
-                                        GoogleSignInRequested(),
-                                      );
-                                    }
-                                  },
-                                  title: zContinueWithGoogle,
-                                  height: size.height * 0.07,
-                                  isLoading: state is GoogleAuthLoading,
-                                );
-                              },
-                            ),
-                          ),
+                            _buildGoogleSiginButton(size),
                             SizedBox(height: size.height * 0.04),
-                            Align(
-                              alignment: Alignment.center,
-                              child: _createAccount(context),
-                            ),
+                            _createAccount(context),
                           ],
                         ),
                       ],
@@ -171,26 +88,132 @@ class SiginupScreen extends StatelessWidget {
     );
   }
 
-  Widget _createAccount(BuildContext context) {
-    return RichText(
-      text: TextSpan(children: [
-        TextSpan(
-          text: zDoYouHaveAccount,
-          style: Theme.of(context).textTheme.labelLarge,
-        ),
-        TextSpan(
-          recognizer: TapGestureRecognizer()
-            ..onTap = () {
-              AppNavigator.push(context, SigninScreen());
-            },
-          text: zSignIn,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.blue,
-          ),
-        ),
-      ]),
+  Widget _buildLogoWidget(Size size) {
+    return Center(
+      child: Image(
+        image: const AssetImage(zLogo),
+        height: size.height * 0.2,
+        width: size.height * 0.2,
+      ),
     );
   }
 
+  Widget _buildTextFormName() {
+    return TextFormFieldWidget(
+      label: zEnterName,
+      controller: nameController,
+      keyboardType: TextInputType.name,
+    );
+  }
+
+  Widget _buildTextFormEmail() {
+    return TextFormFieldWidget(
+      label: zEnterEmail,
+      controller: emailController,
+      keyboardType: TextInputType.emailAddress,
+    );
+  }
+
+  Widget _buildTextFormPhoneNo() {
+    return TextFormFieldWidget(
+      label: zEnterPhoneNo,
+      controller: phoneNoController,
+      keyboardType: TextInputType.phone,
+    );
+  }
+
+  Widget _buildTextFormPassword() {
+    return TextFormFieldWidget(
+      label: zEnterPassword,
+      controller: passwordController,
+      isPassword: true,
+      keyboardType: TextInputType.visiblePassword,
+    );
+  }
+
+  Widget _buildEmailPasswordButton(
+    AuthState state,
+    BuildContext context,
+    Size size,
+  ) {
+    return BasicElevatedAppButton(
+      onPressed: () {
+        if (_formKey.currentState!.validate() && state is! AuthLoading) {
+          final newUser = UserModel(
+            email: emailController.text.trim(),
+            password: passwordController.text.trim(),
+            fullName: nameController.text.trim(),
+            phoneNo: phoneNoController.text.trim(),
+          );
+          context.read<AuthBloc>().add(SignUpEvent(user: newUser));
+        }
+      },
+      title: zContinue,
+      height: size.height * 0.07,
+      isLoading: state is AuthLoading,
+    );
+  }
+
+  Widget _buildGoogleSiginButton(Size size) {
+    return BlocListener<GoogleAuthBloc, GoogleAuthState>(
+      listener: (context, state) {
+        if (state is GoogleAuthSuccess) {
+          BasicSnackbar(
+            message: state.message,
+            backgroundColor: Colors.green,
+          ).show(context);
+          AppNavigator.pushReplacement(context, const MainScreens());
+        } else if (state is GoogleAuthFailure) {
+          BasicSnackbar(
+            message: state.errorMessage,
+            backgroundColor: Colors.red,
+          ).show(context);
+        }
+      },
+      child: BlocBuilder<GoogleAuthBloc, GoogleAuthState>(
+        builder: (context, state) {
+          return BasicOutlinedAppButton(
+            image: zGoogleLogo,
+            onPressed: () {
+              if (state is! GoogleAuthLoading) {
+                context.read<GoogleAuthBloc>().add(GoogleSignInRequested());
+              }
+            },
+            title: zContinueWithGoogle,
+            height: size.height * 0.07,
+            isLoading: state is GoogleAuthLoading,
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _createAccount(BuildContext context) {
+    return Align(
+      alignment: Alignment.center,
+
+      child: RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: zDoYouHaveAccount,
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            TextSpan(
+              recognizer:
+                  TapGestureRecognizer()
+                    ..onTap = () {
+                      AppNavigator.push(context, SigninScreen());
+                    },
+              text: zSignIn,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

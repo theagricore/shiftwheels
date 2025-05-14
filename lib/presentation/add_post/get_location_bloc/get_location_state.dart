@@ -20,3 +20,18 @@ final class GetLocationError extends GetLocationState {
   GetLocationError(this.message);
 }
 
+final class GetLocationSearchResults extends GetLocationState {
+  final List<LocationModel> locations;
+
+  GetLocationSearchResults(this.locations);
+}
+final class LocationSelectedState extends GetLocationState {
+  final LocationModel location;
+
+  LocationSelectedState(this.location);
+}
+final class GetLocationSearchSelected extends GetLocationState {
+  final LocationModel location;
+
+  GetLocationSearchSelected(this.location);
+}

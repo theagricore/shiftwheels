@@ -8,4 +8,5 @@ abstract class PostRepository {
   Future<Either<String, List<String>>> getModels(String brandId);
   Future<Either<String, List<FuelsModel>>> getFuel();
   Future<Either<String, LocationModel>> getCurrentLocation();
+  Future<Either<String, List<LocationModel>>> searchLocation(String query);
 }

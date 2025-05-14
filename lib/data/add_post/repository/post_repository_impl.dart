@@ -38,5 +38,10 @@ class PostRepositoryImpl extends PostRepository {
   Future<Either<String, LocationModel>> getCurrentLocation() async {
     return await sl<FirebasePostService>().getCurrentLocation();
   }
+  
+  @override
+  Future<Either<String, List<LocationModel>>> searchLocation(String query) async{
+    return await sl<FirebasePostService>().searchLocation(query);
+  }
  
 }

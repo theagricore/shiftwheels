@@ -8,6 +8,7 @@ import 'package:shiftwheels/domain/add_post/usecase/get_brand_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_fuels_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_location_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_models_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/search_location_usecase.dart';
 import 'package:shiftwheels/domain/auth/repository/auth_repository.dart';
 import 'package:shiftwheels/domain/auth/usecase/get_user_data_usecase.dart';
 import 'package:shiftwheels/domain/auth/usecase/google_signin_usecase.dart';
@@ -75,6 +76,9 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<GetLocationUsecase>(
   GetLocationUsecase(),
   );
+  sl.registerSingleton<SearchLocationUsecase>(
+  SearchLocationUsecase(),
+  );
 
   // Blocs
   sl.registerFactory<GoogleAuthBloc>(
@@ -92,7 +96,7 @@ Future<void> initializeDependencies() async {
   sl.registerFactory<GetLocationBloc>(
   () => GetLocationBloc(
      getLocationUsecase: sl<GetLocationUsecase>(),
-     
+     searchLocationUsecase: sl<SearchLocationUsecase>(),   
   )
 );
 }

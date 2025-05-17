@@ -42,12 +42,10 @@ class ScreenPrice extends StatelessWidget {
     return BlocListener<PostAdBloc, PostAdState>(
       listener: (context, state) {
         if (state is PostAdSuccess) {
-          BasicSnackbar(message: "Post Uploaded Sucessfully", backgroundColor: Colors.green);
+          BasicSnackbar(message: "Post Uploaded Sucessfully", backgroundColor: Colors.green).show(context);
           Navigator.of(context).popUntil((route) => route.isFirst);
         } else if (state is PostAdError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-          );
+         BasicSnackbar(message: state.message, backgroundColor: Colors.red).show(context);
         }
       },
       child: Scaffold(

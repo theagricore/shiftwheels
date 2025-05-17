@@ -5,6 +5,7 @@ import 'package:shiftwheels/data/add_post/repository/post_repository_impl.dart';
 import 'package:shiftwheels/data/auth/data_dource/firebase_auth_service.dart';
 import 'package:shiftwheels/data/auth/repository/auth_repository_impl.dart';
 import 'package:shiftwheels/domain/add_post/repository/post_repository.dart';
+import 'package:shiftwheels/domain/add_post/usecase/get_active_ads_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_brand_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_fuels_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_location_usecase.dart';
@@ -26,6 +27,7 @@ import 'package:shiftwheels/presentation/main_screen/screen_profile/ProfileBloc/
 import 'package:shiftwheels/presentation/add_post/add_post_bloc/add_post_bloc.dart';
 import 'package:shiftwheels/presentation/auth/google_auth/google_auth_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/get_fuels_bloc/get_fuels_bloc.dart';
+import 'package:shiftwheels/presentation/screen_home/get_post_ad_bloc/get_post_ad_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -88,6 +90,9 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<PostAdUsecase>(
     PostAdUsecase(sl<PostRepository>()),
     );
+  sl.registerSingleton<GetActiveAdsUsecase>(
+   GetActiveAdsUsecase(sl<PostRepository>()),
+   );
 
   // Blocs
   sl.registerFactory<GoogleAuthBloc>(
@@ -116,5 +121,8 @@ Future<void> initializeDependencies() async {
      postAdUsecase: sl<PostAdUsecase>(),
      cloudinaryService: sl<CloudinaryService>(),
     ),
+  );
+  sl.registerFactory<GetPostAdBloc>(
+  () => GetPostAdBloc(getActiveAdsUsecase: sl<GetActiveAdsUsecase>()),
   );
 }

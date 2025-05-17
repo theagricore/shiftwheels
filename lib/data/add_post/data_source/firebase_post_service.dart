@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter/services.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:location/location.dart' as loc;
+import 'package:shiftwheels/data/add_post/models/ad_with_user_model.dart';
 import 'package:shiftwheels/data/add_post/models/ads_model.dart';
 import 'package:shiftwheels/data/add_post/models/brand_model.dart';
 import 'package:shiftwheels/data/add_post/models/fuels_model.dart';
@@ -15,6 +16,7 @@ abstract class FirebasePostService {
   Future<Either<String, LocationModel>> getCurrentLocation();
   Future<Either<String, List<LocationModel>>> searchLocation(String query);
   Future<Either<String, String>> postAd(AdsModel ad);
+  Future<Either<String, List<AdWithUserModel>>> getActiveAdsWithUsers();
 }
 
 class PostFirebaseServiceImpl extends FirebasePostService {
@@ -229,6 +231,37 @@ class PostFirebaseServiceImpl extends FirebasePostService {
     try {
       final docRef = await _firestore.collection("car_ads").add(ad.toMap());
       return Right(docRef.id);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Either<String, List<AdWithUserModel>>> getActiveAdsWithUsers() async {
+    try {
+      final adsSnapshot =
+          await _firestore
+              .collection('car_ads')
+              .where('isActive', isEqualTo: true)
+              .get();
+      final ads =
+          adsSnapshot.docs.map((doc) {
+            return AdsModel.fromMap(doc.data(), doc.id);
+          }).toList();
+      final result = <AdWithUserModel>[];
+
+      for (final ad in ads) {
+        try {
+          final userSnapShot =
+              await _firestore.collection('Users').doc(ad.userId).get();
+          result.add(AdWithUserModel(ad: ad, userData: userSnapShot.data()));
+        } catch (e) {
+          result.add(AdWithUserModel(ad: ad));
+        }
+      }
+      return Right(result);
     } on FirebaseException catch (e) {
       return Left('Firebase error: ${e.message}');
     } catch (e) {

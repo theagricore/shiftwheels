@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftwheels/core/common_widget/widget/search_feald_widget.dart';
 import 'package:shiftwheels/presentation/add_post/get_location_bloc/get_location_bloc.dart';
 
 class PopUpSearchScreenWidget extends StatelessWidget {
@@ -16,17 +17,12 @@ class PopUpSearchScreenWidget extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextFormField(
+        SearchFealdWidget(
           controller: _searchController,
-          decoration: const InputDecoration(
-            labelText: 'Search for a location',
-            border: OutlineInputBorder(),
-          ),
+          hintText: 'Search for a location',
           onChanged: (query) {
             if (query.isNotEmpty) {
-              context.read<GetLocationBloc>().add(
-                SearchLocationEvent(query),
-              );
+              context.read<GetLocationBloc>().add(SearchLocationEvent(query));
             }
           },
         ),
@@ -52,7 +48,7 @@ class PopUpSearchScreenWidget extends StatelessWidget {
                         );
                         Navigator.pop(context);
                       },
-    
+
                       child: Container(
                         height: 60,
                         decoration: BoxDecoration(
@@ -88,8 +84,8 @@ class PopUpSearchScreenWidget extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(
-                      width: 24,
-                      height: 24,
+                      width: 20,
+                      height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation<Color>(
@@ -100,13 +96,7 @@ class PopUpSearchScreenWidget extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       'Searching locations...',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.6),
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
                 ),

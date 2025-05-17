@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter/services.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:location/location.dart' as loc;
+import 'package:shiftwheels/data/add_post/models/ads_model.dart';
 import 'package:shiftwheels/data/add_post/models/brand_model.dart';
 import 'package:shiftwheels/data/add_post/models/fuels_model.dart';
 import 'package:shiftwheels/data/add_post/models/location_model.dart';
@@ -13,6 +14,7 @@ abstract class FirebasePostService {
   Future<Either<String, List<FuelsModel>>> getFuel();
   Future<Either<String, LocationModel>> getCurrentLocation();
   Future<Either<String, List<LocationModel>>> searchLocation(String query);
+  Future<Either<String, String>> postAd(AdsModel ad);
 }
 
 class PostFirebaseServiceImpl extends FirebasePostService {
@@ -168,51 +170,69 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   }
 
   @override
-Future<Either<String, List<LocationModel>>> searchLocation(String query) async {
-  try {
-    if (query.isEmpty) {
-      return Left('Search query cannot be empty');
-    }
-
-    final locations = await locationFromAddress(query);
-    if (locations.isEmpty) {
-      return Left('No locations found for "$query"');
-    }
-
-    final results = <LocationModel>[];
-    for (final location in locations) {
-      try {
-        final placeDetails = await _getPlaceDetails(
-          location.latitude,
-          location.longitude,
-        );
-        
-        results.add(LocationModel(
-          latitude: location.latitude,
-          longitude: location.longitude,
-          placeName: placeDetails['placeName'] ?? 'Unknown place',
-          address: placeDetails['address'] ?? query, 
-          city: placeDetails['city'],
-          country: placeDetails['country'],
-        ));
-      } catch (e) {
-        results.add(LocationModel(
-          latitude: location.latitude,
-          longitude: location.longitude,
-          address: query,
-        ));
-        continue;
+  Future<Either<String, List<LocationModel>>> searchLocation(
+    String query,
+  ) async {
+    try {
+      if (query.isEmpty) {
+        return Left('Search query cannot be empty');
       }
-    }
 
-    if (results.isEmpty) {
-      return Left('Found locations but couldn\'t get details');
+      final locations = await locationFromAddress(query);
+      if (locations.isEmpty) {
+        return Left('No locations found for "$query"');
+      }
+
+      final results = <LocationModel>[];
+      for (final location in locations) {
+        try {
+          final placeDetails = await _getPlaceDetails(
+            location.latitude,
+            location.longitude,
+          );
+
+          results.add(
+            LocationModel(
+              latitude: location.latitude,
+              longitude: location.longitude,
+              placeName: placeDetails['placeName'] ?? 'Unknown place',
+              address: placeDetails['address'] ?? query,
+              city: placeDetails['city'],
+              country: placeDetails['country'],
+            ),
+          );
+        } catch (e) {
+          results.add(
+            LocationModel(
+              latitude: location.latitude,
+              longitude: location.longitude,
+              address: query,
+            ),
+          );
+          continue;
+        }
+      }
+
+      if (results.isEmpty) {
+        return Left('Found locations but couldn\'t get details');
+      }
+      return Right(results);
+    } on PlatformException catch (e) {
+      return Left('Location service error: ${e.message ?? 'Unknown error'}');
+    } catch (e) {
+      return Left('Failed to search location');
     }
-    return Right(results);
-  } on PlatformException catch (e) {
-    return Left('Location service error: ${e.message ?? 'Unknown error'}');
-  } catch (e) {
-    return Left('Failed to search location');
   }
-}
+
+  @override
+  Future<Either<String, String>> postAd(AdsModel ad) async {
+    try {
+      final docRef = await _firestore.collection("car_ads").add(ad.toMap());
+      return Right(docRef.id);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Unexpected error: ${e.toString()}');
+    }
+  }
 }

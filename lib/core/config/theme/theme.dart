@@ -1,5 +1,6 @@
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/core/config/widget_theme/elevated_butten_theme.dart';
+import 'package:shiftwheels/core/config/widget_theme/icon_theme.dart';
 
 import 'package:shiftwheels/core/config/widget_theme/input_decoration_theme.dart';
 import 'package:shiftwheels/core/config/widget_theme/outlined_butten_theme.dart';
@@ -25,6 +26,7 @@ class ZAppTheme {
     outlinedButtonTheme: ZOutlinedButtonTheme.lightElevatedButtonTheme,
     elevatedButtonTheme: ZElevatedButtonTheme.lightElevatedButtonTheme,
     inputDecorationTheme: ZTextFormFieldTheme.lightInputDecorationTheme,
+    iconTheme: ZIconTheme.lightIconTheme,
   );
 
   static ThemeData darkTheme = ThemeData(
@@ -43,5 +45,6 @@ class ZAppTheme {
     outlinedButtonTheme: ZOutlinedButtonTheme.darkElevatedButtonTheme,
     elevatedButtonTheme: ZElevatedButtonTheme.darkElevatedButtonTheme,
     inputDecorationTheme: ZTextFormFieldTheme.darkInputDecorationTheme,
+    iconTheme: ZIconTheme.darkIconTheme,
   );
 }

@@ -1,17 +1,21 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftwheels/core/common_widget/basic_app_bar.dart';
 import 'package:shiftwheels/core/common_widget/text_form_feald_widget.dart';
 import 'package:shiftwheels/core/common_widget/widget/app_bottom_sheet.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_elevated_app_button.dart';
+import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
 import 'package:shiftwheels/core/common_widget/widget/drop_down_sheet.dart';
 import 'package:shiftwheels/core/common_widget/widget/list_widget.dart';
+import 'package:shiftwheels/core/common_widget/widget/seat_type_selector.dart';
 import 'package:shiftwheels/core/config/helper/navigator/app_navigator.dart';
 import 'package:shiftwheels/data/add_post/models/brand_model.dart';
 import 'package:shiftwheels/data/add_post/models/fuels_model.dart';
 import 'package:shiftwheels/presentation/add_post/add_post_bloc/add_post_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/get_fuels_bloc/get_fuels_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/screen_select_location.dart';
+import 'package:shiftwheels/presentation/add_post/seat_type_bloc/seat_type_bloc.dart';
 
 class ScreenAddPost extends StatefulWidget {
   const ScreenAddPost({super.key});
@@ -24,6 +28,7 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
   BrandModel? selectedBrand;
   String? selectedModel;
   FuelsModel? selectedFuel;
+  int? selectedSeatCount;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController yearController = TextEditingController();
   final TextEditingController kmController = TextEditingController();
@@ -32,38 +37,53 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: BasicAppbar(
-        title: Text(
-          "Include Some Details",
-          style: Theme.of(context).textTheme.displayLarge,
+    return BlocProvider(
+      create: (_) => SeatTypeBloc(),
+      child: Scaffold(
+        appBar: BasicAppbar(
+          title: Text(
+            "Include Some Details",
+            style: Theme.of(context).textTheme.displayLarge,
+          ),
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              _buildBrandBottomSheet(),
-              const SizedBox(height: 20),
-              _buildModelBottomSheet(),
-              const SizedBox(height: 20),
-              _buildFuelsBottomSheet(),
-              const SizedBox(height: 20),
-              _buildYearWidget(),
-              const SizedBox(height: 20),
-              _buildKmDrivenWidget(),
-              const SizedBox(height: 20),
-              _buildNoOfOwnersWidget(),
-              const SizedBox(height: 20),
-              _buildDiscribtionWidget(),
-              const SizedBox(height: 20),
-              _buildContinueWidget(context),
-            ],
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                _buildBrandBottomSheet(),
+                const SizedBox(height: 20),
+                _buildModelBottomSheet(),
+                const SizedBox(height: 20),
+                _buildFuelsBottomSheet(),
+                const SizedBox(height: 20),
+                _buildToggleButton(),
+                const SizedBox(height: 20),
+                _buildYearWidget(),
+                const SizedBox(height: 20),
+                _buildKmDrivenWidget(),
+                const SizedBox(height: 20),
+                _buildNoOfOwnersWidget(),
+                const SizedBox(height: 20),
+                _buildDiscribtionWidget(),
+                const SizedBox(height: 20),
+                _buildContinueWidget(context),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildToggleButton() {
+    return SeatTypeSelector(
+      onSeatTypeSelected: (seatCount) {
+        setState(() {
+          selectedSeatCount = seatCount;
+        });
+      },
     );
   }
 
@@ -204,13 +224,11 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
   }
 
   Widget _buildYearWidget() {
-    return TextFormFieldWidget(label: "Year*",
-     controller: yearController);
+    return TextFormFieldWidget(label: "Year*", controller: yearController);
   }
 
   Widget _buildKmDrivenWidget() {
-    return TextFormFieldWidget(label: "KM driven*",
-     controller: kmController);
+    return TextFormFieldWidget(label: "KM driven*", controller: kmController);
   }
 
   Widget _buildNoOfOwnersWidget() {
@@ -230,10 +248,54 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
 
   Widget _buildContinueWidget(BuildContext context) {
     return BasicElevatedAppButton(
-      onPressed: () {
-        AppNavigator.push(context, ScreenSelectLocation());
-      },
+      onPressed: () => _validateAndContinue(context),
       title: "Continue",
     );
+  }
+
+  void _validateAndContinue(BuildContext context) {
+    if (_formKey.currentState!.validate()) {
+      if (selectedBrand == null ||
+          selectedModel == null ||
+          selectedFuel == Null ||
+          selectedSeatCount == null) {
+        BasicSnackbar(
+          message: 'Please fill all required fields',
+          backgroundColor: Colors.red,
+        );
+        return;
+      }
+      final year = int.tryParse(yearController.text);
+      final kmDriven = int.tryParse(kmController.text);
+      final noofOwners = int.tryParse(noOfOwnersController.text);
+
+      if (year == null || kmDriven == null || noofOwners == null) {
+        BasicSnackbar(
+          message: 'Please fill all required fields',
+          backgroundColor: Colors.red,
+        );
+        return;
+      }
+
+      final currentUser = FirebaseAuth.instance.currentUser;
+      BasicSnackbar(
+        message: 'Please login to post an ad',
+        backgroundColor: Colors.red,
+      );
+      AppNavigator.push(
+        context,
+        ScreenSelectLocation(
+          userId: currentUser!.uid,
+          brand: selectedBrand!.brandName!,
+          model: selectedModel!,
+          fuelType: selectedFuel!.fuels!,
+          seatCount: selectedSeatCount!,
+          year: year,
+          kmDriven: kmDriven,
+          noOfOwners: noofOwners,
+          description: discribeController.text,
+        ),
+      );
+    }
   }
 }

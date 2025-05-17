@@ -70,7 +70,7 @@ class SelectLocationWidget extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.location_on_outlined),
+        Icon(Icons.location_on_outlined,color: AppColors.zfontColor,),
         Text(
           selectedLocation?.address ?? 'No address',
           style: Theme.of(context).textTheme.bodySmall,

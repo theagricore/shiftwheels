@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftwheels/core/config/theme/app_colors.dart';
 
 class TextFormFieldWidget extends StatefulWidget {
   final String label;
@@ -60,7 +61,7 @@ class _TextFormFieldWidgetState extends State<TextFormFieldWidget> {
           suffixIcon: widget.isPassword
               ? IconButton(
                   icon: Icon(
-                    _obscureText ? Icons.visibility_off : Icons.visibility,
+                    _obscureText ? Icons.visibility_off: Icons.visibility,color: AppColors.zfontColor,
                   ),
                   onPressed: () {
                     setState(() {

@@ -42,7 +42,7 @@ class BottomNavBarWidget extends StatelessWidget {
     required int index,
   }) {
     final isSelected = selectedIndex == index;
-    final color = isSelected ? AppColors.zPrimaryColor : Colors.grey;
+    final color = isSelected ? AppColors.zPrimaryColor : AppColors.zfontColor;
 
     return InkWell(
       onTap: () => onItemSelected(index),

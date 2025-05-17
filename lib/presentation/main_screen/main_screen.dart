@@ -2,7 +2,6 @@ import 'package:shiftwheels/core/common_widget/Widget/bottom_nav_bar_widget.dart
 import 'package:shiftwheels/core/config/helper/navigator/app_navigator.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/presentation/add_post/screen_add_post.dart';
-import 'package:shiftwheels/presentation/add_post/screen_select_location.dart';
 import 'package:shiftwheels/presentation/main_screen/screen_home/screen_home.dart';
 import 'package:shiftwheels/presentation/main_screen/screen_message/screen_message.dart';
 import 'package:shiftwheels/presentation/main_screen/screen_my_ads/screen_my_ads.dart';

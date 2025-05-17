@@ -6,12 +6,34 @@ import 'package:shiftwheels/core/common_widget/widget/basic_elevated_app_button.
 import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
 import 'package:shiftwheels/core/common_widget/widget/pop_up_screenWidget.dart';
 import 'package:shiftwheels/core/common_widget/widget/select_location_widget.dart';
+import 'package:shiftwheels/core/config/helper/navigator/app_navigator.dart';
 import 'package:shiftwheels/data/add_post/models/location_model.dart';
 import 'package:shiftwheels/presentation/add_post/get_location_bloc/get_location_bloc.dart';
+import 'package:shiftwheels/presentation/add_post/screen_select_image.dart';
 
 // ignore: must_be_immutable
 class ScreenSelectLocation extends StatelessWidget {
-  ScreenSelectLocation({super.key});
+  final String userId;
+  final String brand;
+  final String model;
+  final String fuelType;
+  final int seatCount;
+  final int year;
+  final int kmDriven;
+  final int noOfOwners;
+  final String description;
+  ScreenSelectLocation({
+    super.key,
+    required this.userId,
+    required this.brand,
+    required this.model,
+    required this.fuelType,
+    required this.seatCount,
+    required this.year,
+    required this.kmDriven,
+    required this.noOfOwners,
+    required this.description,
+  });
   final TextEditingController _searchController = TextEditingController();
   LocationModel? _selectedLocation;
 
@@ -39,9 +61,7 @@ class ScreenSelectLocation extends StatelessWidget {
           appBar: BasicAppbar(
             title: Text(
               "Select Location",
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
+              style: Theme.of(context).textTheme.headlineSmall,
             ),
           ),
           body: Padding(
@@ -53,21 +73,31 @@ class ScreenSelectLocation extends StatelessWidget {
                 const SizedBox(height: 30),
                 const Spacer(),
                 if (_selectedLocation != null)
-                 _buildContinueButton(context),
+                  BasicElevatedAppButton(
+                    onPressed: () {
+                      AppNavigator.push(
+                        context,
+                        ScreenSelectImage(
+                          userId: userId,
+                          brand: brand,
+                          model: model,
+                          fuelType: fuelType,
+                          seatCount: seatCount,
+                          year: year,
+                          kmDriven: kmDriven,
+                          noOfOwners: noOfOwners,
+                          description: description,
+                          location: _selectedLocation!,
+                        ),
+                      );
+                    },
+                    title: "Continue",
+                  ),
               ],
             ),
           ),
         );
       },
-    );
-  }
-
-  Widget _buildContinueButton(BuildContext context) {
-    return BasicElevatedAppButton(
-      onPressed: () {
-        Navigator.pop(context, _selectedLocation);
-      },
-      title: "Continue",
     );
   }
 

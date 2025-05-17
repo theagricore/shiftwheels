@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:shiftwheels/data/add_post/data_source/cloudinary_service.dart';
 import 'package:shiftwheels/data/add_post/data_source/firebase_post_service.dart';
 import 'package:shiftwheels/data/add_post/repository/post_repository_impl.dart';
 import 'package:shiftwheels/data/auth/data_dource/firebase_auth_service.dart';
@@ -8,6 +9,7 @@ import 'package:shiftwheels/domain/add_post/usecase/get_brand_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_fuels_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_location_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_models_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/post_ad_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/search_location_usecase.dart';
 import 'package:shiftwheels/domain/auth/repository/auth_repository.dart';
 import 'package:shiftwheels/domain/auth/usecase/get_user_data_usecase.dart';
@@ -17,7 +19,9 @@ import 'package:shiftwheels/domain/auth/usecase/logout_usecase.dart';
 import 'package:shiftwheels/domain/auth/usecase/password_reset_email.dart';
 import 'package:shiftwheels/domain/auth/usecase/sigin_usecase.dart';
 import 'package:shiftwheels/domain/auth/usecase/siginup_usecase.dart';
+import 'package:shiftwheels/presentation/add_post/get_images_bloc/get_images_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/get_location_bloc/get_location_bloc.dart';
+import 'package:shiftwheels/presentation/add_post/post_ad_bloc/post_ad_bloc.dart';
 import 'package:shiftwheels/presentation/main_screen/screen_profile/ProfileBloc/profile_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/add_post_bloc/add_post_bloc.dart';
 import 'package:shiftwheels/presentation/auth/google_auth/google_auth_bloc.dart';
@@ -33,7 +37,9 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<FirebasePostService>(
     PostFirebaseServiceImpl(),
   );
-
+   sl.registerSingleton<CloudinaryService>(
+    CloudinaryServiceImpl(),
+  );
   //Repositories
   sl.registerSingleton<AuthRepository>(
     AuthRepositoryImpl(),
@@ -79,6 +85,9 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<SearchLocationUsecase>(
   SearchLocationUsecase(),
   );
+  sl.registerSingleton<PostAdUsecase>(
+    PostAdUsecase(sl<PostRepository>()),
+    );
 
   // Blocs
   sl.registerFactory<GoogleAuthBloc>(
@@ -98,5 +107,14 @@ Future<void> initializeDependencies() async {
      getLocationUsecase: sl<GetLocationUsecase>(),
      searchLocationUsecase: sl<SearchLocationUsecase>(),   
   )
-);
+  );
+    sl.registerFactory<GetImagesBloc>(
+    () => GetImagesBloc(),
+  );
+  sl.registerFactory<PostAdBloc>(
+    () => PostAdBloc(
+     postAdUsecase: sl<PostAdUsecase>(),
+     cloudinaryService: sl<CloudinaryService>(),
+    ),
+  );
 }

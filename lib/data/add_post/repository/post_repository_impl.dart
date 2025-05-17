@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:shiftwheels/data/add_post/data_source/firebase_post_service.dart';
+import 'package:shiftwheels/data/add_post/models/ads_model.dart';
 import 'package:shiftwheels/data/add_post/models/brand_model.dart';
 import 'package:shiftwheels/data/add_post/models/fuels_model.dart';
 import 'package:shiftwheels/data/add_post/models/location_model.dart';
@@ -42,6 +43,11 @@ class PostRepositoryImpl extends PostRepository {
   @override
   Future<Either<String, List<LocationModel>>> searchLocation(String query) async{
     return await sl<FirebasePostService>().searchLocation(query);
+  }
+
+  @override
+  Future<Either<String, String>> postAd(AdsModel ad) async{
+   return await sl<FirebasePostService>().postAd(ad);
   }
  
 }

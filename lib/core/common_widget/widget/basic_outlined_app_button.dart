@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftwheels/core/config/theme/app_colors.dart';
 
 class BasicOutlinedAppButton extends StatelessWidget {
   final String title;
@@ -34,7 +35,7 @@ class BasicOutlinedAppButton extends StatelessWidget {
                     width: 24,
                   ),
                   const SizedBox(width: 10),
-                  Text(title),
+                  Text(title,style: TextStyle(color: AppColors.zfontColor),),
                 ],
               ),
       ),

@@ -45,7 +45,7 @@ class DropdownSheet<T> extends StatelessWidget {
                   style: Theme.of(context).textTheme.displayLarge,
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon:  Icon(Icons.close,color: AppColors.zfontColor,),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],

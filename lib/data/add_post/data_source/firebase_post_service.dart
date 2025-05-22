@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/services.dart';
@@ -17,6 +19,10 @@ abstract class FirebasePostService {
   Future<Either<String, List<LocationModel>>> searchLocation(String query);
   Future<Either<String, String>> postAd(AdsModel ad);
   Future<Either<String, List<AdWithUserModel>>> getActiveAdsWithUsers();
+  Future<Either<String, void>> toggleFavorite(String adId, String userId);
+  Future<Either<String, List<AdWithUserModel>>> getUserFavorites(String userId);
+  Future<Either<String, List<AdWithUserModel>>> getUserActiveAds(String userId);
+  Future<Either<String, void>> deactivateAd(String adId);
 }
 
 class PostFirebaseServiceImpl extends FirebasePostService {
@@ -266,6 +272,133 @@ class PostFirebaseServiceImpl extends FirebasePostService {
       return Left('Firebase error: ${e.message}');
     } catch (e) {
       return Left('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Either<String, List<AdWithUserModel>>> getUserFavorites(
+    String userId,
+  ) async {
+    try {
+      final adsSnapshot =
+          await _firestore
+              .collection('car_ads')
+              .where('favoritedByUsers', arrayContains: userId)
+              .where('isActive', isEqualTo: true)
+              .get();
+
+      final ads =
+          adsSnapshot.docs.map((doc) {
+            return AdsModel.fromMap(doc.data(), doc.id);
+          }).toList();
+
+      final result = <AdWithUserModel>[];
+
+      for (final ad in ads) {
+        try {
+          final userSnapShot =
+              await _firestore.collection('Users').doc(ad.userId).get();
+          result.add(
+            AdWithUserModel(
+              ad: ad,
+              userData: userSnapShot.data(),
+              isFavorite: true,
+            ),
+          );
+        } catch (e) {
+          result.add(AdWithUserModel(ad: ad, isFavorite: true));
+        }
+      }
+
+      return Right(result);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Failed to get favorites: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Either<String, void>> toggleFavorite(
+    String adId,
+    String userId,
+  ) async {
+    try {
+      final adRef = _firestore.collection('car_ads').doc(adId);
+
+      await _firestore.runTransaction((transaction) async {
+        final adDoc = await transaction.get(adRef);
+        if (!adDoc.exists) {
+          throw Exception('Ad not found');
+        }
+
+        final currentFavorites = List<String>.from(
+          adDoc['favoritedByUsers'] ?? [],
+        );
+        final isFavorite = currentFavorites.contains(userId);
+
+        if (isFavorite) {
+          currentFavorites.remove(userId);
+        } else {
+          currentFavorites.add(userId);
+        }
+
+        transaction.update(adRef, {'favoritedByUsers': currentFavorites});
+      });
+
+      return const Right(null);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Failed to toggle favorite: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Either<String, List<AdWithUserModel>>> getUserActiveAds(
+    String userId,
+  ) async {
+    try {
+      final adsSnapshot =
+          await _firestore
+              .collection('car_ads')
+              .where('userId', isEqualTo: userId)
+              .where('isActive', isEqualTo: true)
+              .get();
+
+      final ads =
+          adsSnapshot.docs.map((doc) {
+            return AdsModel.fromMap(doc.data(), doc.id);
+          }).toList();
+      final result = <AdWithUserModel>[];
+      for (final ad in ads) {
+        try {
+          final userSnapshot =
+              await _firestore.collection('Users').doc(ad.userId).get();
+          result.add(AdWithUserModel(ad: ad, userData: userSnapshot.data()));
+        } catch (e) {
+          result.add(AdWithUserModel(ad: ad));
+        }
+      }
+      return Right(result);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Either<String, void>> deactivateAd(String adId) async {
+    try {
+      await _firestore.collection('car_ads').doc(adId).update({
+        'isActive': false,
+      });
+      return const Right(null);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Failed to deactivate ad: ${e.toString()}');
     }
   }
 }

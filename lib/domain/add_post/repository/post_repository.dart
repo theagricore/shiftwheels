@@ -13,5 +13,8 @@ abstract class PostRepository {
   Future<Either<String, List<LocationModel>>> searchLocation(String query);
   Future<Either<String, String>> postAd(AdsModel ad);
   Future<Either<String, List<AdWithUserModel>>> getActiveAdsWithUsers();
-
+  Future<Either<String, void>> toggleFavorite(String adId, String userId);
+  Future<Either<String, List<AdWithUserModel>>> getUserFavorites(String userId);
+  Future<Either<String, List<AdWithUserModel>>> getUserActiveAds(String userId);
+  Future<Either<String, void>> deactivateAd(String adId);
 }

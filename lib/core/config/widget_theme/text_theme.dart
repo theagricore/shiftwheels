@@ -5,11 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 class ZTextTheme {
   static TextTheme lightTextTheme = TextTheme(
     //----Heading----//
-    displayLarge: TextStyle(
-      color: AppColors.zfontColor,
-      fontSize: 24.sp,
-      fontWeight: FontWeight.w600,
-    ), //--appbar heading
+    displayLarge: TextStyle(  color: AppColors.zfontColor, fontSize: 24.sp, fontWeight: FontWeight.w600,), //--appbar heading
     displayMedium: TextStyle(color: AppColors.zfontColor, fontSize: 15.sp),
     displaySmall: TextStyle(color: AppColors.zfontColor, fontSize: 10.sp),
 

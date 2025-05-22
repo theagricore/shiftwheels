@@ -12,4 +12,6 @@ class AppColors {
   static const zWhite = Colors.white;
   static const zblack = Colors.black;
   static const zGrey = Colors.grey;
+  static const zred = Colors.red;
+  static const zGreen = Colors.green;
 }

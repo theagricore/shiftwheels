@@ -5,13 +5,17 @@ import 'package:shiftwheels/data/add_post/repository/post_repository_impl.dart';
 import 'package:shiftwheels/data/auth/data_dource/firebase_auth_service.dart';
 import 'package:shiftwheels/data/auth/repository/auth_repository_impl.dart';
 import 'package:shiftwheels/domain/add_post/repository/post_repository.dart';
+import 'package:shiftwheels/domain/add_post/usecase/deactive-ad_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_active_ads_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_brand_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/get_favorites_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_fuels_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_location_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_models_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/get_user_active_ads_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/post_ad_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/search_location_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/toggle_favoriteUsecase.dart';
 import 'package:shiftwheels/domain/auth/repository/auth_repository.dart';
 import 'package:shiftwheels/domain/auth/usecase/get_user_data_usecase.dart';
 import 'package:shiftwheels/domain/auth/usecase/google_signin_usecase.dart';
@@ -28,6 +32,8 @@ import 'package:shiftwheels/presentation/add_post/add_post_bloc/add_post_bloc.da
 import 'package:shiftwheels/presentation/auth/google_auth/google_auth_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/get_fuels_bloc/get_fuels_bloc.dart';
 import 'package:shiftwheels/presentation/screen_home/get_post_ad_bloc/get_post_ad_bloc.dart';
+import 'package:shiftwheels/presentation/screen_my_ads/active_ads_bloc/active_ads_bloc.dart';
+import 'package:shiftwheels/presentation/screen_my_ads/add_favourite_bloc/add_favourite_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -93,6 +99,18 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<GetActiveAdsUsecase>(
    GetActiveAdsUsecase(sl<PostRepository>()),
    );
+   sl.registerSingleton<ToggleFavoriteUsecase>(
+  ToggleFavoriteUsecase(sl<PostRepository>()),
+);
+sl.registerSingleton<GetFavoritesUsecase>(
+  GetFavoritesUsecase(sl<PostRepository>()),
+);
+sl.registerSingleton<GetUserActiveAdsUsecase>(
+  GetUserActiveAdsUsecase(sl<PostRepository>()),
+);
+sl.registerSingleton<DeactivateAdUsecase>(
+  DeactivateAdUsecase(sl<PostRepository>()),
+);
 
   // Blocs
   sl.registerFactory<GoogleAuthBloc>(
@@ -125,4 +143,13 @@ Future<void> initializeDependencies() async {
   sl.registerFactory<GetPostAdBloc>(
   () => GetPostAdBloc(getActiveAdsUsecase: sl<GetActiveAdsUsecase>()),
   );
+sl.registerFactory<AddFavouriteBloc>(
+  () => AddFavouriteBloc(sl<PostRepository>()),
+);
+sl.registerFactory<ActiveAdsBloc>(
+  () => ActiveAdsBloc(
+    getUserActiveAds: sl<GetUserActiveAdsUsecase>(),
+    deactivateAd: sl<DeactivateAdUsecase>(),
+  ),
+);
 }

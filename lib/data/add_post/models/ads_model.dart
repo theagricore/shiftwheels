@@ -16,7 +16,7 @@ class AdsModel {
   final double price;
   final DateTime postedDate;
   final bool isActive;
-  final bool isFavorite;
+  final List<String> favoritedByUsers;
   final List<String> chatIds;
 
   AdsModel({
@@ -35,25 +35,49 @@ class AdsModel {
     required this.price,
     required this.postedDate,
     this.isActive = true,
-    this.isFavorite = false,
+    this.favoritedByUsers = const [],
     this.chatIds = const [],
   });
 
-  bool isValid() {
-    return userId.isNotEmpty &&
-        brand.isNotEmpty &&
-        model.isNotEmpty &&
-        fuelType.isNotEmpty &&
-        seatCount > 0 &&
-        year > 1900 &&
-        year <= DateTime.now().year &&
-        kmDriven >= 0 &&
-        noOfOwners >= 0 &&
-        description.isNotEmpty &&
-        imageUrls.isNotEmpty &&
-        price > 0 &&
-        location.latitude != 0 &&
-        location.longitude != 0;
+  AdsModel copyWith({
+    String? id,
+    String? userId,
+    String? brand,
+    String? model,
+    String? fuelType,
+    int? seatCount,
+    int? year,
+    int? kmDriven,
+    int? noOfOwners,
+    String? description,
+    LocationModel? location,
+    List<String>? imageUrls,
+    double? price,
+    DateTime? postedDate,
+    bool? isActive,
+    List<String>? favoritedByUsers,
+    List<String>? chatIds,
+    bool? isFavorite,
+  }) {
+    return AdsModel(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      brand: brand ?? this.brand,
+      model: model ?? this.model,
+      fuelType: fuelType ?? this.fuelType,
+      seatCount: seatCount ?? this.seatCount,
+      year: year ?? this.year,
+      kmDriven: kmDriven ?? this.kmDriven,
+      noOfOwners: noOfOwners ?? this.noOfOwners,
+      description: description ?? this.description,
+      location: location ?? this.location,
+      imageUrls: imageUrls ?? this.imageUrls,
+      price: price ?? this.price,
+      postedDate: postedDate ?? this.postedDate,
+      isActive: isActive ?? this.isActive,
+      favoritedByUsers: favoritedByUsers ?? this.favoritedByUsers,
+      chatIds: chatIds ?? this.chatIds,
+    );
   }
 
   factory AdsModel.fromMap(Map<String, dynamic> map, String id) {
@@ -70,10 +94,12 @@ class AdsModel {
       description: map['description'] as String,
       location: LocationModel.fromMap(map['location'] as Map<String, dynamic>),
       imageUrls: List<String>.from(map['imageUrls'] as List),
-      price: map['price'] as double,
+      price: (map['price'] as num).toDouble(),
       postedDate: DateTime.parse(map['postedDate'] as String),
       isActive: map['isActive'] as bool? ?? true,
-      isFavorite: map['isFavorite'] as bool? ?? false,
+      favoritedByUsers: List<String>.from(
+        map['favoritedByUsers'] as List? ?? [],
+      ),
       chatIds: List<String>.from(map['chatIds'] as List? ?? []),
     );
   }
@@ -94,7 +120,7 @@ class AdsModel {
       'price': price,
       'postedDate': postedDate.toIso8601String(),
       'isActive': isActive,
-      'isFavorite': isFavorite,
+      'favoritedByUsers': favoritedByUsers,
       'chatIds': chatIds,
     };
   }

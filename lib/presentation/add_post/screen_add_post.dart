@@ -224,17 +224,18 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
   }
 
   Widget _buildYearWidget() {
-    return TextFormFieldWidget(label: "Year*", controller: yearController);
+    return TextFormFieldWidget(label: "Year*", controller: yearController,keyboardType: TextInputType.number,);
   }
 
   Widget _buildKmDrivenWidget() {
-    return TextFormFieldWidget(label: "KM driven*", controller: kmController);
+    return TextFormFieldWidget(label: "KM driven*", controller: kmController,keyboardType: TextInputType.number);
   }
 
   Widget _buildNoOfOwnersWidget() {
     return TextFormFieldWidget(
       label: "No.of Owners*",
       controller: noOfOwnersController,
+      keyboardType: TextInputType.number
     );
   }
 

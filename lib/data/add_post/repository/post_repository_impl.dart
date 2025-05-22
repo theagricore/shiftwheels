@@ -40,20 +40,48 @@ class PostRepositoryImpl extends PostRepository {
   Future<Either<String, LocationModel>> getCurrentLocation() async {
     return await sl<FirebasePostService>().getCurrentLocation();
   }
-  
+
   @override
-  Future<Either<String, List<LocationModel>>> searchLocation(String query) async{
+  Future<Either<String, List<LocationModel>>> searchLocation(
+    String query,
+  ) async {
     return await sl<FirebasePostService>().searchLocation(query);
   }
 
   @override
-  Future<Either<String, String>> postAd(AdsModel ad) async{
-   return await sl<FirebasePostService>().postAd(ad);
+  Future<Either<String, String>> postAd(AdsModel ad) async {
+    return await sl<FirebasePostService>().postAd(ad);
   }
 
   @override
   Future<Either<String, List<AdWithUserModel>>> getActiveAdsWithUsers() async {
     return await sl<FirebasePostService>().getActiveAdsWithUsers();
   }
- 
+
+  @override
+  Future<Either<String, List<AdWithUserModel>>> getUserFavorites(
+    String userId,
+  ) async {
+    return await sl<FirebasePostService>().getUserFavorites(userId);
+  }
+
+  @override
+  Future<Either<String, void>> toggleFavorite(
+    String adId,
+    String userId,
+  ) async {
+    return await sl<FirebasePostService>().toggleFavorite(adId, userId);
+  }
+
+  @override
+  Future<Either<String, void>> deactivateAd(String adId) async {
+    return await sl<FirebasePostService>().deactivateAd(adId);
+  }
+
+  @override
+  Future<Either<String, List<AdWithUserModel>>> getUserActiveAds(
+    String userId,
+  ) async {
+    return await sl<FirebasePostService>().getUserActiveAds(userId);
+  }
 }

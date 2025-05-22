@@ -10,6 +10,8 @@ import 'package:shiftwheels/presentation/add_post/add_post_bloc/add_post_bloc.da
 import 'package:shiftwheels/presentation/auth/auth_bloc/auth_bloc.dart';
 import 'package:shiftwheels/presentation/auth/google_auth/google_auth_bloc.dart';
 import 'package:shiftwheels/presentation/screen_home/get_post_ad_bloc/get_post_ad_bloc.dart';
+import 'package:shiftwheels/presentation/screen_my_ads/active_ads_bloc/active_ads_bloc.dart';
+import 'package:shiftwheels/presentation/screen_my_ads/add_favourite_bloc/add_favourite_bloc.dart';
 import 'package:shiftwheels/presentation/splash/splash_bloc/splash_bloc.dart';
 import 'package:shiftwheels/presentation/splash/screen/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -64,6 +66,12 @@ class MyApp extends StatelessWidget {
                     postAdUsecase: sl<PostAdUsecase>(),
                     cloudinaryService: sl<CloudinaryService>(),
                   ),
+            ),
+            BlocProvider<AddFavouriteBloc>(
+              create: (context) => sl<AddFavouriteBloc>(),
+            ),
+             BlocProvider<ActiveAdsBloc>(
+              create: (context) => sl<ActiveAdsBloc>(),
             ),
           ],
           child: MaterialApp(

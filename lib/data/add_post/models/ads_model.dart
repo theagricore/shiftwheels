@@ -6,7 +6,7 @@ class AdsModel {
   final String brand;
   final String model;
   final String fuelType;
-  final int seatCount;
+  final String transmissionType;
   final int year;
   final int kmDriven;
   final int noOfOwners;
@@ -25,7 +25,7 @@ class AdsModel {
     required this.brand,
     required this.model,
     required this.fuelType,
-    required this.seatCount,
+    required this.transmissionType,
     required this.year,
     required this.kmDriven,
     required this.noOfOwners,
@@ -45,7 +45,7 @@ class AdsModel {
     String? brand,
     String? model,
     String? fuelType,
-    int? seatCount,
+    String? transmissionType,
     int? year,
     int? kmDriven,
     int? noOfOwners,
@@ -65,7 +65,7 @@ class AdsModel {
       brand: brand ?? this.brand,
       model: model ?? this.model,
       fuelType: fuelType ?? this.fuelType,
-      seatCount: seatCount ?? this.seatCount,
+      transmissionType: transmissionType ?? this.transmissionType,
       year: year ?? this.year,
       kmDriven: kmDriven ?? this.kmDriven,
       noOfOwners: noOfOwners ?? this.noOfOwners,
@@ -87,7 +87,7 @@ class AdsModel {
       brand: map['brand'] as String,
       model: map['model'] as String,
       fuelType: map['fuelType'] as String,
-      seatCount: map['seatCount'] as int,
+      transmissionType: map['transmissionType'] as String,
       year: map['year'] as int,
       kmDriven: map['kmDriven'] as int,
       noOfOwners: map['noOfOwners'] as int,
@@ -110,7 +110,7 @@ class AdsModel {
       'brand': brand,
       'model': model,
       'fuelType': fuelType,
-      'seatCount': seatCount,
+      'transmissionType': transmissionType,
       'year': year,
       'kmDriven': kmDriven,
       'noOfOwners': noOfOwners,

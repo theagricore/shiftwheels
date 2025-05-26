@@ -12,6 +12,7 @@ import 'package:shiftwheels/presentation/auth/google_auth/google_auth_bloc.dart'
 import 'package:shiftwheels/presentation/screen_home/get_post_ad_bloc/get_post_ad_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/active_ads_bloc/active_ads_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/add_favourite_bloc/add_favourite_bloc.dart';
+import 'package:shiftwheels/presentation/screen_my_ads/update_ad_bloc/update_ad_bloc.dart';
 import 'package:shiftwheels/presentation/splash/splash_bloc/splash_bloc.dart';
 import 'package:shiftwheels/presentation/splash/screen/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -72,6 +73,9 @@ class MyApp extends StatelessWidget {
             ),
              BlocProvider<ActiveAdsBloc>(
               create: (context) => sl<ActiveAdsBloc>(),
+            ),
+             BlocProvider<UpdateAdBloc>(
+              create: (context) => sl<UpdateAdBloc>(),
             ),
           ],
           child: MaterialApp(

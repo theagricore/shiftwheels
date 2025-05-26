@@ -17,3 +17,11 @@ class RemoveImageEvent extends GetImagesEvent {
   @override
   List<Object> get props => [index];
 }
+class SetInitialImages extends GetImagesEvent {
+  final List<String> initialImages;
+
+  const SetInitialImages(this.initialImages);
+
+  @override
+  List<Object> get props => [initialImages];
+}

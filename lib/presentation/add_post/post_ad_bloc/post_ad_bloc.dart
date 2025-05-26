@@ -53,7 +53,7 @@ class PostAdBloc extends Bloc<PostAdEvent, PostAdState> {
             brand: event.brand,
             model: event.model,
             fuelType: event.fuelType,
-            seatCount: event.seatCount,
+            transmissionType: event.transmissionType,
             year: event.year,
             kmDriven: event.kmDriven,
             noOfOwners: event.noOfOwners,

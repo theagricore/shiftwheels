@@ -16,6 +16,7 @@ import 'package:shiftwheels/domain/add_post/usecase/get_user_active_ads_usecase.
 import 'package:shiftwheels/domain/add_post/usecase/post_ad_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/search_location_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/toggle_favoriteUsecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/upadate_ad_usecate.dart';
 import 'package:shiftwheels/domain/auth/repository/auth_repository.dart';
 import 'package:shiftwheels/domain/auth/usecase/get_user_data_usecase.dart';
 import 'package:shiftwheels/domain/auth/usecase/google_signin_usecase.dart';
@@ -34,88 +35,51 @@ import 'package:shiftwheels/presentation/add_post/get_fuels_bloc/get_fuels_bloc.
 import 'package:shiftwheels/presentation/screen_home/get_post_ad_bloc/get_post_ad_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/active_ads_bloc/active_ads_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/add_favourite_bloc/add_favourite_bloc.dart';
+import 'package:shiftwheels/presentation/screen_my_ads/update_ad_bloc/update_ad_bloc.dart';
 
 final sl = GetIt.instance;
 
 Future<void> initializeDependencies() async {
   //Service
-  sl.registerSingleton<FirebaseAuthService>(
-    AuthFirebaseServiceImpl(),
-  );
-  sl.registerSingleton<FirebasePostService>(
-    PostFirebaseServiceImpl(),
-  );
-   sl.registerSingleton<CloudinaryService>(
-    CloudinaryServiceImpl(),
-  );
+  sl.registerSingleton<FirebaseAuthService>(AuthFirebaseServiceImpl());
+  sl.registerSingleton<FirebasePostService>(PostFirebaseServiceImpl());
+  sl.registerSingleton<CloudinaryService>(CloudinaryServiceImpl());
   //Repositories
-  sl.registerSingleton<AuthRepository>(
-    AuthRepositoryImpl(),
-  );
-  sl.registerSingleton<PostRepository>(
-    PostRepositoryImpl(),
-  );
+  sl.registerSingleton<AuthRepository>(AuthRepositoryImpl());
+  sl.registerSingleton<PostRepository>(PostRepositoryImpl());
 
   //UseCase
-  sl.registerSingleton<SiginupUsecase>(
-    SiginupUsecase(),
-  );
-  sl.registerSingleton<SiginUsecase>(
-    SiginUsecase(),
-  );
-  sl.registerSingleton<IsLoggedinusecase>(
-    IsLoggedinusecase(),
-  );
-  sl.registerSingleton<LogoutUsecase>(
-    LogoutUsecase(),
-  );
-  sl.registerSingleton<PasswordResetEmailUsecase>(
-    PasswordResetEmailUsecase(),
-  );
-  sl.registerSingleton<GetUserDataUsecase>(
-    GetUserDataUsecase(),
-  );
-  sl.registerSingleton<GoogleSignInUsecase>(
-    GoogleSignInUsecase(),
-  );
-  sl.registerSingleton<GetBrandUsecase>(
-    GetBrandUsecase(),
-  );
-  sl.registerSingleton<GetModelsUsecase>(
-    GetModelsUsecase(),
-  );
-  sl.registerSingleton<GetFuelsUsecase>(
-    GetFuelsUsecase(),
-  );
-  sl.registerSingleton<GetLocationUsecase>(
-  GetLocationUsecase(),
-  );
-  sl.registerSingleton<SearchLocationUsecase>(
-  SearchLocationUsecase(),
-  );
-  sl.registerSingleton<PostAdUsecase>(
-    PostAdUsecase(sl<PostRepository>()),
-    );
+  sl.registerSingleton<SiginupUsecase>(SiginupUsecase());
+  sl.registerSingleton<SiginUsecase>(SiginUsecase());
+  sl.registerSingleton<IsLoggedinusecase>(IsLoggedinusecase());
+  sl.registerSingleton<LogoutUsecase>(LogoutUsecase());
+  sl.registerSingleton<PasswordResetEmailUsecase>(PasswordResetEmailUsecase());
+  sl.registerSingleton<GetUserDataUsecase>(GetUserDataUsecase());
+  sl.registerSingleton<GoogleSignInUsecase>(GoogleSignInUsecase());
+  sl.registerSingleton<GetBrandUsecase>(GetBrandUsecase());
+  sl.registerSingleton<GetModelsUsecase>(GetModelsUsecase());
+  sl.registerSingleton<GetFuelsUsecase>(GetFuelsUsecase());
+  sl.registerSingleton<GetLocationUsecase>(GetLocationUsecase());
+  sl.registerSingleton<SearchLocationUsecase>(SearchLocationUsecase());
+  sl.registerSingleton<PostAdUsecase>(PostAdUsecase(sl<PostRepository>()));
   sl.registerSingleton<GetActiveAdsUsecase>(
-   GetActiveAdsUsecase(sl<PostRepository>()),
-   );
-   sl.registerSingleton<ToggleFavoriteUsecase>(
-  ToggleFavoriteUsecase(sl<PostRepository>()),
-);
-sl.registerSingleton<GetFavoritesUsecase>(
-  GetFavoritesUsecase(sl<PostRepository>()),
-);
-sl.registerSingleton<GetUserActiveAdsUsecase>(
-  GetUserActiveAdsUsecase(sl<PostRepository>()),
-);
-sl.registerSingleton<DeactivateAdUsecase>(
-  DeactivateAdUsecase(sl<PostRepository>()),
-);
-
-  // Blocs
-  sl.registerFactory<GoogleAuthBloc>(
-    () => GoogleAuthBloc(),
+    GetActiveAdsUsecase(sl<PostRepository>()),
   );
+  sl.registerSingleton<ToggleFavoriteUsecase>(
+    ToggleFavoriteUsecase(sl<PostRepository>()),
+  );
+  sl.registerSingleton<GetFavoritesUsecase>(
+    GetFavoritesUsecase(sl<PostRepository>()),
+  );
+  sl.registerSingleton<GetUserActiveAdsUsecase>(
+    GetUserActiveAdsUsecase(sl<PostRepository>()),
+  );
+  sl.registerSingleton<DeactivateAdUsecase>(
+    DeactivateAdUsecase(sl<PostRepository>()),
+  );
+  sl.registerSingleton<UpdateAdUsecase>(UpdateAdUsecase(sl<PostRepository>()));
+  // Blocs
+  sl.registerFactory<GoogleAuthBloc>(() => GoogleAuthBloc());
   sl.registerFactory<ProfileBloc>(
     () => ProfileBloc(getUserDataUsecase: sl<GetUserDataUsecase>()),
   );
@@ -126,30 +90,31 @@ sl.registerSingleton<DeactivateAdUsecase>(
     () => GetFuelsBloc(getFuelsUsecase: sl<GetFuelsUsecase>()),
   );
   sl.registerFactory<GetLocationBloc>(
-  () => GetLocationBloc(
-     getLocationUsecase: sl<GetLocationUsecase>(),
-     searchLocationUsecase: sl<SearchLocationUsecase>(),   
-  )
+    () => GetLocationBloc(
+      getLocationUsecase: sl<GetLocationUsecase>(),
+      searchLocationUsecase: sl<SearchLocationUsecase>(),
+    ),
   );
-    sl.registerFactory<GetImagesBloc>(
-    () => GetImagesBloc(),
-  );
+  sl.registerFactory<GetImagesBloc>(() => GetImagesBloc());
   sl.registerFactory<PostAdBloc>(
     () => PostAdBloc(
-     postAdUsecase: sl<PostAdUsecase>(),
-     cloudinaryService: sl<CloudinaryService>(),
+      postAdUsecase: sl<PostAdUsecase>(),
+      cloudinaryService: sl<CloudinaryService>(),
     ),
   );
   sl.registerFactory<GetPostAdBloc>(
-  () => GetPostAdBloc(getActiveAdsUsecase: sl<GetActiveAdsUsecase>()),
+    () => GetPostAdBloc(getActiveAdsUsecase: sl<GetActiveAdsUsecase>()),
   );
-sl.registerFactory<AddFavouriteBloc>(
-  () => AddFavouriteBloc(sl<PostRepository>()),
-);
-sl.registerFactory<ActiveAdsBloc>(
-  () => ActiveAdsBloc(
-    getUserActiveAds: sl<GetUserActiveAdsUsecase>(),
-    deactivateAd: sl<DeactivateAdUsecase>(),
-  ),
-);
+  sl.registerFactory<AddFavouriteBloc>(
+    () => AddFavouriteBloc(sl<PostRepository>()),
+  );
+  sl.registerFactory<ActiveAdsBloc>(
+    () => ActiveAdsBloc(
+      getUserActiveAds: sl<GetUserActiveAdsUsecase>(),
+      deactivateAd: sl<DeactivateAdUsecase>(),
+    ),
+  );
+  sl.registerFactory<UpdateAdBloc>(
+    () => UpdateAdBloc(updateAdUsecase: sl<UpdateAdUsecase>()),
+  );
 }

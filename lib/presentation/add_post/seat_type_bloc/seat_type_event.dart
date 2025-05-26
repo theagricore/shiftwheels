@@ -7,11 +7,11 @@ abstract class SeatTypeEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class ChangeSeatTypeEvent extends SeatTypeEvent {
-  final int seatCount;
+class ChangeTransmissionTypeEvent extends SeatTypeEvent {
+  final String transmissionType;
 
-  const ChangeSeatTypeEvent(this.seatCount);
+  const ChangeTransmissionTypeEvent(this.transmissionType);
 
   @override
-  List<Object> get props => [seatCount];
+  List<Object> get props => [transmissionType];
 }

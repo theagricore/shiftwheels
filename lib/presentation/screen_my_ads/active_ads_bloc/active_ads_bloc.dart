@@ -10,11 +10,9 @@ part 'active_ads_state.dart';
 class ActiveAdsBloc extends Bloc<ActiveAdsEvent, ActiveAdsState> {
   final GetUserActiveAdsUsecase getUserActiveAds;
   final DeactivateAdUsecase deactivateAd;
-  
-  ActiveAdsBloc({
-    required this.getUserActiveAds,
-    required this.deactivateAd,
-  }) : super(ActiveAdsInitial()) {
+
+  ActiveAdsBloc({required this.getUserActiveAds, required this.deactivateAd})
+    : super(ActiveAdsInitial()) {
     on<LoadActiveAds>(_onLoadActiveAds);
     on<DeactivateAd>(_onDeactivateAd);
   }
@@ -24,9 +22,7 @@ class ActiveAdsBloc extends Bloc<ActiveAdsEvent, ActiveAdsState> {
     Emitter<ActiveAdsState> emit,
   ) async {
     emit(ActiveAdsLoading());
-    
     final result = await getUserActiveAds(param: event.userId);
-    
     result.fold(
       (failure) => emit(ActiveAdsError(failure)),
       (ads) => emit(ActiveAdsLoaded(ads)),
@@ -39,19 +35,16 @@ class ActiveAdsBloc extends Bloc<ActiveAdsEvent, ActiveAdsState> {
   ) async {
     if (state is ActiveAdsLoaded) {
       final currentState = state as ActiveAdsLoaded;
-      
       emit(ActiveAdsLoading());
-      
       final result = await deactivateAd(param: event.adId);
-      
       result.fold(
         (failure) {
           emit(ActiveAdsError(failure));
-          emit(currentState); // Revert to previous state on failure
+          emit(currentState);
         },
         (_) {
-          // Remove the deactivated ad from the list
-          final updatedAds = currentState.ads.where((ad) => ad.ad.id != event.adId).toList();
+          final updatedAds =
+              currentState.ads.where((ad) => ad.ad.id != event.adId).toList();
           emit(ActiveAdsLoaded(updatedAds));
         },
       );

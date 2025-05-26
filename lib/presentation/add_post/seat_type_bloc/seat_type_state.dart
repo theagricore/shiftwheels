@@ -1,17 +1,17 @@
 import 'package:equatable/equatable.dart';
 
 abstract class SeatTypeState extends Equatable {
-  final int seatCount;
-  const SeatTypeState(this.seatCount);
+  final String transmissionType;
+  const SeatTypeState(this.transmissionType);
 
   @override
-  List<Object> get props => [seatCount];
+  List<Object> get props => [transmissionType];
 }
 
 class SeatTypeInitial extends SeatTypeState {
-  const SeatTypeInitial(int seatCount) : super(seatCount);
+  const SeatTypeInitial() : super('Manual'); // Default to Manual
 }
 
-class SeatTypeChanged extends SeatTypeState {
-  const SeatTypeChanged(int seatCount) : super(seatCount);
+class TransmissionTypeChanged extends SeatTypeState {
+  const TransmissionTypeChanged(String transmissionType) : super(transmissionType);
 }

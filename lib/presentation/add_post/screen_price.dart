@@ -12,7 +12,7 @@ class ScreenPrice extends StatelessWidget {
   final String brand;
   final String model;
   final String fuelType;
-  final int seatCount;
+  final String transmissionType;
   final int year;
   final int kmDriven;
   final int noOfOwners;
@@ -26,7 +26,7 @@ class ScreenPrice extends StatelessWidget {
     required this.brand,
     required this.model,
     required this.fuelType,
-    required this.seatCount,
+    required this.transmissionType,
     required this.year,
     required this.kmDriven,
     required this.noOfOwners,
@@ -66,16 +66,7 @@ class ScreenPrice extends StatelessWidget {
                     label: "Price*",
                     controller: priceController,
                     keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a price';
-                      }
-                      final price = double.tryParse(value);
-                      if (price == null || price <= 0) {
-                        return 'Please enter a valid price';
-                      }
-                      return null;
-                    },
+                   
                   ),
                   const Spacer(),
                   BlocBuilder<PostAdBloc, PostAdState>(
@@ -105,7 +96,7 @@ class ScreenPrice extends StatelessWidget {
                               brand: brand,
                               model: model,
                               fuelType: fuelType,
-                              seatCount: seatCount,
+                              transmissionType: transmissionType,
                               year: year,
                               kmDriven: kmDriven,
                               noOfOwners: noOfOwners,

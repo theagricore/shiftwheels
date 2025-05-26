@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/services.dart';
@@ -23,6 +21,7 @@ abstract class FirebasePostService {
   Future<Either<String, List<AdWithUserModel>>> getUserFavorites(String userId);
   Future<Either<String, List<AdWithUserModel>>> getUserActiveAds(String userId);
   Future<Either<String, void>> deactivateAd(String adId);
+  Future<Either<String, void>> updateAd(AdsModel ad);
 }
 
 class PostFirebaseServiceImpl extends FirebasePostService {
@@ -399,6 +398,18 @@ class PostFirebaseServiceImpl extends FirebasePostService {
       return Left('Firebase error: ${e.message}');
     } catch (e) {
       return Left('Failed to deactivate ad: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Either<String, void>> updateAd(AdsModel ad) async {
+    try {
+      await _firestore.collection("car_ads").doc(ad.id).update(ad.toMap());
+      return const Right(null);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Unexpected error: ${e.toString()}');
     }
   }
 }

@@ -13,7 +13,7 @@ class ScreenSelectImage extends StatelessWidget {
   final String brand;
   final String model;
   final String fuelType;
-  final int seatCount;
+  final String transmissionType;
   final int year;
   final int kmDriven;
   final int noOfOwners;
@@ -26,7 +26,7 @@ class ScreenSelectImage extends StatelessWidget {
     required this.brand,
     required this.model,
     required this.fuelType,
-    required this.seatCount,
+    required this.transmissionType,
     required this.year,
     required this.kmDriven,
     required this.noOfOwners,
@@ -51,8 +51,9 @@ class ScreenSelectImage extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: BlocBuilder<GetImagesBloc, GetImagesState>(
             builder: (context, state) {
-              final imagePaths =
-                  state is ImagesSelectedState ? state.imagePaths : <String>[];
+              final imagePaths = state is ImagesSelectedState 
+                  ? state.imagePaths 
+                  : <String>[];
               final hasImages = imagePaths.isNotEmpty;
               final totalItems = imagePaths.length + 1;
               final isScrollable = totalItems > gridSlots;
@@ -113,7 +114,7 @@ class ScreenSelectImage extends StatelessWidget {
                                 brand: brand,
                                 model: model,
                                 fuelType: fuelType,
-                                seatCount: seatCount,
+                                transmissionType: transmissionType,
                                 year: year,
                                 kmDriven: kmDriven,
                                 noOfOwners: noOfOwners,

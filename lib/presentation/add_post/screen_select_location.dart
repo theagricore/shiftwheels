@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftwheels/core/common_widget/basic_app_bar.dart';
-import 'package:shiftwheels/core/common_widget/widget/app_bottom_sheet.dart';
+import 'package:shiftwheels/core/common_widget/widget/bottom_sheet_list/app_bottom_sheet.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_elevated_app_button.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
 import 'package:shiftwheels/core/common_widget/widget/pop_up_screenWidget.dart';
@@ -17,7 +17,7 @@ class ScreenSelectLocation extends StatelessWidget {
   final String brand;
   final String model;
   final String fuelType;
-  final int seatCount;
+  final String transmissionType;
   final int year;
   final int kmDriven;
   final int noOfOwners;
@@ -28,7 +28,7 @@ class ScreenSelectLocation extends StatelessWidget {
     required this.brand,
     required this.model,
     required this.fuelType,
-    required this.seatCount,
+    required this.transmissionType,
     required this.year,
     required this.kmDriven,
     required this.noOfOwners,
@@ -82,12 +82,13 @@ class ScreenSelectLocation extends StatelessWidget {
                           brand: brand,
                           model: model,
                           fuelType: fuelType,
-                          seatCount: seatCount,
+                          transmissionType: transmissionType,
                           year: year,
                           kmDriven: kmDriven,
                           noOfOwners: noOfOwners,
                           description: description,
                           location: _selectedLocation!,
+                        
                         ),
                       );
                     },

@@ -1,0 +1,75 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftwheels/core/common_widget/widget/bottom_sheet_list/app_bottom_sheet.dart';
+import 'package:shiftwheels/core/common_widget/widget/bottom_sheet_list/drop_down_sheet.dart';
+
+typedef FetchEventBuilder = void Function(BuildContext context);
+typedef BlocSelectorBuilder<T> = List<T> Function(dynamic state);
+typedef ErrorSelector = String? Function(dynamic state);
+typedef LoadingSelector = bool Function(dynamic state);
+
+class BottomSheetSelector<T> extends StatelessWidget {
+  final String title;
+  final String displayText;
+  final bool isDisabled;
+  final FetchEventBuilder onTapFetchEvent;
+  final Bloc selectorBloc;
+  final BlocSelectorBuilder<T> itemsSelector;
+  final String Function(T) itemText;
+  final void Function(T) onItemSelected;
+  final LoadingSelector loadingSelector;
+  final ErrorSelector errorSelector;
+
+  const BottomSheetSelector({
+    super.key,
+    required this.title,
+    required this.displayText,
+    required this.onTapFetchEvent,
+    required this.selectorBloc,
+    required this.itemsSelector,
+    required this.itemText,
+    required this.onItemSelected,
+    required this.loadingSelector,
+    required this.errorSelector,
+    this.isDisabled = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: isDisabled
+          ? null
+          : () {
+              onTapFetchEvent(context);
+              AppBottomSheet.display(
+                context,
+                BlocProvider.value(
+                  value: selectorBloc,
+                  child: BlocBuilder(
+                    bloc: selectorBloc,
+                    builder: (context, state) {
+                      return DropdownSheet<T>(
+                        title: title,
+                        items: itemsSelector(state),
+                        itemText: itemText,
+                        onSelected: (T item) {
+                          onItemSelected(item);
+                        },
+                        isLoading: loadingSelector(state),
+                        error: errorSelector(state),
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+      child: ListTile(
+        title: Text(displayText),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: Colors.grey.shade300),
+        ),
+      ),
+    );
+  }
+}

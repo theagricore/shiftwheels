@@ -5,9 +5,9 @@ import 'package:shiftwheels/presentation/add_post/seat_type_bloc/seat_type_state
 part 'seat_type_event.dart';
 
 class SeatTypeBloc extends Bloc<SeatTypeEvent, SeatTypeState> {
-  SeatTypeBloc() : super(const SeatTypeInitial(5)) {
-    on<ChangeSeatTypeEvent>((event, emit) {
-      emit(SeatTypeChanged(event.seatCount));
+  SeatTypeBloc() : super(const SeatTypeInitial()) {
+    on<ChangeTransmissionTypeEvent>((event, emit) {
+      emit(TransmissionTypeChanged(event.transmissionType));
     });
   }
 }

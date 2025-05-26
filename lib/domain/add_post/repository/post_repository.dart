@@ -17,4 +17,5 @@ abstract class PostRepository {
   Future<Either<String, List<AdWithUserModel>>> getUserFavorites(String userId);
   Future<Either<String, List<AdWithUserModel>>> getUserActiveAds(String userId);
   Future<Either<String, void>> deactivateAd(String adId);
+  Future<Either<String, void>> updateAd(AdsModel ad);
 }

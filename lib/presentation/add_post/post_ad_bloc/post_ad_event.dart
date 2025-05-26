@@ -12,7 +12,7 @@ class SubmitAdEvent extends PostAdEvent {
   final String brand;
   final String model;
   final String fuelType;
-  final int seatCount;
+  final String transmissionType;
   final int year;
   final int kmDriven;
   final int noOfOwners;
@@ -26,7 +26,7 @@ class SubmitAdEvent extends PostAdEvent {
     required this.brand,
     required this.model,
     required this.fuelType,
-    required this.seatCount,
+    required this.transmissionType,
     required this.year,
     required this.kmDriven,
     required this.noOfOwners,
@@ -42,7 +42,7 @@ class SubmitAdEvent extends PostAdEvent {
         brand,
         model,
         fuelType,
-        seatCount,
+        transmissionType,
         year,
         kmDriven,
         noOfOwners,

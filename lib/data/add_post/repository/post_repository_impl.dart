@@ -84,4 +84,9 @@ class PostRepositoryImpl extends PostRepository {
   ) async {
     return await sl<FirebasePostService>().getUserActiveAds(userId);
   }
+
+  @override
+  Future<Either<String, void>> updateAd(AdsModel ad) async {
+    return await sl<FirebasePostService>().updateAd(ad);
+  }
 }

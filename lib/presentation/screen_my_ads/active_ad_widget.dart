@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shiftwheels/core/common_widget/widget/swipe_botton.dart';
+import 'package:shiftwheels/core/config/theme/app_colors.dart';
+import 'package:shiftwheels/data/add_post/models/ad_with_user_model.dart';
 import 'package:shiftwheels/data/add_post/models/ads_model.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/active_ads_bloc/active_ads_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/update_ad_bloc/update_ad_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/screen_edit_ad.dart';
 import 'package:shiftwheels/service_locater/service_locater.dart';
+import 'package:intl/intl.dart';
 
 class ActiveAdWidget extends StatelessWidget {
   const ActiveAdWidget({super.key});
@@ -68,50 +72,7 @@ class _ActiveAdContent extends StatelessWidget {
                 itemCount: state.ads.length,
                 itemBuilder: (context, index) {
                   final ad = state.ads[index];
-                  return Card(
-                    margin: const EdgeInsets.all(8.0),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${ad.ad.brand} ${ad.ad.model}',
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          const SizedBox(height: 8),
-                          Text('Year: ${ad.ad.year}'),
-                          Text('Price: \$${ad.ad.price.toStringAsFixed(1)}'),
-                          Text(
-                            'Location: ${ad.ad.location.city ?? ad.ad.location.address}',
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              TextButton(
-                                onPressed:
-                                    () => _navigateToEditScreen(context, ad.ad),
-                                child: const Text('Edit'),
-                              ),
-                              const SizedBox(width: 8),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                ),
-                                onPressed: () {
-                                  context.read<ActiveAdsBloc>().add(
-                                    DeactivateAd(ad.ad.id!),
-                                  );
-                                },
-                                child: const Text('Deactivate'),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
+                  return ActiveAdCard(ad: ad);
                 },
               ),
             );
@@ -119,6 +80,168 @@ class _ActiveAdContent extends StatelessWidget {
 
           return const SizedBox();
         },
+      ),
+    );
+  }
+}
+
+class ActiveAdCard extends StatelessWidget {
+  final AdWithUserModel ad;
+
+  const ActiveAdCard({super.key, required this.ad});
+
+  @override
+  Widget build(BuildContext context) {
+    final adData = ad.ad;
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final secondaryTextColor =
+        isDarkMode ? AppColors.zSecondBackground : AppColors.zGrey[300];
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: AppColors.zfontColor.withOpacity(0.2)),
+      ),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Date posted
+            Text(
+              "Posted: ${_formatDate(adData.postedDate)}",
+              style: TextStyle(fontSize: 12, color: AppColors.zGrey[500]),
+            ),
+            const SizedBox(height: 12),
+
+            // Image and main details row
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(
+                    adData.imageUrls.first,
+                    height: 100,
+                    width: 100,
+                    fit: BoxFit.cover,
+                    errorBuilder:
+                        (_, __, ___) => const Icon(Icons.image, size: 80),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            '${adData.brand} ${adData.model}',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            adData.year.toString(),
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+
+                      Text(
+                        "Fuel: ${adData.fuelType}",
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                      Text(
+                        "Transmission: ${adData.transmissionType}",
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                      Text(
+                        "KM Driven: ${adData.kmDriven}",
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+            const Divider(),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        _navigateToEditScreen(context, ad.ad);
+                      },
+                      child: Container(
+                        width: 70,
+                        height: 30,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: secondaryTextColor,
+                          borderRadius: BorderRadius.circular(4),
+                         
+                        ),
+                        child: Text(
+                          "Edit",
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleSmall?.copyWith(
+                           
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    GestureDetector(
+                      onTap: () {
+                        context.read<ActiveAdsBloc>().add(
+                          DeactivateAd(ad.ad.id!),
+                        );
+                      },
+                      child: Container(
+                        width: 70,
+                        height: 30,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: secondaryTextColor,
+                          borderRadius: BorderRadius.circular(4),
+                          
+                        ),
+                        child: Text(
+                          "Delete",
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleSmall?.copyWith(
+                            
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                CustomSwipeButton(
+                  onSwipe: () {
+                    _navigateToEditScreen(context, ad.ad);
+                  },
+                  buttonText: "MARK AS SOLD",
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -142,5 +265,10 @@ class _ActiveAdContent extends StatelessWidget {
       final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
       context.read<ActiveAdsBloc>().add(LoadActiveAds(userId));
     });
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return '';
+    return DateFormat('dd MMM yyyy').format(date);
   }
 }

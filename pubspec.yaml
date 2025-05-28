@@ -29,6 +29,7 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   appcheck: ^1.5.4+1
+  cached_network_image: ^3.4.1
   cloud_firestore: ^5.6.6
   cloudinary_public: ^0.23.1
   cupertino_icons: ^1.0.8
@@ -46,11 +47,14 @@ dependencies:
   get_it: ^8.0.3
   google_sign_in: ^6.3.0
   image_picker: ^1.1.2
+  intl: ^0.20.2
   location: ^8.0.0
   lottie: ^3.3.1
   mime: ^2.0.0
   persistent_bottom_nav_bar: ^6.2.1
   random_string: ^2.3.1
+  sweep_animation_button: ^0.0.3
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_lints: ^5.0.0

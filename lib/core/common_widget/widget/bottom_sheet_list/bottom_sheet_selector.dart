@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftwheels/core/common_widget/widget/bottom_sheet_list/app_bottom_sheet.dart';
 import 'package:shiftwheels/core/common_widget/widget/bottom_sheet_list/drop_down_sheet.dart';
+import 'package:shiftwheels/core/config/theme/app_colors.dart';
 
 typedef FetchEventBuilder = void Function(BuildContext context);
 typedef BlocSelectorBuilder<T> = List<T> Function(dynamic state);
@@ -37,37 +38,46 @@ class BottomSheetSelector<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: isDisabled
-          ? null
-          : () {
-              onTapFetchEvent(context);
-              AppBottomSheet.display(
-                context,
-                BlocProvider.value(
-                  value: selectorBloc,
-                  child: BlocBuilder(
-                    bloc: selectorBloc,
-                    builder: (context, state) {
-                      return DropdownSheet<T>(
-                        title: title,
-                        items: itemsSelector(state),
-                        itemText: itemText,
-                        onSelected: (T item) {
-                          onItemSelected(item);
-                        },
-                        isLoading: loadingSelector(state),
-                        error: errorSelector(state),
-                      );
-                    },
+      onTap:
+          isDisabled
+              ? null
+              : () {
+                onTapFetchEvent(context);
+                AppBottomSheet.display(
+                  context,
+                  BlocProvider.value(
+                    value: selectorBloc,
+                    child: BlocBuilder(
+                      bloc: selectorBloc,
+                      builder: (context, state) {
+                        return DropdownSheet<T>(
+                          title: title,
+                          items: itemsSelector(state),
+                          itemText: itemText,
+                          onSelected: (T item) {
+                            onItemSelected(item);
+                          },
+                          isLoading: loadingSelector(state),
+                          error: errorSelector(state),
+                        );
+                      },
+                    ),
                   ),
-                ),
-              );
-            },
-      child: ListTile(
-        title: Text(displayText),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(color: Colors.grey.shade300),
+                );
+              },
+      child: Container(
+        height: 65,
+        decoration: BoxDecoration(
+          color: AppColors.zSecondBackground,
+          borderRadius: BorderRadius.circular(5),
+
+        ),
+        child: Center(
+          child: ListTile(
+            title: Text(displayText),
+            trailing: const Icon(Icons.keyboard_arrow_down),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+          ),
         ),
       ),
     );

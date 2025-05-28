@@ -14,3 +14,12 @@ class FetchActiveAds extends GetPostAdEvent {
 class RefreshActiveAds extends GetPostAdEvent {
   const RefreshActiveAds();
 }
+
+class FilterByBrandEvent extends GetPostAdEvent {
+  final String brandName;
+
+  const FilterByBrandEvent(this.brandName);
+
+  @override
+  List<Object> get props => [brandName];
+}

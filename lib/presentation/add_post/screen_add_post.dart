@@ -3,11 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftwheels/core/common_widget/basic_app_bar.dart';
 import 'package:shiftwheels/core/common_widget/text_form_feald_widget.dart';
-import 'package:shiftwheels/core/common_widget/widget/bottom_sheet_list/app_bottom_sheet.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_elevated_app_button.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
-import 'package:shiftwheels/core/common_widget/widget/bottom_sheet_list/drop_down_sheet.dart';
-import 'package:shiftwheels/core/common_widget/widget/list_widget.dart';
+import 'package:shiftwheels/core/common_widget/widget/bottom_sheet_list/bottom_sheet_selector.dart';
 import 'package:shiftwheels/core/common_widget/widget/transmission_type_selecter.dart';
 import 'package:shiftwheels/core/config/helper/navigator/app_navigator.dart';
 import 'package:shiftwheels/data/add_post/models/brand_model.dart';
@@ -77,159 +75,93 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
     );
   }
 
-Widget _buildToggleButton() {
-  return TransmissionTypeSelector(
-    initialType: transmissionType ?? 'Manual', 
-    onTransmissionSelected: (type) {
-      setState(() {
-        transmissionType = type;
-      });
-    },
-  );
-}
+  Widget _buildToggleButton() {
+    return TransmissionTypeSelector(
+      initialType: transmissionType ?? 'Manual',
+      onTransmissionSelected: (type) {
+        setState(() {
+          transmissionType = type;
+        });
+      },
+    );
+  }
 
   Widget _buildBrandBottomSheet() {
-    return BlocBuilder<AddPostBloc, AddPostState>(
-      builder: (context, state) {
-        return GestureDetector(
-          onTap: () {
-            context.read<AddPostBloc>().add(FetchBrandsEvent());
-            AppBottomSheet.display(
-              context,
-              BlocProvider.value(
-                value: BlocProvider.of<AddPostBloc>(context),
-                child: BlocBuilder<AddPostBloc, AddPostState>(
-                  builder: (context, state) {
-                    final sheetIsLoading = state is BrandsLoading;
-                    final List<BrandModel> sheetBrands =
-                        state is BrandsLoaded ? state.brands : [];
-                    final sheetError =
-                        state is BrandsError ? state.message : null;
-
-                    return DropdownSheet<BrandModel>(
-                      title: 'Select Brand',
-                      items: sheetBrands,
-                      itemText:
-                          (BrandModel brand) => brand.brandName ?? 'Unknown',
-                      onSelected: (BrandModel brand) {
-                        setState(() {
-                          selectedBrand = brand;
-                          selectedModel = null;
-                        });
-                        context.read<AddPostBloc>().add(
-                          FetchModelsEvent(brand.id!),
-                        );
-                      },
-                      isLoading: sheetIsLoading,
-                      error: sheetError,
-                    );
-                  },
-                ),
-              ),
-            );
-          },
-          child: ListWidget(text: selectedBrand?.brandName ?? 'Select Brand*'),
-        );
+    return BottomSheetSelector<BrandModel>(
+      title: 'Select Brand',
+      displayText: selectedBrand?.brandName ?? 'Select Brand*',
+      onTapFetchEvent:
+          (context) => context.read<AddPostBloc>().add(FetchBrandsEvent()),
+      selectorBloc: context.read<AddPostBloc>(),
+      itemsSelector: (state) => state is BrandsLoaded ? state.brands : [],
+      itemText: (brand) => brand.brandName ?? 'Unknown',
+      onItemSelected: (brand) {
+        setState(() {
+          selectedBrand = brand;
+          selectedModel = null;
+        });
+        context.read<AddPostBloc>().add(FetchModelsEvent(brand.id!));
       },
+      loadingSelector: (state) => state is BrandsLoading,
+      errorSelector: (state) => state is BrandsError ? state.message : null,
     );
   }
 
   Widget _buildModelBottomSheet() {
-    return BlocBuilder<AddPostBloc, AddPostState>(
-      builder: (context, state) {
-        final isDisabled = selectedBrand == null;
-
-        return GestureDetector(
-          onTap: () {
-            if (isDisabled) return;
-
-            context.read<AddPostBloc>().add(
-              FetchModelsEvent(selectedBrand!.id!),
-            );
-
-            AppBottomSheet.display(
-              context,
-              BlocProvider.value(
-                value: BlocProvider.of<AddPostBloc>(context),
-                child: BlocBuilder<AddPostBloc, AddPostState>(
-                  builder: (context, state) {
-                    final sheetIsLoading = state is ModelsLoading;
-                    final List<String> sheetModels =
-                        state is ModelsLoaded ? state.models : [];
-                    final sheetError =
-                        state is ModelsError ? state.message : null;
-
-                    return DropdownSheet<String>(
-                      title: 'Select Model',
-                      items: sheetModels,
-                      itemText: (String model) => model,
-                      onSelected: (String model) {
-                        setState(() {
-                          selectedModel = model;
-                        });
-                      },
-                      isLoading: sheetIsLoading,
-                      error: sheetError,
-                    );
-                  },
-                ),
-              ),
-            );
-          },
-          child: ListWidget(text: selectedModel ?? 'Select Model*'),
-        );
+    return BottomSheetSelector<String>(
+      title: 'Select Model',
+      displayText: selectedModel ?? 'Select Model*',
+      isDisabled: selectedBrand == null,
+      onTapFetchEvent:
+          (context) => context.read<AddPostBloc>().add(
+            FetchModelsEvent(selectedBrand!.id!),
+          ),
+      selectorBloc: context.read<AddPostBloc>(),
+      itemsSelector: (state) => state is ModelsLoaded ? state.models : [],
+      itemText: (model) => model,
+      onItemSelected: (model) {
+        setState(() {
+          selectedModel = model;
+        });
       },
+      loadingSelector: (state) => state is ModelsLoading,
+      errorSelector: (state) => state is ModelsError ? state.message : null,
     );
   }
 
   Widget _buildFuelsBottomSheet() {
-    return BlocBuilder<GetFuelsBloc, GetFuelsState>(
-      builder: (context, state) {
-        return GestureDetector(
-          onTap: () {
-            context.read<GetFuelsBloc>().add(FetchFuels());
-
-            AppBottomSheet.display(
-              context,
-              BlocProvider.value(
-                value: BlocProvider.of<GetFuelsBloc>(context),
-                child: BlocBuilder<GetFuelsBloc, GetFuelsState>(
-                  builder: (context, state) {
-                    final sheetIsLoading = state is GetFuelsLoading;
-                    final List<FuelsModel> sheetFuels =
-                        state is GetFuelsLoaded ? state.fuels : [];
-                    final sheetError =
-                        state is GetFuelsError ? state.message : null;
-
-                    return DropdownSheet<FuelsModel>(
-                      title: 'Select Fuel Type',
-                      items: sheetFuels,
-                      itemText: (FuelsModel fuel) => fuel.fuels ?? 'Unknown',
-                      onSelected: (FuelsModel fuel) {
-                        setState(() {
-                          selectedFuel = fuel;
-                        });
-                      },
-                      isLoading: sheetIsLoading,
-                      error: sheetError,
-                    );
-                  },
-                ),
-              ),
-            );
-          },
-          child: ListWidget(text: selectedFuel?.fuels ?? 'Select Fuel Type*'),
-        );
+    return BottomSheetSelector<FuelsModel>(
+      title: 'Select Fuel Type',
+      displayText: selectedFuel?.fuels ?? 'Select Fuel Type*',
+      onTapFetchEvent:
+          (context) => context.read<GetFuelsBloc>().add(FetchFuels()),
+      selectorBloc: context.read<GetFuelsBloc>(),
+      itemsSelector: (state) => state is GetFuelsLoaded ? state.fuels : [],
+      itemText: (fuel) => fuel.fuels ?? 'Unknown',
+      onItemSelected: (fuel) {
+        setState(() {
+          selectedFuel = fuel;
+        });
       },
+      loadingSelector: (state) => state is GetFuelsLoading,
+      errorSelector: (state) => state is GetFuelsError ? state.message : null,
     );
   }
 
   Widget _buildYearWidget() {
-    return TextFormFieldWidget(label: "Year*", controller: yearController,keyboardType: TextInputType.number,);
+    return TextFormFieldWidget(
+      label: "Year*",
+      controller: yearController,
+      keyboardType: TextInputType.number,
+    );
   }
 
   Widget _buildKmDrivenWidget() {
-    return TextFormFieldWidget(label: "KM driven*", controller: kmController,keyboardType: TextInputType.number);
+    return TextFormFieldWidget(
+      label: "KM driven*",
+      controller: kmController,
+      keyboardType: TextInputType.number,
+    );
   }
 
   Widget _buildNoOfOwnersWidget() {
@@ -244,7 +176,7 @@ Widget _buildToggleButton() {
     return TextFormFieldWidget(
       label: "Describe what you are selling*",
       controller: discribeController,
-      
+
       multiline: true,
       keyboardType: TextInputType.multiline,
     );

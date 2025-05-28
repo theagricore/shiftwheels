@@ -32,14 +32,13 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   Future<Either<String, List<BrandModel>>> getBrands() async {
     try {
       final snapshot = await _firestore.collection('Brands').get();
-      final brands =
-          snapshot.docs.map((doc) {
-            return BrandModel(
-              id: doc.id,
-              brandName: doc['brandName'] as String? ?? '',
-              image: doc['image'] as String?,
-            );
-          }).toList();
+      final brands = snapshot.docs.map((doc) {
+        return BrandModel(
+          id: doc.id,
+          brandName: doc['brandName'] as String? ?? '',
+          image: doc['imageUrl'] as String?, 
+        );
+      }).toList();
 
       if (brands.isEmpty) {
         return Left('No brands found');
@@ -55,18 +54,16 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   @override
   Future<Either<String, List<String>>> getModels(String brandId) async {
     try {
-      final snapshot =
-          await _firestore
-              .collection('Brands')
-              .doc(brandId)
-              .collection('Models')
-              .get();
+      final snapshot = await _firestore
+          .collection('Brands')
+          .doc(brandId)
+          .collection('Models')
+          .get();
 
-      final models =
-          snapshot.docs
-              .map((doc) => doc['modelName'] as String? ?? '')
-              .where((name) => name.isNotEmpty)
-              .toList();
+      final models = snapshot.docs
+          .map((doc) => doc['modelName'] as String? ?? '')
+          .where((name) => name.isNotEmpty)
+          .toList();
 
       if (models.isEmpty) {
         return Left('No models found for this brand');
@@ -83,10 +80,9 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   Future<Either<String, List<FuelsModel>>> getFuel() async {
     try {
       final snapshot = await _firestore.collection('fuels').get();
-      final fuels =
-          snapshot.docs.map((doc) {
-            return FuelsModel(id: doc.id, fuels: doc['fuels'] as String? ?? '');
-          }).toList();
+      final fuels = snapshot.docs.map((doc) {
+        return FuelsModel(id: doc.id, fuels: doc['fuels'] as String? ?? '');
+      }).toList();
       return Right(fuels);
     } on FirebaseException catch (e) {
       return Left('Firebase error: ${e.message}');
@@ -165,21 +161,18 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   }
 
   String _buildAddress(Placemark place) {
-    final addressParts =
-        [
-          place.subLocality,
-          place.locality,
-          place.administrativeArea,
-          place.postalCode,
-        ].where((part) => part != null && part.isNotEmpty).toList();
+    final addressParts = [
+      place.subLocality,
+      place.locality,
+      place.administrativeArea,
+      place.postalCode,
+    ].where((part) => part != null && part.isNotEmpty).toList();
 
     return addressParts.join(', ');
   }
 
   @override
-  Future<Either<String, List<LocationModel>>> searchLocation(
-    String query,
-  ) async {
+  Future<Either<String, List<LocationModel>>> searchLocation(String query) async {
     try {
       if (query.isEmpty) {
         return Left('Search query cannot be empty');
@@ -246,22 +239,22 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   @override
   Future<Either<String, List<AdWithUserModel>>> getActiveAdsWithUsers() async {
     try {
-      final adsSnapshot =
-          await _firestore
-              .collection('car_ads')
-              .where('isActive', isEqualTo: true)
-              .get();
-      final ads =
-          adsSnapshot.docs.map((doc) {
-            return AdsModel.fromMap(doc.data(), doc.id);
-          }).toList();
+      final adsSnapshot = await _firestore
+          .collection('car_ads')
+          .where('isActive', isEqualTo: true)
+          .get();
+      final ads = adsSnapshot.docs.map((doc) {
+        return AdsModel.fromMap(doc.data(), doc.id);
+      }).toList();
       final result = <AdWithUserModel>[];
 
       for (final ad in ads) {
         try {
-          final userSnapShot =
-              await _firestore.collection('Users').doc(ad.userId).get();
-          result.add(AdWithUserModel(ad: ad, userData: userSnapShot.data()));
+          final userSnapShot = await _firestore.collection('Users').doc(ad.userId).get();
+          result.add(AdWithUserModel(
+            ad: ad,
+            userData: userSnapShot.data(),
+          ));
         } catch (e) {
           result.add(AdWithUserModel(ad: ad));
         }
@@ -275,28 +268,23 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   }
 
   @override
-  Future<Either<String, List<AdWithUserModel>>> getUserFavorites(
-    String userId,
-  ) async {
+  Future<Either<String, List<AdWithUserModel>>> getUserFavorites(String userId) async {
     try {
-      final adsSnapshot =
-          await _firestore
-              .collection('car_ads')
-              .where('favoritedByUsers', arrayContains: userId)
-              .where('isActive', isEqualTo: true)
-              .get();
+      final adsSnapshot = await _firestore
+          .collection('car_ads')
+          .where('favoritedByUsers', arrayContains: userId)
+          .where('isActive', isEqualTo: true)
+          .get();
 
-      final ads =
-          adsSnapshot.docs.map((doc) {
-            return AdsModel.fromMap(doc.data(), doc.id);
-          }).toList();
+      final ads = adsSnapshot.docs.map((doc) {
+        return AdsModel.fromMap(doc.data(), doc.id);
+      }).toList();
 
       final result = <AdWithUserModel>[];
 
       for (final ad in ads) {
         try {
-          final userSnapShot =
-              await _firestore.collection('Users').doc(ad.userId).get();
+          final userSnapShot = await _firestore.collection('Users').doc(ad.userId).get();
           result.add(
             AdWithUserModel(
               ad: ad,
@@ -305,7 +293,10 @@ class PostFirebaseServiceImpl extends FirebasePostService {
             ),
           );
         } catch (e) {
-          result.add(AdWithUserModel(ad: ad, isFavorite: true));
+          result.add(AdWithUserModel(
+            ad: ad,
+            isFavorite: true,
+          ));
         }
       }
 
@@ -318,10 +309,7 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   }
 
   @override
-  Future<Either<String, void>> toggleFavorite(
-    String adId,
-    String userId,
-  ) async {
+  Future<Either<String, void>> toggleFavorite(String adId, String userId) async {
     try {
       final adRef = _firestore.collection('car_ads').doc(adId);
 
@@ -354,27 +342,25 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   }
 
   @override
-  Future<Either<String, List<AdWithUserModel>>> getUserActiveAds(
-    String userId,
-  ) async {
+  Future<Either<String, List<AdWithUserModel>>> getUserActiveAds(String userId) async {
     try {
-      final adsSnapshot =
-          await _firestore
-              .collection('car_ads')
-              .where('userId', isEqualTo: userId)
-              .where('isActive', isEqualTo: true)
-              .get();
+      final adsSnapshot = await _firestore
+          .collection('car_ads')
+          .where('userId', isEqualTo: userId)
+          .where('isActive', isEqualTo: true)
+          .get();
 
-      final ads =
-          adsSnapshot.docs.map((doc) {
-            return AdsModel.fromMap(doc.data(), doc.id);
-          }).toList();
+      final ads = adsSnapshot.docs.map((doc) {
+        return AdsModel.fromMap(doc.data(), doc.id);
+      }).toList();
       final result = <AdWithUserModel>[];
       for (final ad in ads) {
         try {
-          final userSnapshot =
-              await _firestore.collection('Users').doc(ad.userId).get();
-          result.add(AdWithUserModel(ad: ad, userData: userSnapshot.data()));
+          final userSnapshot = await _firestore.collection('Users').doc(ad.userId).get();
+          result.add(AdWithUserModel(
+            ad: ad,
+            userData: userSnapshot.data(),
+          ));
         } catch (e) {
           result.add(AdWithUserModel(ad: ad));
         }

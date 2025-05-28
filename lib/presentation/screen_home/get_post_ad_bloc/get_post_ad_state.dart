@@ -20,10 +20,12 @@ final class GetPostAdLoading extends GetPostAdState {
 
 final class GetPostAdLoaded extends GetPostAdState {
   final List<AdWithUserModel> ads;
+  final String? selectedBrand;
 
-  const GetPostAdLoaded(this.ads);
+  const GetPostAdLoaded(this.ads, {this.selectedBrand});
+
   @override
-  List<Object> get props => [ads];
+  List<Object> get props => [ads, selectedBrand ?? ''];
 }
 
 final class GetPostAdError extends GetPostAdState {

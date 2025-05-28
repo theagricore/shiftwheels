@@ -20,12 +20,12 @@ class ZTextTheme {
     ),
     titleMedium: TextStyle(
       color: AppColors.zfontColor,
-      fontSize: 14.sp,
+      fontSize: 13.sp,
       fontWeight: FontWeight.w600,
     ),
     titleSmall: TextStyle(
       color: AppColors.zfontColor,
-      fontSize: 12.sp,
+      fontSize: 10.sp,
       fontWeight: FontWeight.w600,
     ),
 
@@ -33,9 +33,9 @@ class ZTextTheme {
     bodyMedium: TextStyle(color: AppColors.zfontColor, fontSize: 12.sp),
     bodySmall: TextStyle(color: AppColors.zfontColor, fontSize: 10.sp),
 
-    labelLarge: TextStyle(color: AppColors.zfontColor, fontSize: 15.sp),
+    labelLarge: TextStyle(color: AppColors.zfontColor, fontSize: 13.sp),
     labelMedium: TextStyle(color: AppColors.zfontColor, fontSize: 10.sp),
-    labelSmall: TextStyle(color: AppColors.zfontColor, fontSize: 10.sp),
+    labelSmall: TextStyle(color: AppColors.zfontColor, fontSize: 9.sp),
   );
 
   static TextTheme darkTextTheme = TextTheme(
@@ -54,7 +54,7 @@ class ZTextTheme {
 
     titleLarge: TextStyle(
       color: AppColors.zdarkfontColor,
-      fontSize: 19.sp,
+      fontSize: 16.sp,
       fontWeight: FontWeight.w600,
     ),
     titleMedium: TextStyle(
@@ -64,7 +64,7 @@ class ZTextTheme {
     ),
     titleSmall: TextStyle(
       color: AppColors.zdarkfontColor,
-      fontSize: 12.sp,
+      fontSize: 10.sp,
       fontWeight: FontWeight.w600,
     ),
 
@@ -72,8 +72,8 @@ class ZTextTheme {
     bodyMedium: TextStyle(color: AppColors.zdarkfontColor, fontSize: 12.sp),
     bodySmall: TextStyle(color: AppColors.zdarkfontColor, fontSize: 10.sp),
 
-    labelLarge: TextStyle(color: AppColors.zdarkfontColor, fontSize: 15.sp),
+    labelLarge: TextStyle(color: AppColors.zdarkfontColor, fontSize: 13.sp),
     labelMedium: TextStyle(color: AppColors.zdarkfontColor, fontSize: 10.sp),
-    labelSmall: TextStyle(color: AppColors.zdarkfontColor, fontSize: 10.sp),
+    labelSmall: TextStyle(color: AppColors.zdarkfontColor, fontSize: 9.sp),
   );
 }

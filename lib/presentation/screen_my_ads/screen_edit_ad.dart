@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftwheels/core/common_widget/basic_app_bar.dart';
 import 'package:shiftwheels/core/common_widget/text_form_feald_widget.dart';
-import 'package:shiftwheels/core/common_widget/widget/bottom_sheet_list/app_bottom_sheet.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_elevated_app_button.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
-import 'package:shiftwheels/core/common_widget/widget/bottom_sheet_list/drop_down_sheet.dart';
+import 'package:shiftwheels/core/common_widget/widget/bottom_sheet_list/bottom_sheet_selector.dart';
 import 'package:shiftwheels/core/common_widget/widget/edit_image_widget.dart';
-import 'package:shiftwheels/core/common_widget/widget/list_widget.dart';
 import 'package:shiftwheels/core/common_widget/widget/transmission_type_selecter.dart';
 import 'package:shiftwheels/data/add_post/models/ads_model.dart';
 import 'package:shiftwheels/data/add_post/models/brand_model.dart';
@@ -33,7 +31,7 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
   String? selectedModel;
   FuelsModel? selectedFuel;
   List<String> imagePaths = [];
-  
+
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController yearController = TextEditingController();
   final TextEditingController kmController = TextEditingController();
@@ -69,7 +67,7 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
         title: Text(
           "Edit Your Ad",
           style: Theme.of(context).textTheme.displayLarge,
-        ),        
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -79,9 +77,18 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
             providers: [
               BlocProvider.value(value: BlocProvider.of<AddPostBloc>(context)),
               BlocProvider.value(value: BlocProvider.of<GetFuelsBloc>(context)),
-              BlocProvider(create: (_) => GetImagesBloc()..add(SetInitialImages(imagePaths))),
               BlocProvider(
-                create: (_) => SeatTypeBloc()..add(ChangeTransmissionTypeEvent(widget.ad.transmissionType)),
+                create:
+                    (_) => GetImagesBloc()..add(SetInitialImages(imagePaths)),
+              ),
+              BlocProvider(
+                create:
+                    (_) =>
+                        SeatTypeBloc()..add(
+                          ChangeTransmissionTypeEvent(
+                            widget.ad.transmissionType,
+                          ),
+                        ),
               ),
             ],
             child: Column(
@@ -116,142 +123,64 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
   }
 
   Widget _buildBrandBottomSheet() {
-    return BlocBuilder<AddPostBloc, AddPostState>(
-      builder: (context, state) {
-        return GestureDetector(
-          onTap: () {
-            context.read<AddPostBloc>().add(FetchBrandsEvent());
-            AppBottomSheet.display(
-              context,
-              BlocProvider.value(
-                value: BlocProvider.of<AddPostBloc>(context),
-                child: BlocBuilder<AddPostBloc, AddPostState>(
-                  builder: (context, state) {
-                    final sheetIsLoading = state is BrandsLoading;
-                    final List<BrandModel> sheetBrands =
-                        state is BrandsLoaded ? state.brands : [];
-                    final sheetError =
-                        state is BrandsError ? state.message : null;
-
-                    return DropdownSheet<BrandModel>(
-                      title: 'Select Brand',
-                      items: sheetBrands,
-                      itemText:
-                          (BrandModel brand) => brand.brandName ?? 'Unknown',
-                      onSelected: (BrandModel brand) {
-                        setState(() {
-                          selectedBrand = brand;
-                          selectedModel = null;
-                        });
-                        context.read<AddPostBloc>().add(
-                          FetchModelsEvent(brand.id!),
-                        );
-                      },
-                      isLoading: sheetIsLoading,
-                      error: sheetError,
-                    );
-                  },
-                ),
-              ),
-            );
-          },
-          child: ListWidget(
-            text: selectedBrand?.brandName ?? widget.ad.brand,
-          ),
-        );
+    return BottomSheetSelector<BrandModel>(
+      title: 'Select Brand',
+      displayText: selectedBrand?.brandName ?? 'Select Brand*',
+      onTapFetchEvent:
+          (context) => context.read<AddPostBloc>().add(FetchBrandsEvent()),
+      selectorBloc: context.read<AddPostBloc>(),
+      itemsSelector: (state) => state is BrandsLoaded ? state.brands : [],
+      itemText: (brand) => brand.brandName ?? 'Unknown',
+      onItemSelected: (brand) {
+        setState(() {
+          selectedBrand = brand;
+          selectedModel = null;
+        });
+        context.read<AddPostBloc>().add(FetchModelsEvent(brand.id!));
       },
+      loadingSelector: (state) => state is BrandsLoading,
+      errorSelector: (state) => state is BrandsError ? state.message : null,
     );
   }
 
   Widget _buildModelBottomSheet() {
-    return BlocBuilder<AddPostBloc, AddPostState>(
-      builder: (context, state) {
-        return GestureDetector(
-          onTap: () {
-            if (selectedBrand == null) return;
-
-            context.read<AddPostBloc>().add(
-              FetchModelsEvent(selectedBrand!.id!),
-            );
-
-            AppBottomSheet.display(
-              context,
-              BlocProvider.value(
-                value: BlocProvider.of<AddPostBloc>(context),
-                child: BlocBuilder<AddPostBloc, AddPostState>(
-                  builder: (context, state) {
-                    final sheetIsLoading = state is ModelsLoading;
-                    final List<String> sheetModels =
-                        state is ModelsLoaded ? state.models : [];
-                    final sheetError =
-                        state is ModelsError ? state.message : null;
-
-                    return DropdownSheet<String>(
-                      title: 'Select Model',
-                      items: sheetModels,
-                      itemText: (String model) => model,
-                      onSelected: (String model) {
-                        setState(() {
-                          selectedModel = model;
-                        });
-                      },
-                      isLoading: sheetIsLoading,
-                      error: sheetError,
-                    );
-                  },
-                ),
-              ),
-            );
-          },
-          child: ListWidget(
-            text: selectedModel ?? widget.ad.model,
+    return BottomSheetSelector<String>(
+      title: 'Select Model',
+      displayText: selectedModel ?? 'Select Model*',
+      isDisabled: selectedBrand == null,
+      onTapFetchEvent:
+          (context) => context.read<AddPostBloc>().add(
+            FetchModelsEvent(selectedBrand!.id!),
           ),
-        );
+      selectorBloc: context.read<AddPostBloc>(),
+      itemsSelector: (state) => state is ModelsLoaded ? state.models : [],
+      itemText: (model) => model,
+      onItemSelected: (model) {
+        setState(() {
+          selectedModel = model;
+        });
       },
+      loadingSelector: (state) => state is ModelsLoading,
+      errorSelector: (state) => state is ModelsError ? state.message : null,
     );
   }
 
   Widget _buildFuelsBottomSheet() {
-    return BlocBuilder<GetFuelsBloc, GetFuelsState>(
-      builder: (context, state) {
-        return GestureDetector(
-          onTap: () {
-            context.read<GetFuelsBloc>().add(FetchFuels());
-
-            AppBottomSheet.display(
-              context,
-              BlocProvider.value(
-                value: BlocProvider.of<GetFuelsBloc>(context),
-                child: BlocBuilder<GetFuelsBloc, GetFuelsState>(
-                  builder: (context, state) {
-                    final sheetIsLoading = state is GetFuelsLoading;
-                    final List<FuelsModel> sheetFuels =
-                        state is GetFuelsLoaded ? state.fuels : [];
-                    final sheetError =
-                        state is GetFuelsError ? state.message : null;
-
-                    return DropdownSheet<FuelsModel>(
-                      title: 'Select Fuel Type',
-                      items: sheetFuels,
-                      itemText: (FuelsModel fuel) => fuel.fuels ?? 'Unknown',
-                      onSelected: (FuelsModel fuel) {
-                        setState(() {
-                          selectedFuel = fuel;
-                        });
-                      },
-                      isLoading: sheetIsLoading,
-                      error: sheetError,
-                    );
-                  },
-                ),
-              ),
-            );
-          },
-          child: ListWidget(
-            text: selectedFuel?.fuels ?? widget.ad.fuelType,
-          ),
-        );
+    return BottomSheetSelector<FuelsModel>(
+      title: 'Select Fuel Type',
+      displayText: selectedFuel?.fuels ?? 'Select Fuel Type*',
+      onTapFetchEvent:
+          (context) => context.read<GetFuelsBloc>().add(FetchFuels()),
+      selectorBloc: context.read<GetFuelsBloc>(),
+      itemsSelector: (state) => state is GetFuelsLoaded ? state.fuels : [],
+      itemText: (fuel) => fuel.fuels ?? 'Unknown',
+      onItemSelected: (fuel) {
+        setState(() {
+          selectedFuel = fuel;
+        });
       },
+      loadingSelector: (state) => state is GetFuelsLoading,
+      errorSelector: (state) => state is GetFuelsError ? state.message : null,
     );
   }
 
@@ -315,7 +244,7 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
         if (state is ImagesSelectedState) {
           imagePaths = state.imagePaths;
         }
-        
+
         return EditImageWidget(imagePaths: imagePaths);
       },
     );
@@ -353,9 +282,13 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
       final kmDriven = int.tryParse(kmController.text);
       final noOfOwners = int.tryParse(noOfOwnersController.text);
       final price = double.tryParse(priceController.text);
-      final transmissionType = context.read<SeatTypeBloc>().state.transmissionType;
+      final transmissionType =
+          context.read<SeatTypeBloc>().state.transmissionType;
 
-      if (year == null || kmDriven == null || noOfOwners == null || price == null) {
+      if (year == null ||
+          kmDriven == null ||
+          noOfOwners == null ||
+          price == null) {
         BasicSnackbar(
           message: 'Please fill all required fields with valid values',
           backgroundColor: Colors.red,
@@ -380,4 +313,3 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
     }
   }
 }
-

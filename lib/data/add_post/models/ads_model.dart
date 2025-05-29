@@ -13,11 +13,13 @@ class AdsModel {
   final String description;
   final LocationModel location;
   final List<String> imageUrls;
+
+  
   final double price;
   final DateTime postedDate;
   final bool isActive;
   final List<String> favoritedByUsers;
-  final List<String> chatIds;
+  final List<String> chatIds;  
 
   AdsModel({
     this.id,

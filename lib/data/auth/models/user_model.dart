@@ -15,28 +15,15 @@ class UserModel {
     this.createdAt,
   });
 
-  factory UserModel.fromMap(Map<String, dynamic>? data) {
-    if (data == null) {
-      return UserModel();
-    }
+  // Add fromMap constructor if needed
+  factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
-      fullName: data['fullName'] as String?,
-      email: data['email'] as String?,
-      phoneNo: data['phoneNo'] as String?,
-      password: data['password'] as String?,
-      uid: data['uid'] as String?,
-      createdAt: data['createdAt'] as String?,
+      fullName: map['fullName'] as String?,
+      email: map['email'] as String?,
+      phoneNo: map['phoneNo'] as String?,
+      password: map['password'] as String?,
+      uid: map['uid'] as String?,
+      createdAt: map['createdAt']?.toString(),
     );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'fullName': fullName,
-      'email': email,
-      'phoneNo': phoneNo,
-      'password': password,
-      'uid': uid,
-      'createdAt': createdAt,
-    };
   }
 }

@@ -30,8 +30,9 @@ class FilterBrandIcon extends StatelessWidget {
                 width: 70,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.zPrimaryColor : Colors.grey[300],
+                  color: isSelected ? AppColors.zPrimaryColor : Colors.grey [100],
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.zfontColor.withOpacity(0.4))
                 ),
                 child: brandName == 'ALL'
                     ? Center(

@@ -42,12 +42,24 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
   @override
   void initState() {
     super.initState();
+    // Initialize form fields with existing ad data
     yearController.text = widget.ad.year.toString();
     kmController.text = widget.ad.kmDriven.toString();
     noOfOwnersController.text = widget.ad.noOfOwners.toString();
     descriptionController.text = widget.ad.description;
     priceController.text = widget.ad.price.toStringAsFixed(2);
     imagePaths = widget.ad.imageUrls;
+    
+    // Initialize brand, model and fuel with existing ad data
+    selectedBrand = BrandModel(id: '', brandName: widget.ad.brand);
+    selectedModel = widget.ad.model;
+    selectedFuel = FuelsModel(id: '', fuels: widget.ad.fuelType);
+    
+    // Fetch models for the brand if needed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AddPostBloc>().add(FetchBrandsEvent());
+      context.read<GetFuelsBloc>().add(FetchFuels());
+    });
   }
 
   @override
@@ -78,17 +90,12 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
               BlocProvider.value(value: BlocProvider.of<AddPostBloc>(context)),
               BlocProvider.value(value: BlocProvider.of<GetFuelsBloc>(context)),
               BlocProvider(
-                create:
-                    (_) => GetImagesBloc()..add(SetInitialImages(imagePaths)),
+                create: (_) => GetImagesBloc()..add(SetInitialImages(imagePaths)),
               ),
               BlocProvider(
-                create:
-                    (_) =>
-                        SeatTypeBloc()..add(
-                          ChangeTransmissionTypeEvent(
-                            widget.ad.transmissionType,
-                          ),
-                        ),
+                create: (_) => SeatTypeBloc()..add(
+                  ChangeTransmissionTypeEvent(widget.ad.transmissionType),
+                ),
               ),
             ],
             child: Column(
@@ -123,64 +130,100 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
   }
 
   Widget _buildBrandBottomSheet() {
-    return BottomSheetSelector<BrandModel>(
-      title: 'Select Brand',
-      displayText: selectedBrand?.brandName ?? 'Select Brand*',
-      onTapFetchEvent:
-          (context) => context.read<AddPostBloc>().add(FetchBrandsEvent()),
-      selectorBloc: context.read<AddPostBloc>(),
-      itemsSelector: (state) => state is BrandsLoaded ? state.brands : [],
-      itemText: (brand) => brand.brandName ?? 'Unknown',
-      onItemSelected: (brand) {
-        setState(() {
-          selectedBrand = brand;
-          selectedModel = null;
-        });
-        context.read<AddPostBloc>().add(FetchModelsEvent(brand.id!));
+    return BlocBuilder<AddPostBloc, AddPostState>(
+      builder: (context, state) {
+        if (state is BrandsLoaded) {
+          final exactBrand = state.brands.firstWhere(
+            (brand) => brand.brandName == widget.ad.brand,
+            orElse: () => BrandModel(id: '', brandName: widget.ad.brand),
+          );
+          selectedBrand = exactBrand;
+        }
+
+        return BottomSheetSelector<BrandModel>(
+          title: 'Select Brand',
+          displayText: selectedBrand?.brandName ?? widget.ad.brand,
+          onTapFetchEvent: (context) => context.read<AddPostBloc>().add(FetchBrandsEvent()),
+          selectorBloc: context.read<AddPostBloc>(),
+          itemsSelector: (state) => state is BrandsLoaded ? state.brands : [],
+          itemText: (brand) => brand.brandName ?? 'Unknown',
+          onItemSelected: (brand) {
+            setState(() {
+              selectedBrand = brand;
+              selectedModel = null;
+            });
+            context.read<AddPostBloc>().add(FetchModelsEvent(brand.id!));
+          },
+          loadingSelector: (state) => state is BrandsLoading,
+          errorSelector: (state) => state is BrandsError ? state.message : null,
+        );
       },
-      loadingSelector: (state) => state is BrandsLoading,
-      errorSelector: (state) => state is BrandsError ? state.message : null,
     );
   }
 
   Widget _buildModelBottomSheet() {
-    return BottomSheetSelector<String>(
-      title: 'Select Model',
-      displayText: selectedModel ?? 'Select Model*',
-      isDisabled: selectedBrand == null,
-      onTapFetchEvent:
-          (context) => context.read<AddPostBloc>().add(
-            FetchModelsEvent(selectedBrand!.id!),
-          ),
-      selectorBloc: context.read<AddPostBloc>(),
-      itemsSelector: (state) => state is ModelsLoaded ? state.models : [],
-      itemText: (model) => model,
-      onItemSelected: (model) {
-        setState(() {
-          selectedModel = model;
-        });
+    return BlocBuilder<AddPostBloc, AddPostState>(
+      builder: (context, state) {
+        if (state is ModelsLoaded && selectedBrand != null) {
+          final exactModel = state.models.firstWhere(
+            (model) => model == widget.ad.model,
+            orElse: () => widget.ad.model,
+          );
+          selectedModel = exactModel;
+        }
+
+        return BottomSheetSelector<String>(
+          title: 'Select Model',
+          displayText: selectedModel ?? widget.ad.model,
+          isDisabled: selectedBrand == null,
+          onTapFetchEvent: (context) {
+            if (selectedBrand != null) {
+              context.read<AddPostBloc>().add(FetchModelsEvent(selectedBrand!.id!));
+            }
+          },
+          selectorBloc: context.read<AddPostBloc>(),
+          itemsSelector: (state) => state is ModelsLoaded ? state.models : [],
+          itemText: (model) => model,
+          onItemSelected: (model) {
+            setState(() {
+              selectedModel = model;
+            });
+          },
+          loadingSelector: (state) => state is ModelsLoading,
+          errorSelector: (state) => state is ModelsError ? state.message : null,
+        );
       },
-      loadingSelector: (state) => state is ModelsLoading,
-      errorSelector: (state) => state is ModelsError ? state.message : null,
     );
   }
 
   Widget _buildFuelsBottomSheet() {
-    return BottomSheetSelector<FuelsModel>(
-      title: 'Select Fuel Type',
-      displayText: selectedFuel?.fuels ?? 'Select Fuel Type*',
-      onTapFetchEvent:
-          (context) => context.read<GetFuelsBloc>().add(FetchFuels()),
-      selectorBloc: context.read<GetFuelsBloc>(),
-      itemsSelector: (state) => state is GetFuelsLoaded ? state.fuels : [],
-      itemText: (fuel) => fuel.fuels ?? 'Unknown',
-      onItemSelected: (fuel) {
-        setState(() {
-          selectedFuel = fuel;
-        });
+    return BlocBuilder<GetFuelsBloc, GetFuelsState>(
+      builder: (context, state) {
+        // Find the exact fuel from the list if available
+        if (state is GetFuelsLoaded) {
+          final exactFuel = state.fuels.firstWhere(
+            (fuel) => fuel.fuels == widget.ad.fuelType,
+            orElse: () => FuelsModel(id: '', fuels: widget.ad.fuelType),
+          );
+          selectedFuel = exactFuel;
+        }
+
+        return BottomSheetSelector<FuelsModel>(
+          title: 'Select Fuel Type',
+          displayText: selectedFuel?.fuels ?? widget.ad.fuelType,
+          onTapFetchEvent: (context) => context.read<GetFuelsBloc>().add(FetchFuels()),
+          selectorBloc: context.read<GetFuelsBloc>(),
+          itemsSelector: (state) => state is GetFuelsLoaded ? state.fuels : [],
+          itemText: (fuel) => fuel.fuels ?? 'Unknown',
+          onItemSelected: (fuel) {
+            setState(() {
+              selectedFuel = fuel;
+            });
+          },
+          loadingSelector: (state) => state is GetFuelsLoading,
+          errorSelector: (state) => state is GetFuelsError ? state.message : null,
+        );
       },
-      loadingSelector: (state) => state is GetFuelsLoading,
-      errorSelector: (state) => state is GetFuelsError ? state.message : null,
     );
   }
 
@@ -282,13 +325,9 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
       final kmDriven = int.tryParse(kmController.text);
       final noOfOwners = int.tryParse(noOfOwnersController.text);
       final price = double.tryParse(priceController.text);
-      final transmissionType =
-          context.read<SeatTypeBloc>().state.transmissionType;
+      final transmissionType = context.read<SeatTypeBloc>().state.transmissionType;
 
-      if (year == null ||
-          kmDriven == null ||
-          noOfOwners == null ||
-          price == null) {
+      if (year == null || kmDriven == null || noOfOwners == null || price == null) {
         BasicSnackbar(
           message: 'Please fill all required fields with valid values',
           backgroundColor: Colors.red,

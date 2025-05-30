@@ -8,6 +8,7 @@ import 'package:shiftwheels/data/add_post/models/ads_model.dart';
 import 'package:shiftwheels/data/add_post/models/brand_model.dart';
 import 'package:shiftwheels/data/add_post/models/fuels_model.dart';
 import 'package:shiftwheels/data/add_post/models/location_model.dart';
+import 'package:shiftwheels/data/auth/models/user_model.dart';
 
 abstract class FirebasePostService {
   Future<Either<String, List<BrandModel>>> getBrands();
@@ -32,13 +33,14 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   Future<Either<String, List<BrandModel>>> getBrands() async {
     try {
       final snapshot = await _firestore.collection('Brands').get();
-      final brands = snapshot.docs.map((doc) {
-        return BrandModel(
-          id: doc.id,
-          brandName: doc['brandName'] as String? ?? '',
-          image: doc['imageUrl'] as String?, 
-        );
-      }).toList();
+      final brands =
+          snapshot.docs.map((doc) {
+            return BrandModel(
+              id: doc.id,
+              brandName: doc['brandName'] as String? ?? '',
+              image: doc['imageUrl'] as String?,
+            );
+          }).toList();
 
       if (brands.isEmpty) {
         return Left('No brands found');
@@ -54,16 +56,18 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   @override
   Future<Either<String, List<String>>> getModels(String brandId) async {
     try {
-      final snapshot = await _firestore
-          .collection('Brands')
-          .doc(brandId)
-          .collection('Models')
-          .get();
+      final snapshot =
+          await _firestore
+              .collection('Brands')
+              .doc(brandId)
+              .collection('Models')
+              .get();
 
-      final models = snapshot.docs
-          .map((doc) => doc['modelName'] as String? ?? '')
-          .where((name) => name.isNotEmpty)
-          .toList();
+      final models =
+          snapshot.docs
+              .map((doc) => doc['modelName'] as String? ?? '')
+              .where((name) => name.isNotEmpty)
+              .toList();
 
       if (models.isEmpty) {
         return Left('No models found for this brand');
@@ -80,9 +84,10 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   Future<Either<String, List<FuelsModel>>> getFuel() async {
     try {
       final snapshot = await _firestore.collection('fuels').get();
-      final fuels = snapshot.docs.map((doc) {
-        return FuelsModel(id: doc.id, fuels: doc['fuels'] as String? ?? '');
-      }).toList();
+      final fuels =
+          snapshot.docs.map((doc) {
+            return FuelsModel(id: doc.id, fuels: doc['fuels'] as String? ?? '');
+          }).toList();
       return Right(fuels);
     } on FirebaseException catch (e) {
       return Left('Firebase error: ${e.message}');
@@ -161,18 +166,21 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   }
 
   String _buildAddress(Placemark place) {
-    final addressParts = [
-      place.subLocality,
-      place.locality,
-      place.administrativeArea,
-      place.postalCode,
-    ].where((part) => part != null && part.isNotEmpty).toList();
+    final addressParts =
+        [
+          place.subLocality,
+          place.locality,
+          place.administrativeArea,
+          place.postalCode,
+        ].where((part) => part != null && part.isNotEmpty).toList();
 
     return addressParts.join(', ');
   }
 
   @override
-  Future<Either<String, List<LocationModel>>> searchLocation(String query) async {
+  Future<Either<String, List<LocationModel>>> searchLocation(
+    String query,
+  ) async {
     try {
       if (query.isEmpty) {
         return Left('Search query cannot be empty');
@@ -239,26 +247,46 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   @override
   Future<Either<String, List<AdWithUserModel>>> getActiveAdsWithUsers() async {
     try {
-      final adsSnapshot = await _firestore
-          .collection('car_ads')
-          .where('isActive', isEqualTo: true)
-          .get();
-      final ads = adsSnapshot.docs.map((doc) {
-        return AdsModel.fromMap(doc.data(), doc.id);
-      }).toList();
+      // Get all active ads
+      final adsSnapshot =
+          await _firestore
+              .collection('car_ads')
+              .where('isActive', isEqualTo: true)
+              .get();
+
+      final ads =
+          adsSnapshot.docs
+              .map((doc) => AdsModel.fromMap(doc.data(), doc.id))
+              .toList();
+
       final result = <AdWithUserModel>[];
 
       for (final ad in ads) {
         try {
-          final userSnapShot = await _firestore.collection('Users').doc(ad.userId).get();
-          result.add(AdWithUserModel(
-            ad: ad,
-            userData: userSnapShot.data(),
-          ));
+          final userDoc =
+              await _firestore.collection('Users').doc(ad.userId).get();
+          if (userDoc.exists) {
+            final userData = userDoc.data()!;
+            final userModel = UserModel(
+              fullName: userData['fullName'] as String?,
+              email: userData['email'] as String?,
+              phoneNo: userData['phoneNo'] as String?,
+              uid: userData['uid'] as String?,
+              createdAt: userData['createdAt']?.toString(),
+            );
+
+            result.add(AdWithUserModel(ad: ad, userData: userModel));
+          } else {
+            result.add(
+              AdWithUserModel(ad: ad, userData: UserModel(uid: ad.userId)),
+            );
+          }
         } catch (e) {
-          result.add(AdWithUserModel(ad: ad));
+          result.add(AdWithUserModel(ad: ad, userData: UserModel(uid: ad.userId)));
+          continue;
         }
       }
+
       return Right(result);
     } on FirebaseException catch (e) {
       return Left('Firebase error: ${e.message}');
@@ -268,48 +296,51 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   }
 
   @override
-  Future<Either<String, List<AdWithUserModel>>> getUserFavorites(String userId) async {
-    try {
-      final adsSnapshot = await _firestore
-          .collection('car_ads')
-          .where('favoritedByUsers', arrayContains: userId)
-          .where('isActive', isEqualTo: true)
-          .get();
+Future<Either<String, List<AdWithUserModel>>> getUserFavorites(String userId) async {
+  try {
+    final adsSnapshot = await _firestore
+        .collection('car_ads')
+        .where('favoritedByUsers', arrayContains: userId)
+        .where('isActive', isEqualTo: true)
+        .get();
 
-      final ads = adsSnapshot.docs.map((doc) {
-        return AdsModel.fromMap(doc.data(), doc.id);
-      }).toList();
+    final ads = adsSnapshot.docs
+        .map((doc) => AdsModel.fromMap(doc.data(), doc.id))
+        .toList();
 
-      final result = <AdWithUserModel>[];
+    final result = <AdWithUserModel>[];
 
-      for (final ad in ads) {
-        try {
-          final userSnapShot = await _firestore.collection('Users').doc(ad.userId).get();
-          result.add(
-            AdWithUserModel(
-              ad: ad,
-              userData: userSnapShot.data(),
-              isFavorite: true,
-            ),
-          );
-        } catch (e) {
-          result.add(AdWithUserModel(
-            ad: ad,
-            isFavorite: true,
-          ));
+    for (final ad in ads) {
+      try {
+        final userDoc = await _firestore.collection('Users').doc(ad.userId).get();
+        UserModel? userModel;
+        if (userDoc.exists) {
+          userModel = UserModel.fromMap(userDoc.data()!);
         }
+        result.add(AdWithUserModel(
+          ad: ad,
+          userData: userModel,
+          isFavorite: true,
+        ));
+      } catch (e) {
+        result.add(AdWithUserModel(ad: ad, isFavorite: true));
       }
-
-      return Right(result);
-    } on FirebaseException catch (e) {
-      return Left('Firebase error: ${e.message}');
-    } catch (e) {
-      return Left('Failed to get favorites: ${e.toString()}');
     }
+
+    return Right(result);
+  } on FirebaseException catch (e) {
+    return Left('Firebase error: ${e.message}');
+  } catch (e) {
+    return Left('Failed to get favorites: ${e.toString()}');
   }
+}
+
 
   @override
-  Future<Either<String, void>> toggleFavorite(String adId, String userId) async {
+  Future<Either<String, void>> toggleFavorite(
+    String adId,
+    String userId,
+  ) async {
     try {
       final adRef = _firestore.collection('car_ads').doc(adId);
 
@@ -342,36 +373,41 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   }
 
   @override
-  Future<Either<String, List<AdWithUserModel>>> getUserActiveAds(String userId) async {
-    try {
-      final adsSnapshot = await _firestore
-          .collection('car_ads')
-          .where('userId', isEqualTo: userId)
-          .where('isActive', isEqualTo: true)
-          .get();
+Future<Either<String, List<AdWithUserModel>>> getUserActiveAds(String userId) async {
+  try {
+    final adsSnapshot = await _firestore
+        .collection('car_ads')
+        .where('userId', isEqualTo: userId)
+        .where('isActive', isEqualTo: true)
+        .get();
 
-      final ads = adsSnapshot.docs.map((doc) {
-        return AdsModel.fromMap(doc.data(), doc.id);
-      }).toList();
-      final result = <AdWithUserModel>[];
-      for (final ad in ads) {
-        try {
-          final userSnapshot = await _firestore.collection('Users').doc(ad.userId).get();
-          result.add(AdWithUserModel(
-            ad: ad,
-            userData: userSnapshot.data(),
-          ));
-        } catch (e) {
-          result.add(AdWithUserModel(ad: ad));
+    final ads = adsSnapshot.docs
+        .map((doc) => AdsModel.fromMap(doc.data(), doc.id))
+        .toList();
+
+    final result = <AdWithUserModel>[];
+
+    for (final ad in ads) {
+      try {
+        final userDoc = await _firestore.collection('Users').doc(ad.userId).get();
+        UserModel? userModel;
+        if (userDoc.exists) {
+          userModel = UserModel.fromMap(userDoc.data()!);
         }
+        result.add(AdWithUserModel(ad: ad, userData: userModel));
+      } catch (e) {
+        result.add(AdWithUserModel(ad: ad));
       }
-      return Right(result);
-    } on FirebaseException catch (e) {
-      return Left('Firebase error: ${e.message}');
-    } catch (e) {
-      return Left('Unexpected error: ${e.toString()}');
     }
+
+    return Right(result);
+  } on FirebaseException catch (e) {
+    return Left('Firebase error: ${e.message}');
+  } catch (e) {
+    return Left('Unexpected error: ${e.toString()}');
   }
+}
+
 
   @override
   Future<Either<String, void>> deactivateAd(String adId) async {

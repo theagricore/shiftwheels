@@ -54,6 +54,7 @@ dependencies:
   persistent_bottom_nav_bar: ^6.2.1
   random_string: ^2.3.1
   sweep_animation_button: ^0.0.3
+  timeago: ^3.7.1
   url_launcher: ^6.3.1
 
 dev_dependencies:

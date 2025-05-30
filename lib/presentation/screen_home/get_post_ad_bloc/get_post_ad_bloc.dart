@@ -8,13 +8,14 @@ part 'get_post_ad_state.dart';
 
 class GetPostAdBloc extends Bloc<GetPostAdEvent, GetPostAdState> {
   final GetActiveAdsUsecase getActiveAdsUsecase;
-  List<AdWithUserModel> _allAds = []; // Store all ads for filtering
+  List<AdWithUserModel> _allAds = []; 
 
   GetPostAdBloc({required this.getActiveAdsUsecase})
       : super(GetPostAdInitial()) {
     on<FetchActiveAds>(_onFetchActiveAds);
     on<RefreshActiveAds>(_onRefreshActiveAds);
     on<FilterByBrandEvent>(_onFilterByBrand);
+
   }
 
   Future<void> _onFetchActiveAds(

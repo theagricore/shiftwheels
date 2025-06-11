@@ -10,7 +10,6 @@ import 'package:shiftwheels/data/auth/models/user_model.dart';
 import 'package:shiftwheels/presentation/screen_chat/chat_bloc/chat_bloc.dart';
 import 'package:shiftwheels/presentation/screen_chat/screen_ad_chat.dart';
 import 'package:shiftwheels/service_locater/service_locater.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
 class ScreenAdChatList extends StatelessWidget {
   const ScreenAdChatList({super.key});
@@ -35,35 +34,35 @@ class ScreenAdChatList extends StatelessWidget {
         body: BlocConsumer<ChatBloc, ChatState>(
           listener: (context, state) {
             if (state is ChatError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message)),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(state.message)));
             }
           },
           builder: (context, state) {
             if (state is ChatLoading) {
               return const Center(child: CircularProgressIndicator());
             } else if (state is UserChatsLoaded) {
-              if (state.chats.isEmpty) {
+              final sortedChats = List<ChatModel>.from(
+                state.chats,
+              )..sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+
+              if (sortedChats.isEmpty) {
                 return const Center(child: Text('No chats found'));
               }
               return ListView.builder(
-                itemCount: state.chats.length,
+                itemCount: sortedChats.length,
                 itemBuilder: (context, index) {
-                  final chat = state.chats[index];
+                  final chat = sortedChats[index];
                   return FutureBuilder<AdWithUserModel?>(
                     future: _fetchAdAndUser(context, chat.adId, chat),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const ListTile(
-                          title: Text('Loading...'),
-                        );
+                        return const ListTile(title: Text('Loading...'));
                       }
                       final adWithUser = snapshot.data;
                       if (adWithUser == null) {
-                        return const ListTile(
-                          title: Text('Ad not found'),
-                        );
+                        return const ListTile(title: Text('Ad not found'));
                       }
                       return _ChatListItem(
                         chat: chat,
@@ -83,18 +82,25 @@ class ScreenAdChatList extends StatelessWidget {
   }
 
   Future<AdWithUserModel?> _fetchAdAndUser(
-      BuildContext context, String adId, ChatModel chat) async {
+    BuildContext context,
+    String adId,
+    ChatModel chat,
+  ) async {
     try {
-      final adSnapshot =
-          await FirebaseFirestore.instance.collection('car_ads').doc(adId).get();
+      final adSnapshot = await FirebaseFirestore.instance
+          .collection('car_ads')
+          .doc(adId)
+          .get();
       if (!adSnapshot.exists) return null;
 
       final ad = AdsModel.fromMap(adSnapshot.data()!, adSnapshot.id);
-      final userId = chat.buyerId == FirebaseAuth.instance.currentUser?.uid
-          ? chat.sellerId
-          : chat.buyerId;
+      final userId =
+          chat.buyerId == FirebaseAuth.instance.currentUser?.uid
+              ? chat.sellerId
+              : chat.buyerId;
       final userSnapshot =
           await FirebaseFirestore.instance.collection('Users').doc(userId).get();
+
       UserModel? userModel;
       if (userSnapshot.exists) {
         userModel = UserModel.fromMap(userSnapshot.data()!);
@@ -122,15 +128,28 @@ class _ChatListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final ad = adWithUser.ad;
     final userData = adWithUser.userData;
-    final isUnread = chat.hasUnreadMessages &&
+    final isUnread =
+        chat.hasUnreadMessages &&
         chat.lastMessage.isNotEmpty &&
         chat.sellerId != currentUserId;
 
     return ListTile(
-      leading: CircleAvatar(
-        backgroundImage:
-            ad.imageUrls.isNotEmpty ? NetworkImage(ad.imageUrls.first) : null,
-        child: ad.imageUrls.isEmpty ? const Icon(Icons.car_rental) : null,
+      leading: Container(
+        width: 80,
+        height: 80,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          image: ad.imageUrls.isNotEmpty
+              ? DecorationImage(
+                  image: NetworkImage(ad.imageUrls.first),
+                  fit: BoxFit.cover,
+                )
+              : null,
+          color: AppColors.zSecondBackground,
+        ),
+        child: ad.imageUrls.isEmpty
+            ? const Icon(Icons.car_rental, size: 30, color: Colors.black54)
+            : null,
       ),
       title: Text(
         "${ad.brand} ${ad.model} (${ad.year})",
@@ -141,9 +160,32 @@ class _ChatListItem extends StatelessWidget {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            userData?.fullName ?? 'Unknown User',
-            style: const TextStyle(fontSize: 14),
+          Row(
+            children: [
+              Text(
+                userData?.fullName ?? 'Unknown User',
+                style: const TextStyle(fontSize: 14),
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (isUnread)
+                Container(
+                  margin: const EdgeInsets.only(left: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.zPrimaryColor.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'New',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(
@@ -161,36 +203,33 @@ class _ChatListItem extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            timeago.format(chat.lastMessageTime),
+            _formatTime(context, chat.lastMessageTime),
             style: const TextStyle(fontSize: 12),
           ),
-          if (isUnread)
-            Container(
-              margin: const EdgeInsets.only(top: 4),
-              padding: const EdgeInsets.all(6),
-              decoration: const BoxDecoration(
-                color: AppColors.zPrimaryColor,
-                shape: BoxShape.circle,
-              ),
-              child: const Text(
-                'New',
-                style: TextStyle(color: Colors.white, fontSize: 10),
-              ),
-            ),
         ],
       ),
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ScreenAdChat(
-              chatId: chat.id,
-              ad: ad,
-              userData: userData,
-            ),
+            builder: (context) =>
+                ScreenAdChat(chatId: chat.id, ad: ad, userData: userData),
           ),
         );
       },
     );
+  }
+
+  String _formatTime(BuildContext context, DateTime time) {
+    final now = DateTime.now();
+    final difference = now.difference(time);
+
+    if (difference.inMinutes < 1) {
+      return 'Now';
+    } else if (difference.inMinutes < 10) {
+      return '${difference.inMinutes} min';
+    } else {
+      return TimeOfDay.fromDateTime(time).format(context);
+    }
   }
 }

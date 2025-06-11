@@ -9,6 +9,7 @@ import 'package:shiftwheels/presentation/main_screen/screen_profile/ProfileBloc/
 import 'package:shiftwheels/presentation/add_post/add_post_bloc/add_post_bloc.dart';
 import 'package:shiftwheels/presentation/auth/auth_bloc/auth_bloc.dart';
 import 'package:shiftwheels/presentation/auth/google_auth/google_auth_bloc.dart';
+import 'package:shiftwheels/presentation/screen_chat/chat_bloc/chat_bloc.dart';
 import 'package:shiftwheels/presentation/screen_home/get_post_ad_bloc/get_post_ad_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/active_ads_bloc/active_ads_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/add_favourite_bloc/add_favourite_bloc.dart';
@@ -82,6 +83,9 @@ class MyApp extends StatelessWidget {
             ),
              BlocProvider<UpdateAdBloc>(
               create: (context) => sl<UpdateAdBloc>(),
+            ),
+             BlocProvider<ChatBloc>(
+              create: (context) => sl<ChatBloc>(),
             ),
           ],
           child: MaterialApp(

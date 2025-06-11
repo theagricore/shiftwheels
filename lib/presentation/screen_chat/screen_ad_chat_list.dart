@@ -1,0 +1,196 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftwheels/core/config/theme/app_colors.dart';
+import 'package:shiftwheels/data/add_post/models/ad_with_user_model.dart';
+import 'package:shiftwheels/data/add_post/models/ads_model.dart';
+import 'package:shiftwheels/data/add_post/models/chat_model.dart';
+import 'package:shiftwheels/data/auth/models/user_model.dart';
+import 'package:shiftwheels/presentation/screen_chat/chat_bloc/chat_bloc.dart';
+import 'package:shiftwheels/presentation/screen_chat/screen_ad_chat.dart';
+import 'package:shiftwheels/service_locater/service_locater.dart';
+import 'package:timeago/timeago.dart' as timeago;
+
+class ScreenAdChatList extends StatelessWidget {
+  const ScreenAdChatList({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (currentUserId == null) {
+      return const Scaffold(
+        body: Center(child: Text('Please log in to view chats')),
+      );
+    }
+
+    return BlocProvider(
+      create: (context) => sl<ChatBloc>()..add(const LoadUserChatsEvent()),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Chats'),
+          backgroundColor: AppColors.zPrimaryColor,
+        ),
+        body: BlocConsumer<ChatBloc, ChatState>(
+          listener: (context, state) {
+            if (state is ChatError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message)),
+              );
+            }
+          },
+          builder: (context, state) {
+            if (state is ChatLoading) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is UserChatsLoaded) {
+              if (state.chats.isEmpty) {
+                return const Center(child: Text('No chats found'));
+              }
+              return ListView.builder(
+                itemCount: state.chats.length,
+                itemBuilder: (context, index) {
+                  final chat = state.chats[index];
+                  return FutureBuilder<AdWithUserModel?>(
+                    future: _fetchAdAndUser(context, chat.adId, chat),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const ListTile(
+                          title: Text('Loading...'),
+                        );
+                      }
+                      final adWithUser = snapshot.data;
+                      if (adWithUser == null) {
+                        return const ListTile(
+                          title: Text('Ad not found'),
+                        );
+                      }
+                      return _ChatListItem(
+                        chat: chat,
+                        adWithUser: adWithUser,
+                        currentUserId: currentUserId,
+                      );
+                    },
+                  );
+                },
+              );
+            }
+            return const Center(child: CircularProgressIndicator());
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<AdWithUserModel?> _fetchAdAndUser(
+      BuildContext context, String adId, ChatModel chat) async {
+    try {
+      final adSnapshot =
+          await FirebaseFirestore.instance.collection('car_ads').doc(adId).get();
+      if (!adSnapshot.exists) return null;
+
+      final ad = AdsModel.fromMap(adSnapshot.data()!, adSnapshot.id);
+      final userId = chat.buyerId == FirebaseAuth.instance.currentUser?.uid
+          ? chat.sellerId
+          : chat.buyerId;
+      final userSnapshot =
+          await FirebaseFirestore.instance.collection('Users').doc(userId).get();
+      UserModel? userModel;
+      if (userSnapshot.exists) {
+        userModel = UserModel.fromMap(userSnapshot.data()!);
+      }
+
+      return AdWithUserModel(ad: ad, userData: userModel);
+    } catch (e) {
+      return null;
+    }
+  }
+}
+
+class _ChatListItem extends StatelessWidget {
+  final ChatModel chat;
+  final AdWithUserModel adWithUser;
+  final String currentUserId;
+
+  const _ChatListItem({
+    required this.chat,
+    required this.adWithUser,
+    required this.currentUserId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ad = adWithUser.ad;
+    final userData = adWithUser.userData;
+    final isUnread = chat.hasUnreadMessages &&
+        chat.lastMessage.isNotEmpty &&
+        chat.sellerId != currentUserId;
+
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundImage:
+            ad.imageUrls.isNotEmpty ? NetworkImage(ad.imageUrls.first) : null,
+        child: ad.imageUrls.isEmpty ? const Icon(Icons.car_rental) : null,
+      ),
+      title: Text(
+        "${ad.brand} ${ad.model} (${ad.year})",
+        style: TextStyle(
+          fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            userData?.fullName ?? 'Unknown User',
+            style: const TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            chat.lastMessage.isEmpty ? 'No messages yet' : chat.lastMessage,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              color: isUnread ? AppColors.zPrimaryColor : Colors.grey,
+            ),
+          ),
+        ],
+      ),
+      trailing: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            timeago.format(chat.lastMessageTime),
+            style: const TextStyle(fontSize: 12),
+          ),
+          if (isUnread)
+            Container(
+              margin: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: AppColors.zPrimaryColor,
+                shape: BoxShape.circle,
+              ),
+              child: const Text(
+                'New',
+                style: TextStyle(color: Colors.white, fontSize: 10),
+              ),
+            ),
+        ],
+      ),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ScreenAdChat(
+              chatId: chat.id,
+              ad: ad,
+              userData: userData,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}

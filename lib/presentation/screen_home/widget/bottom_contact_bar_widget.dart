@@ -4,6 +4,7 @@ import 'package:shiftwheels/core/config/theme/app_colors.dart';
 class BottomContactBarWidget extends StatelessWidget {
   final VoidCallback onChatPressed;
   final VoidCallback onCallPressed;
+
   const BottomContactBarWidget({
     super.key,
     required this.onChatPressed,
@@ -21,17 +22,18 @@ class BottomContactBarWidget extends StatelessWidget {
           Expanded(
             child: ElevatedButton.icon(
               onPressed: onChatPressed,
-              icon: const Icon(Icons.chat, color: Colors.white),
+              icon: const Icon(Icons.chat, color: Colors.white,size: 25,),
               label: const Text(
                 "Chat",
                 style: TextStyle(
                   color: Colors.white,
+                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.zPrimaryColor,
-                minimumSize: const Size(double.infinity, 50),
+                minimumSize: const Size(double.infinity, 58), 
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -42,17 +44,18 @@ class BottomContactBarWidget extends StatelessWidget {
           Expanded(
             child: ElevatedButton.icon(
               onPressed: onCallPressed,
-              icon: const Icon(Icons.call, color: Colors.white),
+              icon: const Icon(Icons.call, color: Colors.white,size: 25,),
               label: const Text(
                 "Call",
                 style: TextStyle(
+                  fontSize: 20,
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.zPrimaryColor,
-                minimumSize: const Size(double.infinity, 50),
+                minimumSize: const Size(double.infinity, 58), 
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),

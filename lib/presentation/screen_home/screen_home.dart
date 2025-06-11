@@ -166,7 +166,6 @@ class ScreenHome extends StatelessWidget {
     );
   }
 
-  /// Ad Grid View
   Widget _buildAdList(BuildContext context, List ads) {
     return RefreshIndicator(
       onRefresh: () async {

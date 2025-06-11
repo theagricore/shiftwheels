@@ -42,21 +42,16 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
   @override
   void initState() {
     super.initState();
-    // Initialize form fields with existing ad data
     yearController.text = widget.ad.year.toString();
     kmController.text = widget.ad.kmDriven.toString();
     noOfOwnersController.text = widget.ad.noOfOwners.toString();
     descriptionController.text = widget.ad.description;
     priceController.text = widget.ad.price.toStringAsFixed(2);
     imagePaths = widget.ad.imageUrls;
-    
-    // Initialize brand, model and fuel with existing ad data
     selectedBrand = BrandModel(id: '', brandName: widget.ad.brand);
     selectedModel = widget.ad.model;
     selectedFuel = FuelsModel(id: '', fuels: widget.ad.fuelType);
-    
-    // Fetch models for the brand if needed
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AddPostBloc>().add(FetchBrandsEvent());
       context.read<GetFuelsBloc>().add(FetchFuels());
     });
@@ -199,7 +194,6 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
   Widget _buildFuelsBottomSheet() {
     return BlocBuilder<GetFuelsBloc, GetFuelsState>(
       builder: (context, state) {
-        // Find the exact fuel from the list if available
         if (state is GetFuelsLoaded) {
           final exactFuel = state.fuels.firstWhere(
             (fuel) => fuel.fuels == widget.ad.fuelType,

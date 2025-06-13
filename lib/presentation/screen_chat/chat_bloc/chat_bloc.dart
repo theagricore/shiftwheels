@@ -5,7 +5,7 @@ import 'package:shiftwheels/data/add_post/models/chat_model.dart';
 import 'package:shiftwheels/data/add_post/models/message_model.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/create_chat_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_chat_messages_usecase.dart';
-import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_user_chats_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_user_chats_stream_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/mark_messages_read_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/send_message_usecase.dart';
 
@@ -14,7 +14,7 @@ part 'chat_state.dart';
 
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final CreateChatUsecase _createChatUsecase;
-  final GetUserChatsUsecase _getUserChatsUsecase;
+  final GetUserChatsStreamUsecase _getUserChatsStreamUsecase;
   final GetChatMessagesUsecase _getChatMessagesUsecase;
   final SendMessageUsecase _sendMessageUsecase;
   final MarkMessagesReadUsecase _markMessagesReadUsecase;
@@ -22,21 +22,22 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   ChatBloc({
     required CreateChatUsecase createChatUsecase,
-    required GetUserChatsUsecase getUserChatsUsecase,
+    required GetUserChatsStreamUsecase getUserChatsStreamUsecase,
     required GetChatMessagesUsecase getChatMessagesUsecase,
     required SendMessageUsecase sendMessageUsecase,
     required MarkMessagesReadUsecase markMessagesReadUsecase,
   })  : _createChatUsecase = createChatUsecase,
-        _getUserChatsUsecase = getUserChatsUsecase,
+        _getUserChatsStreamUsecase = getUserChatsStreamUsecase,
         _getChatMessagesUsecase = getChatMessagesUsecase,
         _sendMessageUsecase = sendMessageUsecase,
         _markMessagesReadUsecase = markMessagesReadUsecase,
         super(ChatInitial()) {
     on<CreateChatEvent>(_onCreateChat);
-    on<LoadUserChatsEvent>(_onLoadUserChats);
+    on<LoadUserChatsStreamEvent>(_onLoadUserChatsStream);
     on<LoadChatMessagesEvent>(_onLoadChatMessages);
     on<SendMessageEvent>(_onSendMessage);
     on<MarkMessagesReadEvent>(_onMarkMessagesRead);
+    on<UpdateChatListEvent>(_onUpdateChatList);
   }
 
   Future<void> _onCreateChat(CreateChatEvent event, Emitter<ChatState> emit) async {
@@ -61,21 +62,24 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     );
   }
 
-  Future<void> _onLoadUserChats(LoadUserChatsEvent event, Emitter<ChatState> emit) async {
-    emit(ChatLoading());
-    final currentUserId = _auth.currentUser?.uid;
-    if (currentUserId == null) {
-      emit(ChatError('User not logged in'));
-      return;
-    }
-
-    final result = await _getUserChatsUsecase.call(param: currentUserId);
-
-    result.fold(
-      (error) => emit(ChatError(error)),
-      (chats) => emit(UserChatsLoaded(chats)),
-    );
+Future<void> _onLoadUserChatsStream(
+  LoadUserChatsStreamEvent event,
+  Emitter<ChatState> emit,
+) async {
+  emit(ChatLoading());
+  final currentUserId = _auth.currentUser?.uid;
+  if (currentUserId == null) {
+    emit(ChatError('User not logged in'));
+    return;
   }
+
+  final result = await _getUserChatsStreamUsecase.call(param: currentUserId);
+
+  result.fold(
+    (error) => emit(ChatError(error)),
+    (stream) => emit(UserChatsStreamLoaded(stream)),
+  );
+}
 
   Future<void> _onLoadChatMessages(LoadChatMessagesEvent event, Emitter<ChatState> emit) async {
     emit(ChatLoading());
@@ -118,7 +122,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
     result.fold(
       (error) => emit(ChatError(error)),
-      (_) => null,
+      (_) => emit(MessageSent()),
     );
   }
 
@@ -138,7 +142,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
     result.fold(
       (error) => emit(ChatError(error)),
-      (_) => null,
+      (_) => emit(MessagesMarkedRead()),
     );
+  }
+
+  void _onUpdateChatList(UpdateChatListEvent event, Emitter<ChatState> emit) {
+    emit(ChatListUpdated(event.chats));
   }
 }

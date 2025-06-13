@@ -30,7 +30,9 @@ abstract class FirebasePostService {
     String buyerId,
     String sellerId,
   );
-  Future<Either<String, List<ChatModel>>> getUserChats(String userId);
+  Future<Either<String, Stream<List<ChatModel>>>> getUserChatsStream(
+    String userId,
+  );
   Future<Either<String, Stream<List<MessageModel>>>> getChatMessages(
     String chatId,
   );
@@ -459,17 +461,21 @@ class PostFirebaseServiceImpl extends FirebasePostService {
     }
   }
 
- @override
+  @override
   Future<Either<String, String>> createChat(
-      String adId, String buyerId, String sellerId) async {
+    String adId,
+    String buyerId,
+    String sellerId,
+  ) async {
     try {
       // Check if chat already exists
-      final existingChats = await _firestore
-          .collection('chats')
-          .where('adId', isEqualTo: adId)
-          .where('buyerId', isEqualTo: buyerId)
-          .where('sellerId', isEqualTo: sellerId)
-          .get();
+      final existingChats =
+          await _firestore
+              .collection('chats')
+              .where('adId', isEqualTo: adId)
+              .where('buyerId', isEqualTo: buyerId)
+              .where('sellerId', isEqualTo: sellerId)
+              .get();
 
       if (existingChats.docs.isNotEmpty) {
         return Right(existingChats.docs.first.id);
@@ -498,41 +504,9 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   }
 
   @override
-  Future<Either<String, List<ChatModel>>> getUserChats(String userId) async {
-    try {
-       final chatsSnapshot = await _firestore
-        .collection('chats')
-        .where('buyerId', isEqualTo: userId)
-        .orderBy('lastMessageTime', descending: true)
-        .get();
-
-    final sellerChatsSnapshot = await _firestore
-        .collection('chats')
-        .where('sellerId', isEqualTo: userId)
-        .orderBy('lastMessageTime', descending: true)
-        .get();
-
-      final chats = <ChatModel>[];
-      chats.addAll(
-          chatsSnapshot.docs.map((doc) => ChatModel.fromMap(doc.data(), doc.id)));
-      chats.addAll(sellerChatsSnapshot.docs
-          .map((doc) => ChatModel.fromMap(doc.data(), doc.id)));
-
-      if (chats.isEmpty) {
-        return Left('No chats found');
-      }
-
-      return Right(chats);
-    } on FirebaseException catch (e) {
-      return Left('Firebase error: ${e.message}');
-    } catch (e) {
-      return Left('Unexpected error: ${e.toString()}');
-    }
-  }
-
-  @override
   Future<Either<String, Stream<List<MessageModel>>>> getChatMessages(
-      String chatId) async {
+    String chatId,
+  ) async {
     try {
       final messagesStream = _firestore
           .collection('chats')
@@ -540,9 +514,12 @@ class PostFirebaseServiceImpl extends FirebasePostService {
           .collection('messages')
           .orderBy('timestamp', descending: true)
           .snapshots()
-          .map((snapshot) => snapshot.docs
-              .map((doc) => MessageModel.fromMap(doc.data(), doc.id))
-              .toList());
+          .map(
+            (snapshot) =>
+                snapshot.docs
+                    .map((doc) => MessageModel.fromMap(doc.data(), doc.id))
+                    .toList(),
+          );
 
       return Right(messagesStream);
     } on FirebaseException catch (e) {
@@ -554,7 +531,10 @@ class PostFirebaseServiceImpl extends FirebasePostService {
 
   @override
   Future<Either<String, void>> sendMessage(
-      String chatId, String senderId, String content) async {
+    String chatId,
+    String senderId,
+    String content,
+  ) async {
     try {
       final message = MessageModel(
         id: '',
@@ -587,15 +567,18 @@ class PostFirebaseServiceImpl extends FirebasePostService {
 
   @override
   Future<Either<String, void>> markMessagesAsRead(
-      String chatId, String userId) async {
+    String chatId,
+    String userId,
+  ) async {
     try {
-      final messagesSnapshot = await _firestore
-          .collection('chats')
-          .doc(chatId)
-          .collection('messages')
-          .where('senderId', isNotEqualTo: userId)
-          .where('isRead', isEqualTo: false)
-          .get();
+      final messagesSnapshot =
+          await _firestore
+              .collection('chats')
+              .doc(chatId)
+              .collection('messages')
+              .where('senderId', isNotEqualTo: userId)
+              .where('isRead', isEqualTo: false)
+              .get();
 
       final batch = _firestore.batch();
       for (final doc in messagesSnapshot.docs) {
@@ -613,6 +596,48 @@ class PostFirebaseServiceImpl extends FirebasePostService {
       return Left('Firebase error: ${e.message}');
     } catch (e) {
       return Left('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Either<String, Stream<List<ChatModel>>>> getUserChatsStream(
+    String userId,
+  ) async {
+    try {
+      final buyerChatsStream = _firestore
+          .collection('chats')
+          .where('buyerId', isEqualTo: userId)
+          .orderBy('lastMessageTime', descending: true)
+          .snapshots()
+          .map(
+            (snapshot) =>
+                snapshot.docs
+                    .map((doc) => ChatModel.fromMap(doc.data(), doc.id))
+                    .toList(),
+          );
+
+      final sellerChatsStream = _firestore
+          .collection('chats')
+          .where('sellerId', isEqualTo: userId)
+          .orderBy('lastMessageTime', descending: true)
+          .snapshots()
+          .map(
+            (snapshot) =>
+                snapshot.docs
+                    .map((doc) => ChatModel.fromMap(doc.data(), doc.id))
+                    .toList(),
+          );
+
+      final combinedStream = buyerChatsStream.asyncExpand((buyerChats) async* {
+        final sellerChats = await sellerChatsStream.first;
+        final allChats = [...buyerChats, ...sellerChats];
+        allChats.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+        yield allChats;
+      });
+
+      return Right(combinedStream);
+    } catch (e) {
+      return Left('Failed to get user chats stream: ${e.toString()}');
     }
   }
 }

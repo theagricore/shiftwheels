@@ -17,8 +17,8 @@ class CreateChatEvent extends ChatEvent {
   List<Object> get props => [adId, sellerId];
 }
 
-class LoadUserChatsEvent extends ChatEvent {
-  const LoadUserChatsEvent();
+class LoadUserChatsStreamEvent extends ChatEvent {
+  const LoadUserChatsStreamEvent();
 }
 
 class LoadChatMessagesEvent extends ChatEvent {
@@ -47,4 +47,13 @@ class MarkMessagesReadEvent extends ChatEvent {
 
   @override
   List<Object> get props => [chatId];
+}
+
+class UpdateChatListEvent extends ChatEvent {
+  final List<ChatModel> chats;
+
+  const UpdateChatListEvent(this.chats);
+
+  @override
+  List<Object> get props => [chats];
 }

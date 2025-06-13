@@ -7,7 +7,7 @@ import 'package:shiftwheels/data/auth/repository/auth_repository_impl.dart';
 import 'package:shiftwheels/domain/add_post/repository/post_repository.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/create_chat_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_chat_messages_usecase.dart';
-import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_user_chats_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_user_chats_stream_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/mark_messages_read_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/send_message_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/deactive-ad_usecase.dart';
@@ -76,7 +76,7 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<DeactivateAdUsecase>(DeactivateAdUsecase(sl<PostRepository>()));
   sl.registerSingleton<UpdateAdUsecase>(UpdateAdUsecase(sl<PostRepository>()));
   sl.registerSingleton<CreateChatUsecase>(CreateChatUsecase(sl<PostRepository>()));
-  sl.registerSingleton<GetUserChatsUsecase>(GetUserChatsUsecase(sl<PostRepository>()));
+  sl.registerSingleton<GetUserChatsStreamUsecase>(GetUserChatsStreamUsecase(sl<PostRepository>()));
   sl.registerSingleton<GetChatMessagesUsecase>(GetChatMessagesUsecase(sl<PostRepository>()));
   sl.registerSingleton<SendMessageUsecase>(SendMessageUsecase(sl<PostRepository>()));
   sl.registerSingleton<MarkMessagesReadUsecase>(MarkMessagesReadUsecase(sl<PostRepository>()));
@@ -112,7 +112,7 @@ Future<void> initializeDependencies() async {
   sl.registerFactory<UpdateAdBloc>(() => UpdateAdBloc(updateAdUsecase: sl<UpdateAdUsecase>()));
   sl.registerFactory<ChatBloc>(() => ChatBloc(
     createChatUsecase: sl<CreateChatUsecase>(),
-    getUserChatsUsecase: sl<GetUserChatsUsecase>(),
+    getUserChatsStreamUsecase: sl<GetUserChatsStreamUsecase>(),
     getChatMessagesUsecase: sl<GetChatMessagesUsecase>(),
     sendMessageUsecase: sl<SendMessageUsecase>(),
     markMessagesReadUsecase: sl<MarkMessagesReadUsecase>(),

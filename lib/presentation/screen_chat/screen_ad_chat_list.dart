@@ -9,7 +9,6 @@ import 'package:shiftwheels/data/add_post/models/chat_model.dart';
 import 'package:shiftwheels/data/auth/models/user_model.dart';
 import 'package:shiftwheels/presentation/screen_chat/chat_bloc/chat_bloc.dart';
 import 'package:shiftwheels/presentation/screen_chat/screen_ad_chat.dart';
-import 'package:shiftwheels/service_locater/service_locater.dart';
 
 class ScreenAdChatList extends StatefulWidget {
   const ScreenAdChatList({super.key});
@@ -20,6 +19,12 @@ class ScreenAdChatList extends StatefulWidget {
 
 class _ScreenAdChatListState extends State<ScreenAdChatList> {
   @override
+  void initState() {
+    super.initState();
+    context.read<ChatBloc>().add(const LoadUserChatsStreamEvent());
+  }
+
+  @override
   Widget build(BuildContext context) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
 
@@ -29,36 +34,41 @@ class _ScreenAdChatListState extends State<ScreenAdChatList> {
       );
     }
 
-    return BlocProvider(
-      create: (context) => sl<ChatBloc>()..add(const LoadUserChatsEvent()),
-      child: Scaffold(
-       
-        body: BlocConsumer<ChatBloc, ChatState>(
-          listener: (context, state) {
-            if (state is ChatError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message)),
-              );
-            }
-          },
-          builder: (context, state) {
-            if (state is ChatLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is UserChatsLoaded) {
-              final sortedChats = List<ChatModel>.from(state.chats)
-                ..sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Chats'),
+        backgroundColor: AppColors.zPrimaryColor,
+      ),
+      body: BlocConsumer<ChatBloc, ChatState>(
+        listener: (context, state) {
+          if (state is ChatError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state is UserChatsStreamLoaded) {
+            return StreamBuilder<List<ChatModel>>(
+              stream: state.chatsStream,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
 
-              if (sortedChats.isEmpty) {
-                return const Center(child: Text('No chats found'));
-              }
-              return RefreshIndicator(
-                onRefresh: () async {
-                  context.read<ChatBloc>().add(const LoadUserChatsEvent());
-                },
-                child: ListView.builder(
-                  itemCount: sortedChats.length,
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final chats = snapshot.data!;
+                if (chats.isEmpty) {
+                  return const Center(child: Text('No chats found'));
+                }
+
+                return ListView.builder(
+                  itemCount: chats.length,
                   itemBuilder: (context, index) {
-                    final chat = sortedChats[index];
+                    final chat = chats[index];
                     return FutureBuilder<AdWithUserModel?>(
                       future: _fetchAdAndUser(context, chat.adId, chat),
                       builder: (context, snapshot) {
@@ -77,12 +87,14 @@ class _ScreenAdChatListState extends State<ScreenAdChatList> {
                       },
                     );
                   },
-                ),
-              );
-            }
+                );
+              },
+            );
+          } else if (state is ChatLoading) {
             return const Center(child: CircularProgressIndicator());
-          },
-        ),
+          }
+          return const Center(child: Text('Start a conversation'));
+        },
       ),
     );
   }
@@ -189,7 +201,15 @@ class _ChatListItem extends StatelessWidget {
             _formatTime(context, chat.lastMessageTime),
             style: const TextStyle(fontSize: 12),
           ),
-          
+          if (isUnread)
+            Container(
+              width: 12,
+              height: 12,
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+            ),
         ],
       ),
       onTap: () async {
@@ -204,9 +224,8 @@ class _ChatListItem extends StatelessWidget {
           ),
         );
 
-        // Refresh chats when returning from chat screen
         if (result == true && context.mounted) {
-          context.read<ChatBloc>().add(const LoadUserChatsEvent());
+          context.read<ChatBloc>().add(const LoadUserChatsStreamEvent());
         }
       },
     );

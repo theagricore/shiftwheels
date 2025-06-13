@@ -23,30 +23,42 @@ class ScreenAdChat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<ChatBloc>()..add(LoadChatMessagesEvent(chatId: chatId)),
-      child: Scaffold(
-        appBar: AppBar(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.of(context).pop(true);
+        return false;
+      },
+      child: BlocProvider(
+        create: (context) => sl<ChatBloc>()..add(LoadChatMessagesEvent(chatId: chatId)),
+        child: Scaffold(
+          appBar: AppBar(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "${ad.brand} ${ad.model} (${ad.year})",
+                  style: const TextStyle(fontSize: 16),
+                ),
+                Text(
+                  userData?.fullName ?? 'Unknown User',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.zPrimaryColor,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                Navigator.of(context).pop(true); // Return true to indicate refresh needed
+              },
+            ),
+          ),
+          body: Column(
             children: [
-              Text(
-                "${ad.brand} ${ad.model} (${ad.year})",
-                style: const TextStyle(fontSize: 16),
-              ),
-              Text(
-                userData?.fullName ?? 'Unknown User',
-                style: const TextStyle(fontSize: 12),
-              ),
+              Expanded(child: _MessagesList(chatId: chatId)),
+              _MessageInput(chatId: chatId),
             ],
           ),
-          backgroundColor: AppColors.zPrimaryColor,
-        ),
-        body: Column(
-          children: [
-            Expanded(child: _MessagesList(chatId: chatId)),
-            _MessageInput(chatId: chatId),
-          ],
         ),
       ),
     );
@@ -113,8 +125,7 @@ class _MessageBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       child: Align(
-        alignment:
-            isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
+        alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
           padding: const EdgeInsets.all(12),
           margin: const EdgeInsets.symmetric(vertical: 2),
@@ -134,8 +145,7 @@ class _MessageBubble extends StatelessWidget {
               Text(
                 message.content,
                 style: TextStyle(
-                  color: isCurrentUser ? Colors.white : AppColors.zblack,
-                ),
+                  color: isCurrentUser ? Colors.white : AppColors.zblack),
               ),
               const SizedBox(height: 4),
               Text(

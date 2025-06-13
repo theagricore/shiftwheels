@@ -9,7 +9,6 @@ import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_user_chats_
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/mark_messages_read_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/send_message_usecase.dart';
 
-
 part 'chat_event.dart';
 part 'chat_state.dart';
 

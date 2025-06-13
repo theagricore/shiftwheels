@@ -11,9 +11,14 @@ import 'package:shiftwheels/presentation/screen_chat/chat_bloc/chat_bloc.dart';
 import 'package:shiftwheels/presentation/screen_chat/screen_ad_chat.dart';
 import 'package:shiftwheels/service_locater/service_locater.dart';
 
-class ScreenAdChatList extends StatelessWidget {
+class ScreenAdChatList extends StatefulWidget {
   const ScreenAdChatList({super.key});
 
+  @override
+  State<ScreenAdChatList> createState() => _ScreenAdChatListState();
+}
+
+class _ScreenAdChatListState extends State<ScreenAdChatList> {
   @override
   Widget build(BuildContext context) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
@@ -27,51 +32,52 @@ class ScreenAdChatList extends StatelessWidget {
     return BlocProvider(
       create: (context) => sl<ChatBloc>()..add(const LoadUserChatsEvent()),
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Chats'),
-          backgroundColor: AppColors.zPrimaryColor,
-        ),
+       
         body: BlocConsumer<ChatBloc, ChatState>(
           listener: (context, state) {
             if (state is ChatError) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(state.message)));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message)),
+              );
             }
           },
           builder: (context, state) {
             if (state is ChatLoading) {
               return const Center(child: CircularProgressIndicator());
             } else if (state is UserChatsLoaded) {
-              final sortedChats = List<ChatModel>.from(
-                state.chats,
-              )..sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+              final sortedChats = List<ChatModel>.from(state.chats)
+                ..sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
 
               if (sortedChats.isEmpty) {
                 return const Center(child: Text('No chats found'));
               }
-              return ListView.builder(
-                itemCount: sortedChats.length,
-                itemBuilder: (context, index) {
-                  final chat = sortedChats[index];
-                  return FutureBuilder<AdWithUserModel?>(
-                    future: _fetchAdAndUser(context, chat.adId, chat),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const ListTile(title: Text('Loading...'));
-                      }
-                      final adWithUser = snapshot.data;
-                      if (adWithUser == null) {
-                        return const ListTile(title: Text('Ad not found'));
-                      }
-                      return _ChatListItem(
-                        chat: chat,
-                        adWithUser: adWithUser,
-                        currentUserId: currentUserId,
-                      );
-                    },
-                  );
+              return RefreshIndicator(
+                onRefresh: () async {
+                  context.read<ChatBloc>().add(const LoadUserChatsEvent());
                 },
+                child: ListView.builder(
+                  itemCount: sortedChats.length,
+                  itemBuilder: (context, index) {
+                    final chat = sortedChats[index];
+                    return FutureBuilder<AdWithUserModel?>(
+                      future: _fetchAdAndUser(context, chat.adId, chat),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const ListTile(title: Text('Loading...'));
+                        }
+                        final adWithUser = snapshot.data;
+                        if (adWithUser == null) {
+                          return const ListTile(title: Text('Ad not found'));
+                        }
+                        return _ChatListItem(
+                          chat: chat,
+                          adWithUser: adWithUser,
+                          currentUserId: currentUserId,
+                        );
+                      },
+                    );
+                  },
+                ),
               );
             }
             return const Center(child: CircularProgressIndicator());
@@ -94,10 +100,9 @@ class ScreenAdChatList extends StatelessWidget {
       if (!adSnapshot.exists) return null;
 
       final ad = AdsModel.fromMap(adSnapshot.data()!, adSnapshot.id);
-      final userId =
-          chat.buyerId == FirebaseAuth.instance.currentUser?.uid
-              ? chat.sellerId
-              : chat.buyerId;
+      final userId = chat.buyerId == FirebaseAuth.instance.currentUser?.uid
+          ? chat.sellerId
+          : chat.buyerId;
       final userSnapshot =
           await FirebaseFirestore.instance.collection('Users').doc(userId).get();
 
@@ -128,8 +133,7 @@ class _ChatListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final ad = adWithUser.ad;
     final userData = adWithUser.userData;
-    final isUnread =
-        chat.hasUnreadMessages &&
+    final isUnread = chat.hasUnreadMessages &&
         chat.lastMessage.isNotEmpty &&
         chat.sellerId != currentUserId;
 
@@ -167,24 +171,6 @@ class _ChatListItem extends StatelessWidget {
                 style: const TextStyle(fontSize: 14),
                 overflow: TextOverflow.ellipsis,
               ),
-              if (isUnread)
-                Container(
-                  margin: const EdgeInsets.only(left: 8),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.zPrimaryColor.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    'New',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
             ],
           ),
           const SizedBox(height: 4),
@@ -192,10 +178,7 @@ class _ChatListItem extends StatelessWidget {
             chat.lastMessage.isEmpty ? 'No messages yet' : chat.lastMessage,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 12,
-              color: isUnread ? AppColors.zPrimaryColor : Colors.grey,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey),
           ),
         ],
       ),
@@ -206,16 +189,25 @@ class _ChatListItem extends StatelessWidget {
             _formatTime(context, chat.lastMessageTime),
             style: const TextStyle(fontSize: 12),
           ),
+          
         ],
       ),
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        final result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                ScreenAdChat(chatId: chat.id, ad: ad, userData: userData),
+            builder: (context) => ScreenAdChat(
+              chatId: chat.id,
+              ad: ad,
+              userData: userData,
+            ),
           ),
         );
+
+        // Refresh chats when returning from chat screen
+        if (result == true && context.mounted) {
+          context.read<ChatBloc>().add(const LoadUserChatsEvent());
+        }
       },
     );
   }
@@ -226,10 +218,36 @@ class _ChatListItem extends StatelessWidget {
 
     if (difference.inMinutes < 1) {
       return 'Now';
-    } else if (difference.inMinutes < 10) {
-      return '${difference.inMinutes} min';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} min ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} hr ago';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else if (difference.inDays == 2) {
+      return '2 days ago';
     } else {
-      return TimeOfDay.fromDateTime(time).format(context);
+      return '${time.day.toString().padLeft(2, '0')} '
+          '${_monthName(time.month)} '
+          '${time.year}';
     }
+  }
+
+  String _monthName(int month) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[month - 1];
   }
 }

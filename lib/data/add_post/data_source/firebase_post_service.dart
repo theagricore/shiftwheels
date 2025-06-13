@@ -264,7 +264,6 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   @override
   Future<Either<String, List<AdWithUserModel>>> getActiveAdsWithUsers() async {
     try {
-      // Get all active ads
       final adsSnapshot =
           await _firestore
               .collection('car_ads')
@@ -476,7 +475,6 @@ class PostFirebaseServiceImpl extends FirebasePostService {
         return Right(existingChats.docs.first.id);
       }
 
-      // Create new chat
       final chatData = ChatModel(
         id: '',
         adId: adId,
@@ -488,7 +486,6 @@ class PostFirebaseServiceImpl extends FirebasePostService {
       );
 
       final docRef = await _firestore.collection('chats').add(chatData.toMap());
-      // Update the car_ads document to include the chat ID
       await _firestore.collection('car_ads').doc(adId).update({
         'chatIds': FieldValue.arrayUnion([docRef.id]),
       });

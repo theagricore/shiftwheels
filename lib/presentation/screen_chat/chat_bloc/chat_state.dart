@@ -20,19 +20,23 @@ final class ChatCreated extends ChatState {
   List<Object> get props => [chatId];
 }
 
-class UserChatsStreamLoaded extends ChatState {
-  final Stream<List<ChatModel>> chatsStream;
+final class ChatsLoading extends ChatState {}
 
-  const UserChatsStreamLoaded(this.chatsStream);
+final class ChatsLoaded extends ChatState {
+  final Stream<List<ChatModel>> chats;
+
+  const ChatsLoaded(this.chats);
 
   @override
-  List<Object> get props => [chatsStream];
+  List<Object> get props => [chats];
 }
 
-class ChatMessagesLoaded extends ChatState {
+final class MessagesLoading extends ChatState {}
+
+final class MessagesLoaded extends ChatState {
   final Stream<List<MessageModel>> messages;
 
-  const ChatMessagesLoaded(this.messages);
+  const MessagesLoaded(this.messages);
 
   @override
   List<Object> get props => [messages];
@@ -41,15 +45,6 @@ class ChatMessagesLoaded extends ChatState {
 final class MessageSent extends ChatState {}
 
 final class MessagesMarkedRead extends ChatState {}
-
-final class ChatListUpdated extends ChatState {
-  final List<ChatModel> chats;
-
-  const ChatListUpdated(this.chats);
-
-  @override
-  List<Object> get props => [chats];
-}
 
 final class ChatError extends ChatState {
   final String message;

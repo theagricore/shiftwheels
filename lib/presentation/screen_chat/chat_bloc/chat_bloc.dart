@@ -1,11 +1,10 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shiftwheels/data/add_post/models/chat_model.dart';
 import 'package:shiftwheels/data/add_post/models/message_model.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/create_chat_usecase.dart';
-import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_chat_messages_usecase.dart';
-import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_user_chats_stream_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_chats_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_messages_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/mark_messages_read_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/send_message_usecase.dart';
 
@@ -13,138 +12,91 @@ part 'chat_event.dart';
 part 'chat_state.dart';
 
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
-  final CreateChatUsecase _createChatUsecase;
-  final GetUserChatsStreamUsecase _getUserChatsStreamUsecase;
-  final GetChatMessagesUsecase _getChatMessagesUsecase;
-  final SendMessageUsecase _sendMessageUsecase;
-  final MarkMessagesReadUsecase _markMessagesReadUsecase;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final CreateChatUseCase _createChatUseCase;
+  final GetChatsUseCase _getChatsUseCase;
+  final GetMessagesUseCase _getMessagesUseCase;
+  final SendMessageUseCase _sendMessageUseCase;
+  final MarkMessagesReadUseCase _markMessagesReadUseCase;
 
   ChatBloc({
-    required CreateChatUsecase createChatUsecase,
-    required GetUserChatsStreamUsecase getUserChatsStreamUsecase,
-    required GetChatMessagesUsecase getChatMessagesUsecase,
-    required SendMessageUsecase sendMessageUsecase,
-    required MarkMessagesReadUsecase markMessagesReadUsecase,
-  }) : _createChatUsecase = createChatUsecase,
-       _getUserChatsStreamUsecase = getUserChatsStreamUsecase,
-       _getChatMessagesUsecase = getChatMessagesUsecase,
-       _sendMessageUsecase = sendMessageUsecase,
-       _markMessagesReadUsecase = markMessagesReadUsecase,
-       super(ChatInitial()) {
+    required CreateChatUseCase createChatUseCase,
+    required GetChatsUseCase getChatsUseCase,
+    required GetMessagesUseCase getMessagesUseCase,
+    required SendMessageUseCase sendMessageUseCase,
+    required MarkMessagesReadUseCase markMessagesReadUseCase,
+  })  : _createChatUseCase = createChatUseCase,
+        _getChatsUseCase = getChatsUseCase,
+        _getMessagesUseCase = getMessagesUseCase,
+        _sendMessageUseCase = sendMessageUseCase,
+        _markMessagesReadUseCase = markMessagesReadUseCase,
+        super(ChatInitial()) {
     on<CreateChatEvent>(_onCreateChat);
-    on<LoadUserChatsStreamEvent>(_onLoadUserChatsStream);
-    on<LoadChatMessagesEvent>(_onLoadChatMessages);
+    on<LoadChatsEvent>(_onLoadChats);
+    on<LoadMessagesEvent>(_onLoadMessages);
     on<SendMessageEvent>(_onSendMessage);
     on<MarkMessagesReadEvent>(_onMarkMessagesRead);
-    on<UpdateChatListEvent>(_onUpdateChatList);
   }
 
-  Future<void> _onCreateChat(
-    CreateChatEvent event,
-    Emitter<ChatState> emit,
-  ) async {
+  Future<void> _onCreateChat(CreateChatEvent event, Emitter<ChatState> emit) async {
     emit(ChatLoading());
-    final currentUserId = _auth.currentUser?.uid;
-    if (currentUserId == null) {
-      emit(ChatError('User not logged in'));
-      return;
-    }
-
-    final result = await _createChatUsecase.call(
-      param: CreateChatParams(
-        adId: event.adId,
-        buyerId: currentUserId,
-        sellerId: event.sellerId,
-      ),
-    );
+    final result = await _createChatUseCase(param: CreateChatParams(
+      adId: event.adId,
+      sellerId: event.sellerId,
+      buyerId: event.buyerId,
+    ));
 
     result.fold(
-      (error) => emit(ChatError(error)),
+      (failure) => emit(ChatError(failure)),
       (chatId) => emit(ChatCreated(chatId)),
     );
   }
 
-Future<void> _onLoadUserChatsStream(
-  LoadUserChatsStreamEvent event,
-  Emitter<ChatState> emit,
-) async {
-  emit(ChatLoading());
-  final currentUserId = _auth.currentUser?.uid;
-  if (currentUserId == null) {
-    emit(ChatError('User not logged in'));
-    return;
+  Future<void> _onLoadChats(LoadChatsEvent event, Emitter<ChatState> emit) async {
+    emit(ChatLoading());
+    try {
+      final stream = _getChatsUseCase(param: event.userId);
+      emit(ChatsLoaded(stream));
+    } catch (e) {
+      emit(ChatError('Failed to load chats: ${e.toString()}'));
+      await Future.delayed(const Duration(seconds: 2));
+      emit(ChatInitial());
+    }
   }
 
-  final result = await _getUserChatsStreamUsecase.call(param: currentUserId);
-
-  result.fold(
-    (error) => emit(ChatError(error)),
-    (stream) {
-      // Emit loaded state with the stream
-      emit(UserChatsStreamLoaded(stream));
-    },
-  );
-}
-
-Future<void> _onLoadChatMessages(LoadChatMessagesEvent event, Emitter<ChatState> emit) async {
-  emit(ChatLoading());
-  
-  final result = await _getChatMessagesUsecase.call(param: event.chatId);
-
-  result.fold(
-    (error) => emit(ChatError(error)),
-    (stream) {
-      emit(ChatMessagesLoaded(stream));
-    },
-  );
-}
-
-  Future<void> _onSendMessage(
-    SendMessageEvent event,
-    Emitter<ChatState> emit,
-  ) async {
-    final currentUserId = _auth.currentUser?.uid;
-    if (currentUserId == null) {
-      emit(ChatError('User not logged in'));
-      return;
+  Future<void> _onLoadMessages(LoadMessagesEvent event, Emitter<ChatState> emit) async {
+    emit(ChatLoading());
+    try {
+      final stream = _getMessagesUseCase(param: event.chatId);
+      emit(MessagesLoaded(stream));
+    } catch (e) {
+      emit(ChatError('Failed to load messages: ${e.toString()}'));
+      await Future.delayed(const Duration(seconds: 2));
+      emit(ChatInitial());
     }
-
-    final result = await _sendMessageUsecase.call(
-      param: SendMessageParams(
-        chatId: event.chatId,
-        senderId: currentUserId,
-        content: event.content,
-      ),
-    );
-
-    result.fold((error) => emit(ChatError(error)), (_) => emit(MessageSent()));
   }
 
-  Future<void> _onMarkMessagesRead(
-    MarkMessagesReadEvent event,
-    Emitter<ChatState> emit,
-  ) async {
-    final currentUserId = _auth.currentUser?.uid;
-    if (currentUserId == null) {
-      emit(ChatError('User not logged in'));
-      return;
-    }
-
-    final result = await _markMessagesReadUsecase.call(
-      param: MarkMessagesReadParams(
-        chatId: event.chatId,
-        userId: currentUserId,
-      ),
-    );
+  Future<void> _onSendMessage(SendMessageEvent event, Emitter<ChatState> emit) async {
+    final result = await _sendMessageUseCase(param: SendMessageParams(
+      chatId: event.chatId,
+      senderId: event.senderId,
+      content: event.content,
+    ));
 
     result.fold(
-      (error) => emit(ChatError(error)),
-      (_) => emit(MessagesMarkedRead()),
+      (failure) => emit(ChatError(failure)),
+      (_) => null,
     );
   }
 
-  void _onUpdateChatList(UpdateChatListEvent event, Emitter<ChatState> emit) {
-    emit(ChatListUpdated(event.chats));
+  Future<void> _onMarkMessagesRead(MarkMessagesReadEvent event, Emitter<ChatState> emit) async {
+    final result = await _markMessagesReadUseCase(param: MarkMessagesReadParams(
+      chatId: event.chatId,
+      userId: event.userId,
+    ));
+
+    result.fold(
+      (failure) => emit(ChatError(failure)),
+      (_) => null,
+    );
   }
 }

@@ -10,21 +10,31 @@ sealed class ChatEvent extends Equatable {
 class CreateChatEvent extends ChatEvent {
   final String adId;
   final String sellerId;
+  final String buyerId;
 
-  const CreateChatEvent({required this.adId, required this.sellerId});
+  const CreateChatEvent({
+    required this.adId,
+    required this.sellerId,
+    required this.buyerId,
+  });
 
   @override
-  List<Object> get props => [adId, sellerId];
+  List<Object> get props => [adId, sellerId, buyerId];
 }
 
-class LoadUserChatsStreamEvent extends ChatEvent {
-  const LoadUserChatsStreamEvent();
+class LoadChatsEvent extends ChatEvent {
+  final String userId;
+
+  const LoadChatsEvent(this.userId);
+
+  @override
+  List<Object> get props => [userId];
 }
 
-class LoadChatMessagesEvent extends ChatEvent {
+class LoadMessagesEvent extends ChatEvent {
   final String chatId;
 
-  const LoadChatMessagesEvent({required this.chatId});
+  const LoadMessagesEvent(this.chatId);
 
   @override
   List<Object> get props => [chatId];
@@ -32,28 +42,28 @@ class LoadChatMessagesEvent extends ChatEvent {
 
 class SendMessageEvent extends ChatEvent {
   final String chatId;
+  final String senderId;
   final String content;
 
-  const SendMessageEvent({required this.chatId, required this.content});
+  const SendMessageEvent({
+    required this.chatId,
+    required this.senderId,
+    required this.content,
+  });
 
   @override
-  List<Object> get props => [chatId, content];
+  List<Object> get props => [chatId, senderId, content];
 }
 
 class MarkMessagesReadEvent extends ChatEvent {
   final String chatId;
+  final String userId;
 
-  const MarkMessagesReadEvent({required this.chatId});
-
-  @override
-  List<Object> get props => [chatId];
-}
-
-class UpdateChatListEvent extends ChatEvent {
-  final List<ChatModel> chats;
-
-  const UpdateChatListEvent(this.chats);
+  const MarkMessagesReadEvent({
+    required this.chatId,
+    required this.userId,
+  });
 
   @override
-  List<Object> get props => [chats];
+  List<Object> get props => [chatId, userId];
 }

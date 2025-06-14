@@ -93,46 +93,49 @@ class PostRepositoryImpl extends PostRepository {
   }
 
   @override
-  Future<Either<String, String>> createChat(
-    String adId,
-    String buyerId,
-    String sellerId,
-  ) async {
-    return await sl<FirebasePostService>().createChat(adId, buyerId, sellerId);
+  Stream<List<ChatModel>> getChatsForUser(String userId) {
+    return sl<FirebasePostService>().getChatsForUser(userId);
   }
 
   @override
-  Future<Either<String, Stream<List<MessageModel>>>> getChatMessages(
-    String chatId,
-  ) async {
-    return await sl<FirebasePostService>().getChatMessages(chatId);
+  Stream<List<MessageModel>> getMessagesForChat(String chatId) {
+    return sl<FirebasePostService>().getMessagesForChat(chatId);
   }
 
   @override
-  Future<Either<String, void>> sendMessage(
-    String chatId,
-    String senderId,
-    String content,
-  ) async {
-    return await sl<FirebasePostService>().sendMessage(
-      chatId,
-      senderId,
-      content,
+  Future<Either<String, String>> createChat({
+    required String adId,
+    required String sellerId,
+    required String buyerId,
+  }) async {
+    return await sl<FirebasePostService>().createChat(
+      adId: adId,
+      sellerId: sellerId,
+      buyerId: buyerId,
     );
   }
 
   @override
-  Future<Either<String, void>> markMessagesAsRead(
-    String chatId,
-    String userId,
-  ) async {
-    return await sl<FirebasePostService>().markMessagesAsRead(chatId, userId);
+  Future<Either<String, void>> sendMessage({
+    required String chatId,
+    required String senderId,
+    required String content,
+  }) async {
+    return await sl<FirebasePostService>().sendMessage(
+      chatId: chatId,
+      senderId: senderId,
+      content: content,
+    );
   }
 
   @override
-  Future<Either<String, Stream<List<ChatModel>>>> getUserChatsStream(
-    String userId,
-  ) async {
-    return await sl<FirebasePostService>().getUserChatsStream(userId);
+  Future<Either<String, void>> markMessagesAsRead({
+    required String chatId,
+    required String userId,
+  }) async {
+    return await sl<FirebasePostService>().markMessagesAsRead(
+      chatId: chatId,
+      userId: userId,
+    );
   }
 }

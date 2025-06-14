@@ -20,9 +20,20 @@ abstract class PostRepository {
   Future<Either<String, List<AdWithUserModel>>> getUserActiveAds(String userId);
   Future<Either<String, void>> deactivateAd(String adId);
   Future<Either<String, void>> updateAd(AdsModel ad);
-  Future<Either<String, String>> createChat(String adId, String buyerId, String sellerId);
-  Future<Either<String, Stream<List<ChatModel>>>> getUserChatsStream(String userId);
-  Future<Either<String, Stream<List<MessageModel>>>> getChatMessages(String chatId);
-  Future<Either<String, void>> sendMessage(String chatId, String senderId, String content);
-  Future<Either<String, void>> markMessagesAsRead(String chatId, String userId);
+  Stream<List<ChatModel>> getChatsForUser(String userId);
+  Stream<List<MessageModel>> getMessagesForChat(String chatId);
+  Future<Either<String, String>> createChat({
+    required String adId,
+    required String sellerId,
+    required String buyerId,
+  });
+  Future<Either<String, void>> sendMessage({
+    required String chatId,
+    required String senderId,
+    required String content,
+  });
+  Future<Either<String, void>> markMessagesAsRead({
+    required String chatId,
+    required String userId,
+  });
 }

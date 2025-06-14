@@ -9,14 +9,14 @@ import 'package:shiftwheels/presentation/screen_chat/chat_bloc/chat_bloc.dart';
 
 class ScreenAdChat extends StatefulWidget {
   final String chatId;
-  final AdsModel ad;
-  final UserModel? userData;
+  final UserModel? otherUser;
+  final AdsModel? ad;
 
   const ScreenAdChat({
     super.key,
     required this.chatId,
+    required this.otherUser,
     required this.ad,
-    this.userData,
   });
 
   @override
@@ -26,27 +26,22 @@ class ScreenAdChat extends StatefulWidget {
 class _ScreenAdChatState extends State<ScreenAdChat> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  List<MessageModel> _messages = [];
+  final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
   @override
   void initState() {
     super.initState();
-    // Initialize chat messages
-    context.read<ChatBloc>().add(LoadChatMessagesEvent(chatId: widget.chatId));
-    // Mark messages as read when opening
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToBottom();
-    });
+    context.read<ChatBloc>().add(LoadMessagesEvent(widget.chatId));
+    _markMessagesAsRead();
   }
 
-  void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.minScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    }
+  void _markMessagesAsRead() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ChatBloc>().add(MarkMessagesReadEvent(
+            chatId: widget.chatId,
+            userId: currentUserId,
+          ));
+    });
   }
 
   @override
@@ -63,14 +58,12 @@ class _ScreenAdChatState extends State<ScreenAdChat> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "${widget.ad.brand} ${widget.ad.model} (${widget.ad.year})",
-              style: const TextStyle(fontSize: 16),
-            ),
-            Text(
-              widget.userData?.fullName ?? 'Unknown User',
-              style: const TextStyle(fontSize: 12),
-            ),
+            Text(widget.otherUser?.fullName ?? 'Unknown User'),
+            if (widget.ad != null)
+              Text(
+                '${widget.ad!.brand} ${widget.ad!.model}',
+                style: const TextStyle(fontSize: 12),
+              ),
           ],
         ),
         backgroundColor: AppColors.zPrimaryColor,
@@ -78,42 +71,98 @@ class _ScreenAdChatState extends State<ScreenAdChat> {
       body: Column(
         children: [
           Expanded(
-            child: BlocConsumer<ChatBloc, ChatState>(
-              listener: (context, state) {
-                if (state is ChatMessagesLoaded) {
-                  // Update local messages list when new messages arrive
-                  state.messages.listen((messages) {
-                    setState(() {
-                      _messages = messages;
-                    });
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      _scrollToBottom();
-                    });
-                  });
-                }
-              },
+            child: BlocBuilder<ChatBloc, ChatState>(
               builder: (context, state) {
+                if (state is MessagesLoaded) {
+                  return StreamBuilder<List<MessageModel>>(
+                    stream: state.messages,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      }
+
+                      if (!snapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      final messages = snapshot.data!;
+
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (_scrollController.hasClients) {
+                          _scrollController.animateTo(
+                            _scrollController.position.maxScrollExtent,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOut,
+                          );
+                        }
+                      });
+
+                      return ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(8),
+                        itemCount: messages.length,
+                        itemBuilder: (context, index) {
+                          final message = messages[index];
+                          final isMe = message.senderId == currentUserId;
+
+                          return Align(
+                            alignment: isMe
+                                ? Alignment.centerRight
+                                : Alignment.centerLeft,
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(vertical: 4),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: isMe
+                                    ? AppColors.zPrimaryColor
+                                    : Colors.grey[300],
+                                borderRadius: BorderRadius.only(
+                                  topLeft: const Radius.circular(12),
+                                  topRight: const Radius.circular(12),
+                                  bottomLeft: isMe
+                                      ? const Radius.circular(12)
+                                      : const Radius.circular(0),
+                                  bottomRight: isMe
+                                      ? const Radius.circular(0)
+                                      : const Radius.circular(12),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: isMe
+                                    ? CrossAxisAlignment.end
+                                    : CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    message.content,
+                                    style: TextStyle(
+                                      color: isMe ? Colors.white : Colors.black,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _formatTime(message.timestamp),
+                                    style: TextStyle(
+                                      color: isMe
+                                          ? Colors.white70
+                                          : Colors.black54,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                }
+
                 if (state is ChatError) {
                   return Center(child: Text(state.message));
                 }
 
-                if (_messages.isEmpty) {
-                  if (state is ChatLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  return const Center(child: Text('No messages yet'));
-                }
-
-                return ListView.builder(
-                  controller: _scrollController,
-                  reverse: true,
-                  padding: const EdgeInsets.all(8),
-                  itemCount: _messages.length,
-                  itemBuilder: (context, index) {
-                    final message = _messages[index];
-                    return _buildMessageBubble(message);
-                  },
-                );
+                return const Center(child: CircularProgressIndicator());
               },
             ),
           ),
@@ -121,45 +170,6 @@ class _ScreenAdChatState extends State<ScreenAdChat> {
         ],
       ),
     );
-  }
-
-  Widget _buildMessageBubble(MessageModel message) {
-    final isMe = message.senderId == FirebaseAuth.instance.currentUser?.uid;
-    
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isMe ? AppColors.zPrimaryColor : Colors.grey[300],
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              message.content,
-              style: TextStyle(
-                color: isMe ? Colors.white : Colors.black,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _formatTime(message.timestamp),
-              style: TextStyle(
-                color: isMe ? Colors.white70 : Colors.black54,
-                fontSize: 10,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _formatTime(DateTime time) {
-    return '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
   }
 
   Widget _buildMessageInput() {
@@ -175,29 +185,36 @@ class _ScreenAdChatState extends State<ScreenAdChat> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
-              onSubmitted: (value) {
-                _sendMessage();
-              },
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.send, color: AppColors.zPrimaryColor),
-            onPressed: _sendMessage,
+          const SizedBox(width: 8),
+          CircleAvatar(
+            backgroundColor: AppColors.zPrimaryColor,
+            child: IconButton(
+              icon: const Icon(Icons.send, color: Colors.white),
+              onPressed: () {
+                if (_messageController.text.trim().isNotEmpty) {
+                  context.read<ChatBloc>().add(SendMessageEvent(
+                        chatId: widget.chatId,
+                        senderId: currentUserId,
+                        content: _messageController.text.trim(),
+                      ));
+                  _messageController.clear();
+                }
+              },
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _sendMessage() {
-    if (_messageController.text.trim().isNotEmpty) {
-      context.read<ChatBloc>().add(SendMessageEvent(
-            chatId: widget.chatId,
-            content: _messageController.text.trim(),
-          ));
-      _messageController.clear();
-    }
+  String _formatTime(DateTime timestamp) {
+    return '${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}';
   }
 }

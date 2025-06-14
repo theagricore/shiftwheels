@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -26,9 +27,8 @@ class ScreenAdDetails extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) =>
-              AddFavouriteBloc(sl<PostRepository>())
-                ..add(LoadFavoritesEvent(adWithUser.ad.userId)),
+          create: (context) => AddFavouriteBloc(sl<PostRepository>())
+            ..add(LoadFavoritesEvent(adWithUser.ad.userId)),
         ),
         BlocProvider.value(value: sl<ChatBloc>()),
       ],
@@ -37,10 +37,23 @@ class ScreenAdDetails extends StatelessWidget {
   }
 }
 
-class _AdDetailsContent extends StatelessWidget {
+class _AdDetailsContent extends StatefulWidget {
   final AdWithUserModel adWithUser;
 
   const _AdDetailsContent({required this.adWithUser});
+
+  @override
+  State<_AdDetailsContent> createState() => _AdDetailsContentState();
+}
+
+class _AdDetailsContentState extends State<_AdDetailsContent> {
+  StreamSubscription<ChatState>? _chatSubscription;
+
+  @override
+  void dispose() {
+    _chatSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,96 +66,25 @@ class _AdDetailsContent extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        final isFavorite = _getFavoriteStatus(state, adWithUser.ad);
-        final ad = adWithUser.ad;
-        final userData = adWithUser.userData;
+        final isFavorite = _getFavoriteStatus(state, widget.adWithUser.ad);
+        final ad = widget.adWithUser.ad;
+        final userData = widget.adWithUser.userData;
         final textTheme = Theme.of(context).textTheme;
 
-        return BlocListener<ChatBloc, ChatState>(
-          listener: (context, chatState) {
-            if (chatState is ChatCreated) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ScreenAdChat(
-                    chatId: chatState.chatId,
-                    ad: ad,
-                    userData: userData,
-                  ),
-                ),
-              );
-            } else if (chatState is ChatError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(chatState.message)),
-              );
-            }
-          },
-          child: Scaffold(
-            backgroundColor: AppColors.zWhite,
-            appBar: const DeatilsAppBarWidget(),
-            body: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildImageSection(context, isFavorite),
-                  _buildBasicInfoSection(textTheme, ad),
-                  _buildDetailsSection(ad, userData),
-                ],
-              ),
-            ),
-            bottomNavigationBar: Container(
-              color: AppColors.zblack,
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _handleChatPressed(context, ad),
-                      icon: const Icon(Icons.chat, color: Colors.white, size: 25),
-                      label: const Text(
-                        "Chat",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.zPrimaryColor,
-                        minimumSize: const Size(double.infinity, 58),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _handleCallPressed,
-                      icon: const Icon(Icons.call, color: Colors.white, size: 25),
-                      label: const Text(
-                        "Call",
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.zPrimaryColor,
-                        minimumSize: const Size(double.infinity, 58),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+        return Scaffold(
+          backgroundColor: AppColors.zWhite,
+          appBar: const DeatilsAppBarWidget(),
+          body: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildImageSection(context, isFavorite),
+                _buildBasicInfoSection(textTheme, ad),
+                _buildDetailsSection(ad, userData),
+              ],
             ),
           ),
+          bottomNavigationBar: _buildBottomButtons(context, ad),
         );
       },
     );
@@ -154,15 +96,15 @@ class _AdDetailsContent extends StatelessWidget {
     } else if (state is FavoriteToggled && state.adId == ad.id) {
       return state.isNowFavorite;
     }
-    return adWithUser.isFavorite;
+    return widget.adWithUser.isFavorite;
   }
 
   Widget _buildImageSection(BuildContext context, bool isFavorite) {
     return AutoScrollImageCarousel(
-      imageUrls: adWithUser.ad.imageUrls,
+      imageUrls: widget.adWithUser.ad.imageUrls,
       isFavorite: isFavorite,
-      adId: adWithUser.ad.id!,
-      currentUserId: adWithUser.ad.userId,
+      adId: widget.adWithUser.ad.id!,
+      currentUserId: widget.adWithUser.ad.userId,
     );
   }
 
@@ -174,7 +116,6 @@ class _AdDetailsContent extends StatelessWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: Text(
@@ -183,16 +124,11 @@ class _AdDetailsContent extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: AppColors.zblack,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               Row(
                 children: [
-                  const Icon(
-                    Icons.access_time,
-                    size: 16,
-                    color: AppColors.zblack,
-                  ),
+                  const Icon(Icons.access_time, size: 16, color: AppColors.zblack),
                   const SizedBox(width: 4),
                   Text(
                     timeago.format(ad.postedDate),
@@ -226,7 +162,6 @@ class _AdDetailsContent extends StatelessWidget {
         topRight: Radius.circular(25),
       ),
       child: Container(
-        width: double.infinity,
         decoration: const BoxDecoration(
           color: AppColors.zblack,
           borderRadius: BorderRadius.only(
@@ -280,6 +215,38 @@ class _AdDetailsContent extends StatelessWidget {
     );
   }
 
+  Widget _buildBottomButtons(BuildContext context, AdsModel ad) {
+    return Container(
+      color: AppColors.zblack,
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () => _handleChatPressed(context, ad),
+              icon: const Icon(Icons.chat, color: Colors.white, size: 25),
+              label: const Text(
+                "Chat",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.zPrimaryColor,
+                minimumSize: const Size(double.infinity, 58),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
   void _handleChatPressed(BuildContext context, AdsModel ad) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) {
@@ -301,13 +268,43 @@ class _AdDetailsContent extends StatelessWidget {
       return;
     }
 
-    context.read<ChatBloc>().add(CreateChatEvent(
-          adId: ad.id!,
-          sellerId: ad.userId,
-        ));
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final chatBloc = context.read<ChatBloc>();
+    chatBloc.add(CreateChatEvent(
+      adId: ad.id!,
+      sellerId: ad.userId,
+      buyerId: currentUserId,
+    ));
+
+    _chatSubscription?.cancel();
+    _chatSubscription = chatBloc.stream.listen((state) {
+      if (state is ChatCreated) {
+        Navigator.of(context).pop();
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => BlocProvider.value(
+              value: chatBloc,
+              child: ScreenAdChat(
+                chatId: state.chatId,
+                otherUser: widget.adWithUser.userData,
+                ad: ad,
+              ),
+            ),
+          ),
+        );
+      } else if (state is ChatError) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(state.message)),
+        );
+      }
+    });
   }
 
-  void _handleCallPressed() {
-    // Implement call functionality if needed
-  }
+
 }

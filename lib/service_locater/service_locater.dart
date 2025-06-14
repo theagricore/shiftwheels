@@ -6,8 +6,8 @@ import 'package:shiftwheels/data/auth/data_dource/firebase_auth_service.dart';
 import 'package:shiftwheels/data/auth/repository/auth_repository_impl.dart';
 import 'package:shiftwheels/domain/add_post/repository/post_repository.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/create_chat_usecase.dart';
-import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_chat_messages_usecase.dart';
-import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_user_chats_stream_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_chats_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_messages_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/mark_messages_read_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/send_message_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/deactive-ad_usecase.dart';
@@ -50,11 +50,11 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<FirebaseAuthService>(AuthFirebaseServiceImpl());
   sl.registerSingleton<FirebasePostService>(PostFirebaseServiceImpl());
   sl.registerSingleton<CloudinaryService>(CloudinaryServiceImpl());
-  
+
   // Repositories
   sl.registerSingleton<AuthRepository>(AuthRepositoryImpl());
   sl.registerSingleton<PostRepository>(PostRepositoryImpl());
-  
+
   // UseCases
   sl.registerSingleton<SiginupUsecase>(SiginupUsecase());
   sl.registerSingleton<SiginUsecase>(SiginUsecase());
@@ -69,23 +69,47 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<GetLocationUsecase>(GetLocationUsecase());
   sl.registerSingleton<SearchLocationUsecase>(SearchLocationUsecase());
   sl.registerSingleton<PostAdUsecase>(PostAdUsecase(sl<PostRepository>()));
-  sl.registerSingleton<GetActiveAdsUsecase>(GetActiveAdsUsecase(sl<PostRepository>()));
-  sl.registerSingleton<ToggleFavoriteUsecase>(ToggleFavoriteUsecase(sl<PostRepository>()));
-  sl.registerSingleton<GetFavoritesUsecase>(GetFavoritesUsecase(sl<PostRepository>()));
-  sl.registerSingleton<GetUserActiveAdsUsecase>(GetUserActiveAdsUsecase(sl<PostRepository>()));
-  sl.registerSingleton<DeactivateAdUsecase>(DeactivateAdUsecase(sl<PostRepository>()));
+  sl.registerSingleton<GetActiveAdsUsecase>(
+    GetActiveAdsUsecase(sl<PostRepository>()),
+  );
+  sl.registerSingleton<ToggleFavoriteUsecase>(
+    ToggleFavoriteUsecase(sl<PostRepository>()),
+  );
+  sl.registerSingleton<GetFavoritesUsecase>(
+    GetFavoritesUsecase(sl<PostRepository>()),
+  );
+  sl.registerSingleton<GetUserActiveAdsUsecase>(
+    GetUserActiveAdsUsecase(sl<PostRepository>()),
+  );
+  sl.registerSingleton<DeactivateAdUsecase>(
+    DeactivateAdUsecase(sl<PostRepository>()),
+  );
   sl.registerSingleton<UpdateAdUsecase>(UpdateAdUsecase(sl<PostRepository>()));
-  sl.registerSingleton<CreateChatUsecase>(CreateChatUsecase(sl<PostRepository>()));
-  sl.registerSingleton<GetUserChatsStreamUsecase>(GetUserChatsStreamUsecase(sl<PostRepository>()));
-  sl.registerSingleton<GetChatMessagesUsecase>(GetChatMessagesUsecase(sl<PostRepository>()));
-  sl.registerSingleton<SendMessageUsecase>(SendMessageUsecase(sl<PostRepository>()));
-  sl.registerSingleton<MarkMessagesReadUsecase>(MarkMessagesReadUsecase(sl<PostRepository>()));
-  
+  sl.registerSingleton<CreateChatUseCase>(
+    CreateChatUseCase(sl<PostRepository>()),
+  );
+  sl.registerSingleton<GetChatsUseCase>(GetChatsUseCase(sl<PostRepository>()));
+  sl.registerSingleton<GetMessagesUseCase>(
+    GetMessagesUseCase(sl<PostRepository>()),
+  );
+  sl.registerSingleton<SendMessageUseCase>(
+    SendMessageUseCase(sl<PostRepository>()),
+  );
+  sl.registerSingleton<MarkMessagesReadUseCase>(
+    MarkMessagesReadUseCase(sl<PostRepository>()),
+  );
+
   // Blocs
   sl.registerFactory<GoogleAuthBloc>(() => GoogleAuthBloc());
-  sl.registerFactory<ProfileBloc>(() => ProfileBloc(getUserDataUsecase: sl<GetUserDataUsecase>()));
-  sl.registerFactory<AddPostBloc>(() => AddPostBloc(sl<GetBrandUsecase>(), sl<GetModelsUsecase>()));
-  sl.registerFactory<GetFuelsBloc>(() => GetFuelsBloc(getFuelsUsecase: sl<GetFuelsUsecase>()));
+  sl.registerFactory<ProfileBloc>(
+    () => ProfileBloc(getUserDataUsecase: sl<GetUserDataUsecase>()),
+  );
+  sl.registerFactory<AddPostBloc>(
+    () => AddPostBloc(sl<GetBrandUsecase>(), sl<GetModelsUsecase>()),
+  );
+  sl.registerFactory<GetFuelsBloc>(
+    () => GetFuelsBloc(getFuelsUsecase: sl<GetFuelsUsecase>()),
+  );
   sl.registerFactory<GetLocationBloc>(
     () => GetLocationBloc(
       getLocationUsecase: sl<GetLocationUsecase>(),
@@ -102,19 +126,25 @@ Future<void> initializeDependencies() async {
   sl.registerFactory<GetPostAdBloc>(
     () => GetPostAdBloc(getActiveAdsUsecase: sl<GetActiveAdsUsecase>()),
   );
-  sl.registerFactory<AddFavouriteBloc>(() => AddFavouriteBloc(sl<PostRepository>()));
+  sl.registerFactory<AddFavouriteBloc>(
+    () => AddFavouriteBloc(sl<PostRepository>()),
+  );
   sl.registerFactory<ActiveAdsBloc>(
     () => ActiveAdsBloc(
       getUserActiveAds: sl<GetUserActiveAdsUsecase>(),
       deactivateAd: sl<DeactivateAdUsecase>(),
     ),
   );
-  sl.registerFactory<UpdateAdBloc>(() => UpdateAdBloc(updateAdUsecase: sl<UpdateAdUsecase>()));
-  sl.registerFactory<ChatBloc>(() => ChatBloc(
-    createChatUsecase: sl<CreateChatUsecase>(),
-    getUserChatsStreamUsecase: sl<GetUserChatsStreamUsecase>(),
-    getChatMessagesUsecase: sl<GetChatMessagesUsecase>(),
-    sendMessageUsecase: sl<SendMessageUsecase>(),
-    markMessagesReadUsecase: sl<MarkMessagesReadUsecase>(),
-  ));
+  sl.registerFactory<UpdateAdBloc>(
+    () => UpdateAdBloc(updateAdUsecase: sl<UpdateAdUsecase>()),
+  );
+  sl.registerFactory<ChatBloc>(
+    () => ChatBloc(
+      createChatUseCase: sl<CreateChatUseCase>(),
+      getChatsUseCase: sl<GetChatsUseCase>(),
+      getMessagesUseCase: sl<GetMessagesUseCase>(),
+      sendMessageUseCase: sl<SendMessageUseCase>(),
+      markMessagesReadUseCase: sl<MarkMessagesReadUseCase>(),
+    ),
+  );
 }

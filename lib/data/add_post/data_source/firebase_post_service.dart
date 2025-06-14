@@ -504,32 +504,6 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   }
 
   @override
-  Future<Either<String, Stream<List<MessageModel>>>> getChatMessages(
-    String chatId,
-  ) async {
-    try {
-      final messagesStream = _firestore
-          .collection('chats')
-          .doc(chatId)
-          .collection('messages')
-          .orderBy('timestamp', descending: true)
-          .snapshots()
-          .map(
-            (snapshot) =>
-                snapshot.docs
-                    .map((doc) => MessageModel.fromMap(doc.data(), doc.id))
-                    .toList(),
-          );
-
-      return Right(messagesStream);
-    } on FirebaseException catch (e) {
-      return Left('Firebase error: ${e.message}');
-    } catch (e) {
-      return Left('Unexpected error: ${e.toString()}');
-    }
-  }
-
-  @override
   Future<Either<String, void>> sendMessage(
     String chatId,
     String senderId,
@@ -640,4 +614,25 @@ class PostFirebaseServiceImpl extends FirebasePostService {
       return Left('Failed to get user chats stream: ${e.toString()}');
     }
   }
+
+@override
+Future<Either<String, Stream<List<MessageModel>>>> getChatMessages(String chatId) async {
+  try {
+    final stream = _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => MessageModel.fromMap(doc.data(), doc.id))
+            .toList());
+
+    return Right(stream);
+  } on FirebaseException catch (e) {
+    return Left('Firebase error: ${e.message}');
+  } catch (e) {
+    return Left('Failed to load messages: ${e.toString()}');
+  }
+}
 }

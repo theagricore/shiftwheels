@@ -6,10 +6,8 @@ import 'package:shiftwheels/data/add_post/models/ads_model.dart';
 import 'package:shiftwheels/data/add_post/models/message_model.dart';
 import 'package:shiftwheels/data/auth/models/user_model.dart';
 import 'package:shiftwheels/presentation/screen_chat/chat_bloc/chat_bloc.dart';
-import 'package:shiftwheels/service_locater/service_locater.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
-class ScreenAdChat extends StatelessWidget {
+class ScreenAdChat extends StatefulWidget {
   final String chatId;
   final AdsModel ad;
   final UserModel? userData;
@@ -22,177 +20,184 @@ class ScreenAdChat extends StatelessWidget {
   });
 
   @override
+  State<ScreenAdChat> createState() => _ScreenAdChatState();
+}
+
+class _ScreenAdChatState extends State<ScreenAdChat> {
+  final TextEditingController _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  List<MessageModel> _messages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize chat messages
+    context.read<ChatBloc>().add(LoadChatMessagesEvent(chatId: widget.chatId));
+    // Mark messages as read when opening
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
+    });
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.minScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<ChatBloc>()..add(LoadChatMessagesEvent(chatId: chatId)),
-      child: Scaffold(
-        appBar: AppBar(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "${ad.brand} ${ad.model} (${ad.year})",
-                style: const TextStyle(fontSize: 16),
-              ),
-              Text(
-                userData?.fullName ?? 'Unknown User',
-                style: const TextStyle(fontSize: 12),
-              ),
-            ],
-          ),
-          backgroundColor: AppColors.zPrimaryColor,
-        ),
-        body: Column(
+    return Scaffold(
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: _MessagesList(chatId: chatId)),
-            _MessageInput(chatId: chatId),
+            Text(
+              "${widget.ad.brand} ${widget.ad.model} (${widget.ad.year})",
+              style: const TextStyle(fontSize: 16),
+            ),
+            Text(
+              widget.userData?.fullName ?? 'Unknown User',
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+        backgroundColor: AppColors.zPrimaryColor,
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: BlocConsumer<ChatBloc, ChatState>(
+              listener: (context, state) {
+                if (state is ChatMessagesLoaded) {
+                  // Update local messages list when new messages arrive
+                  state.messages.listen((messages) {
+                    setState(() {
+                      _messages = messages;
+                    });
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _scrollToBottom();
+                    });
+                  });
+                }
+              },
+              builder: (context, state) {
+                if (state is ChatError) {
+                  return Center(child: Text(state.message));
+                }
+
+                if (_messages.isEmpty) {
+                  if (state is ChatLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  return const Center(child: Text('No messages yet'));
+                }
+
+                return ListView.builder(
+                  controller: _scrollController,
+                  reverse: true,
+                  padding: const EdgeInsets.all(8),
+                  itemCount: _messages.length,
+                  itemBuilder: (context, index) {
+                    final message = _messages[index];
+                    return _buildMessageBubble(message);
+                  },
+                );
+              },
+            ),
+          ),
+          _buildMessageInput(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageBubble(MessageModel message) {
+    final isMe = message.senderId == FirebaseAuth.instance.currentUser?.uid;
+    
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isMe ? AppColors.zPrimaryColor : Colors.grey[300],
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              message.content,
+              style: TextStyle(
+                color: isMe ? Colors.white : Colors.black,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _formatTime(message.timestamp),
+              style: TextStyle(
+                color: isMe ? Colors.white70 : Colors.black54,
+                fontSize: 10,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
-}
 
-class _MessagesList extends StatelessWidget {
-  final String chatId;
-
-  const _MessagesList({required this.chatId});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<ChatBloc, ChatState>(
-      builder: (context, state) {
-        if (state is ChatLoading) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (state is ChatMessagesLoaded) {
-          return StreamBuilder<List<MessageModel>>(
-            stream: state.messages,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(child: Text('No messages yet'));
-              }
-              final messages = snapshot.data!;
-              return ListView.builder(
-                reverse: true,
-                itemCount: messages.length,
-                itemBuilder: (context, index) {
-                  final message = messages[index];
-                  final isCurrentUser =
-                      message.senderId == FirebaseAuth.instance.currentUser?.uid;
-                  return _MessageBubble(
-                    message: message,
-                    isCurrentUser: isCurrentUser,
-                  );
-                },
-              );
-            },
-          );
-        } else if (state is ChatError) {
-          return Center(child: Text(state.message));
-        }
-        return const Center(child: Text('Start the conversation'));
-      },
-    );
+  String _formatTime(DateTime time) {
+    return '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
   }
-}
 
-class _MessageBubble extends StatelessWidget {
-  final MessageModel message;
-  final bool isCurrentUser;
-
-  const _MessageBubble({
-    required this.message,
-    required this.isCurrentUser,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildMessageInput() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-      child: Align(
-        alignment:
-            isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          margin: const EdgeInsets.symmetric(vertical: 2),
-          decoration: BoxDecoration(
-            color: isCurrentUser
-                ? AppColors.zPrimaryColor
-                : AppColors.zWhite,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isCurrentUser ? AppColors.zPrimaryColor : AppColors.zblack,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment:
-                isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-            children: [
-              Text(
-                message.content,
-                style: TextStyle(
-                  color: isCurrentUser ? Colors.white : AppColors.zblack,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                timeago.format(message.timestamp),
-                style: TextStyle(
-                  fontSize: 10,
-                  color: isCurrentUser ? Colors.white70 : Colors.grey,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MessageInput extends StatelessWidget {
-  final String chatId;
-  final TextEditingController _controller = TextEditingController();
-
-  _MessageInput({required this.chatId});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      color: AppColors.zWhite,
+      padding: const EdgeInsets.all(8.0),
       child: Row(
         children: [
           Expanded(
             child: TextField(
-              controller: _controller,
+              controller: _messageController,
               decoration: InputDecoration(
                 hintText: 'Type a message...',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(24),
                 ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               ),
+              onSubmitted: (value) {
+                _sendMessage();
+              },
             ),
           ),
-          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.send, color: AppColors.zPrimaryColor),
-            onPressed: () {
-              final content = _controller.text.trim();
-              if (content.isNotEmpty) {
-                context.read<ChatBloc>().add(SendMessageEvent(
-                      chatId: chatId,
-                      content: content,
-                    ));
-                _controller.clear();
-              }
-            },
+            onPressed: _sendMessage,
           ),
         ],
       ),
     );
+  }
+
+  void _sendMessage() {
+    if (_messageController.text.trim().isNotEmpty) {
+      context.read<ChatBloc>().add(SendMessageEvent(
+            chatId: widget.chatId,
+            content: _messageController.text.trim(),
+          ));
+      _messageController.clear();
+    }
   }
 }

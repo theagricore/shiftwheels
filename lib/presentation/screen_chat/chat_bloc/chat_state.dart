@@ -20,22 +20,22 @@ final class ChatCreated extends ChatState {
   List<Object> get props => [chatId];
 }
 
-final class UserChatsStreamLoaded extends ChatState {
+class UserChatsStreamLoaded extends ChatState {
   final Stream<List<ChatModel>> chatsStream;
 
   const UserChatsStreamLoaded(this.chatsStream);
 
   @override
-  List<Object> get props => [];
+  List<Object> get props => [chatsStream];
 }
 
-final class ChatMessagesLoaded extends ChatState {
+class ChatMessagesLoaded extends ChatState {
   final Stream<List<MessageModel>> messages;
 
   const ChatMessagesLoaded(this.messages);
 
   @override
-  List<Object> get props => [];
+  List<Object> get props => [messages];
 }
 
 final class MessageSent extends ChatState {}

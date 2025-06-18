@@ -6,6 +6,7 @@ import 'package:shiftwheels/data/auth/data_dource/firebase_auth_service.dart';
 import 'package:shiftwheels/data/auth/repository/auth_repository_impl.dart';
 import 'package:shiftwheels/domain/add_post/repository/post_repository.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/create_chat_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/delete_message_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_chats_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_messages_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/mark_messages_read_usecase.dart';
@@ -98,6 +99,9 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<MarkMessagesReadUseCase>(
     MarkMessagesReadUseCase(sl<PostRepository>()),
   );
+  sl.registerSingleton<DeleteMessageUseCase>(
+    DeleteMessageUseCase(sl<PostRepository>()),
+  );
 
   // Blocs
   sl.registerFactory<GoogleAuthBloc>(() => GoogleAuthBloc());
@@ -145,6 +149,7 @@ Future<void> initializeDependencies() async {
       getMessagesUseCase: sl<GetMessagesUseCase>(),
       sendMessageUseCase: sl<SendMessageUseCase>(),
       markMessagesReadUseCase: sl<MarkMessagesReadUseCase>(),
+      deleteMessageUseCase: sl<DeleteMessageUseCase>(),
     ),
   );
 }

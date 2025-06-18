@@ -32,7 +32,7 @@ final class ChatsLoaded extends ChatState {
 }
 
 final class MessagesLoading extends ChatState {}
-
+final class MessageDeleted extends ChatState {}
 final class MessagesLoaded extends ChatState {
   final Stream<List<MessageModel>> messages;
 

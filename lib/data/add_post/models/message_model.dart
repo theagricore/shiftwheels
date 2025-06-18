@@ -11,6 +11,9 @@ class MessageModel {
   final DateTime timestamp;
   final MessageStatus status;
   final UserModel? sender;
+  final String? replyToMessageId;
+  final String? replyToContent;
+  final bool isDeleted;
 
   MessageModel({
     required this.id,
@@ -20,20 +23,23 @@ class MessageModel {
     required this.timestamp,
     this.status = MessageStatus.sent,
     this.sender,
+    this.replyToMessageId,
+    this.replyToContent,
+    this.isDeleted = false,
   });
 
+  String get displayContent => isDeleted ? 'This message was deleted' : content;
+
   factory MessageModel.fromMap(Map<String, dynamic> map, String id) {
-    // Handle timestamp
     DateTime timestamp;
     if (map['timestamp'] is Timestamp) {
       timestamp = (map['timestamp'] as Timestamp).toDate();
     } else if (map['timestamp'] is String) {
       timestamp = DateTime.parse(map['timestamp'] as String);
     } else {
-      timestamp = DateTime.now(); // fallback
+      timestamp = DateTime.now();
     }
 
-    // Handle status
     MessageStatus status;
     if (map['status'] == null) {
       status = MessageStatus.sent;
@@ -51,6 +57,9 @@ class MessageModel {
       content: map['content'] as String? ?? '',
       timestamp: timestamp,
       status: status,
+      replyToMessageId: map['replyToMessageId'] as String?,
+      replyToContent: map['replyToContent'] as String?,
+      isDeleted: map['isDeleted'] as bool? ?? false,
     );
   }
 
@@ -61,6 +70,9 @@ class MessageModel {
       'content': content,
       'timestamp': Timestamp.fromDate(timestamp),
       'status': status.toString().split('.').last,
+      'replyToMessageId': replyToMessageId,
+      'replyToContent': replyToContent,
+      'isDeleted': isDeleted,
     };
   }
 }

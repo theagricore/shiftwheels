@@ -31,9 +31,15 @@ abstract class PostRepository {
     required String chatId,
     required String senderId,
     required String content,
+    String? replyToMessageId,
+    String? replyToContent,
   });
   Future<Either<String, void>> markMessagesAsRead({
     required String chatId,
     required String userId,
+  });
+    Future<Either<String, void>> deleteMessage({
+    required String chatId,
+    required String messageId,
   });
 }

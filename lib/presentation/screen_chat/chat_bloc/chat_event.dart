@@ -44,17 +44,32 @@ class SendMessageEvent extends ChatEvent {
   final String chatId;
   final String senderId;
   final String content;
+  final String? replyToMessageId;
+  final String? replyToContent;
 
   const SendMessageEvent({
     required this.chatId,
     required this.senderId,
     required this.content,
+    this.replyToMessageId,
+    this.replyToContent,
   });
 
   @override
-  List<Object> get props => [chatId, senderId, content];
+  List<Object> get props => [chatId, senderId, content, replyToMessageId ?? '', replyToContent ?? ''];
 }
+class DeleteMessageEvent extends ChatEvent {
+  final String chatId;
+  final String messageId;
 
+  const DeleteMessageEvent({
+    required this.chatId,
+    required this.messageId,
+  });
+
+  @override
+  List<Object> get props => [chatId, messageId];
+}
 class MarkMessagesReadEvent extends ChatEvent {
   final String chatId;
   final String userId;

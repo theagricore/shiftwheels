@@ -13,6 +13,8 @@ class SendMessageUseCase implements UseCase<Either<String, void>, SendMessagePar
       chatId: param!.chatId,
       senderId: param.senderId,
       content: param.content,
+      replyToMessageId: param.replyToMessageId,
+      replyToContent: param.replyToContent,
     );
   }
 }
@@ -21,10 +23,14 @@ class SendMessageParams {
   final String chatId;
   final String senderId;
   final String content;
+  final String? replyToMessageId;
+  final String? replyToContent;
 
   SendMessageParams({
     required this.chatId,
     required this.senderId,
     required this.content,
+    this.replyToMessageId,
+    this.replyToContent,
   });
 }

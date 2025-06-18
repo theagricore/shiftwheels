@@ -120,11 +120,15 @@ class PostRepositoryImpl extends PostRepository {
     required String chatId,
     required String senderId,
     required String content,
+    String? replyToMessageId,
+    String? replyToContent,
   }) async {
     return await sl<FirebasePostService>().sendMessage(
       chatId: chatId,
       senderId: senderId,
       content: content,
+      replyToMessageId: replyToMessageId,
+      replyToContent: replyToContent,
     );
   }
 
@@ -136,6 +140,17 @@ class PostRepositoryImpl extends PostRepository {
     return await sl<FirebasePostService>().markMessagesAsRead(
       chatId: chatId,
       userId: userId,
+    );
+  }
+  
+  @override
+  Future<Either<String, void>> deleteMessage({
+    required String chatId,
+    required String messageId,
+  }) async {
+    return await sl<FirebasePostService>().deleteMessage(
+      chatId: chatId,
+      messageId: messageId,
     );
   }
 }

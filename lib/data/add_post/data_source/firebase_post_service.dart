@@ -36,10 +36,16 @@ abstract class FirebasePostService {
     required String chatId,
     required String senderId,
     required String content,
+    String? replyToMessageId,
+    String? replyToContent,
   });
   Future<Either<String, void>> markMessagesAsRead({
     required String chatId,
     required String userId,
+  });
+  Future<Either<String, void>> deleteMessage({
+    required String chatId,
+    required String messageId,
   });
 }
 
@@ -467,7 +473,6 @@ class PostFirebaseServiceImpl extends FirebasePostService {
     required String buyerId,
   }) async {
     try {
-      // Check if chat already exists
       final existingChat =
           await _firestore
               .collection('chats')
@@ -479,7 +484,6 @@ class PostFirebaseServiceImpl extends FirebasePostService {
         return Right(existingChat.docs.first.id);
       }
 
-      // Create new chat
       final chatRef = await _firestore.collection('chats').add({
         'adId': adId,
         'sellerId': sellerId,
@@ -511,7 +515,6 @@ class PostFirebaseServiceImpl extends FirebasePostService {
             try {
               final chat = ChatModel.fromMap(doc.data(), doc.id);
 
-              // Get last message
               final lastMessage = await _firestore
                   .collection('chats')
                   .doc(doc.id)
@@ -529,7 +532,6 @@ class PostFirebaseServiceImpl extends FirebasePostService {
                             : null,
                   );
 
-              // Get unread count
               final unreadCount = await _firestore
                   .collection('chats')
                   .doc(doc.id)
@@ -539,7 +541,6 @@ class PostFirebaseServiceImpl extends FirebasePostService {
                   .get()
                   .then((snap) => snap.size);
 
-              // Get user details
               final otherUserId =
                   chat.sellerId == userId ? chat.buyerId : chat.sellerId;
               final userDoc =
@@ -547,7 +548,6 @@ class PostFirebaseServiceImpl extends FirebasePostService {
               final user =
                   userDoc.exists ? UserModel.fromMap(userDoc.data()!) : null;
 
-              // Get ad details
               final adDoc =
                   await _firestore.collection('car_ads').doc(chat.adId).get();
               final ad =
@@ -565,7 +565,6 @@ class PostFirebaseServiceImpl extends FirebasePostService {
                 ),
               );
             } catch (e) {
-              // Skip this chat if there's an error
               continue;
             }
           }
@@ -597,7 +596,6 @@ class PostFirebaseServiceImpl extends FirebasePostService {
     required String userId,
   }) async {
     try {
-      // Get all unread messages
       final messages =
           await _firestore
               .collection('chats')
@@ -605,9 +603,9 @@ class PostFirebaseServiceImpl extends FirebasePostService {
               .collection('messages')
               .where('status', whereIn: ['sent', 'delivered'])
               .where('senderId', isNotEqualTo: userId)
+              .where('isDeleted', isEqualTo: false)
               .get();
 
-      // Batch update messages to 'read'
       final batch = _firestore.batch();
       for (final doc in messages.docs) {
         batch.update(doc.reference, {'status': 'read'});
@@ -627,6 +625,8 @@ class PostFirebaseServiceImpl extends FirebasePostService {
     required String chatId,
     required String senderId,
     required String content,
+    String? replyToMessageId,
+    String? replyToContent,
   }) async {
     try {
       if (content.trim().isEmpty) {
@@ -643,9 +643,11 @@ class PostFirebaseServiceImpl extends FirebasePostService {
             'content': content,
             'timestamp': FieldValue.serverTimestamp(),
             'status': 'sent',
+            'replyToMessageId': replyToMessageId,
+            'replyToContent': replyToContent,
+            'isDeleted': false,
           });
 
-      // Update chat's last updated time
       await _firestore.collection('chats').doc(chatId).update({
         'updatedAt': FieldValue.serverTimestamp(),
       });
@@ -657,4 +659,41 @@ class PostFirebaseServiceImpl extends FirebasePostService {
       return Left('Failed to send message: ${e.toString()}');
     }
   }
+
+  @override
+Future<Either<String, void>> deleteMessage({
+  required String chatId,
+  required String messageId,
+}) async {
+  try {
+    final messageRef = _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .doc(messageId);
+
+    final messageDoc = await messageRef.get();
+    if (!messageDoc.exists) {
+      return Left('Message not found');
+    }
+
+    // Soft delete by marking as deleted and clearing content
+    await messageRef.update({
+      'isDeleted': true,
+      'content': 'This message was deleted',
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    // Update chat's last updated timestamp
+    await _firestore.collection('chats').doc(chatId).update({
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    return const Right(null);
+  } on FirebaseException catch (e) {
+    return Left('Firebase error: ${e.message ?? 'Unknown error'}');
+  } catch (e) {
+    return Left('Failed to delete message: ${e.toString()}');
+  }
+}
 }

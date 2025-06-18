@@ -25,20 +25,25 @@ class _MainScreensState extends State<MainScreens> {
     ScreenMyAds(),
     ScreenProfile()
   ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, 
       body: _screens[_selectedIndex],
-      floatingActionButton: SizedBox(
-        height: 70,
-        width: 70,
-        child: FloatingActionButton(
-          onPressed: () {
-            AppNavigator.push(context, ScreenAddPost());
-          },
-          shape: const CircleBorder(),
-          backgroundColor: AppColors.zPrimaryColor,
-          child: const Icon(Icons.add, color: Colors.white, size: 40),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 10), 
+        child: SizedBox(
+          height: 70,
+          width: 70,
+          child: FloatingActionButton(
+            onPressed: () {
+              AppNavigator.push(context, ScreenAddPost());
+            },
+            shape: const CircleBorder(),
+            backgroundColor: AppColors.zPrimaryColor,
+            child: const Icon(Icons.add, color: Colors.white, size: 40),
+          ),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,

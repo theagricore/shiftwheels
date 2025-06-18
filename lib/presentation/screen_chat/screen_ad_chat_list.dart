@@ -1,13 +1,11 @@
-import 'dart:async';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/data/add_post/models/chat_model.dart';
 import 'package:shiftwheels/presentation/screen_chat/chat_bloc/chat_bloc.dart';
 import 'package:shiftwheels/presentation/screen_chat/screen_ad_chat.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
 class ScreenAdChatList extends StatefulWidget {
   const ScreenAdChatList({super.key});
@@ -17,11 +15,7 @@ class ScreenAdChatList extends StatefulWidget {
 }
 
 class _ScreenAdChatListState extends State<ScreenAdChatList> {
-  StreamSubscription<ChatState>? _blocSubscription;
-  StreamSubscription<List<ChatModel>>? _chatsSubscription;
-  List<ChatModel> _chats = [];
-  bool _isLoading = true;
-  String? _errorMessage;
+  final _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
   @override
   void initState() {
@@ -29,71 +23,25 @@ class _ScreenAdChatListState extends State<ScreenAdChatList> {
     _loadChats();
   }
 
-  @override
-  void dispose() {
-    _blocSubscription?.cancel();
-    _chatsSubscription?.cancel();
-    super.dispose();
-  }
-
   void _loadChats() {
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUserId != null) {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-        _chats = [];
-      });
-
-      // Cancel any existing subscriptions
-      _blocSubscription?.cancel();
-      _chatsSubscription?.cancel();
-
-      // Initialize BLoC and load chats
-      context.read<ChatBloc>().add(LoadChatsEvent(currentUserId));
-
-      // Listen to BLoC state changes
-      _blocSubscription = context.read<ChatBloc>().stream.listen((state) {
-        if (state is ChatsLoaded) {
-          // Cancel previous chats subscription if exists
-          _chatsSubscription?.cancel();
-          
-          // Subscribe to the chats stream
-          _chatsSubscription = state.chats.listen((chats) {
-            if (mounted) {
-              setState(() {
-                _chats = chats;
-                _isLoading = false;
-              });
-            }
-          }, onError: (error) {
-            if (mounted) {
-              setState(() {
-                _errorMessage = error.toString();
-                _isLoading = false;
-              });
-            }
-          });
-        } else if (state is ChatError) {
-          if (mounted) {
-            setState(() {
-              _errorMessage = state.message;
-              _isLoading = false;
-            });
-          }
-        } else if (state is ChatLoading) {
-          if (mounted) {
-            setState(() {
-              _isLoading = true;
-            });
-          }
-        }
-      });
-    }
+    context.read<ChatBloc>().add(LoadChatsEvent(_currentUserId));
   }
 
-  void _refreshChats() {
-    _loadChats();
+  String _formatTime(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+    
+    if (difference.inMinutes < 1) {
+      return 'now';
+    } else if (difference.inHours < 1) {
+      return '${difference.inMinutes}m';
+    } else if (difference.inDays < 1) {
+      return '${difference.inHours}h';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
   }
 
   @override
@@ -105,167 +53,252 @@ class _ScreenAdChatListState extends State<ScreenAdChatList> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _refreshChats,
+            onPressed: _loadChats,
           ),
         ],
       ),
-      body: _buildBody(),
-    );
-  }
-
-  Widget _buildBody() {
-    if (_isLoading && _chats.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_errorMessage != null && _chats.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(_errorMessage!),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _refreshChats,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_chats.isEmpty) {
-      return const Center(
-        child: Text(
-          'No chats yet',
-          style: TextStyle(fontSize: 16),
-        ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: () async => _refreshChats(),
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        itemCount: _chats.length,
-        itemBuilder: (context, index) {
-          final chat = _chats[index];
-          final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
-          final otherUser = chat.sellerId == currentUserId 
-              ? chat.buyer 
-              : chat.seller;
-          final ad = chat.ad;
-          final lastMessage = chat.lastMessage;
-
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => BlocProvider.value(
-                      value: context.read<ChatBloc>(),
-                      child: ScreenAdChat(
-                        chatId: chat.id,
-                        otherUser: otherUser,
-                        ad: ad,
-                      ),
-                    ),
-                  ),
-                ).then((_) => _refreshChats());
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: BlocConsumer<ChatBloc, ChatState>(
+          listener: (context, state) {
+            if (state is ChatError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message)),
+              );
+            }
+          },
+          builder: (context, state) {
+            if (state is ChatsLoading) {
+              return _buildShimmerLoader(context);
+            }
+        
+            if (state is ChatError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircleAvatar(
-                      backgroundColor: AppColors.zPrimaryColor,
-                      radius: 24,
-                      child: Text(
-                        otherUser?.fullName?.substring(0, 1) ?? '?',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            otherUser?.fullName ?? 'Unknown User',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          if (ad != null) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              '${ad.brand} ${ad.model}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                          if (lastMessage != null) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              lastMessage.content,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        if (lastMessage != null)
-                          Text(
-                            timeago.format(lastMessage.timestamp),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[500],
-                            ),
-                          ),
-                        const SizedBox(height: 8),
-                        if (chat.unreadCount > 0)
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: AppColors.zPrimaryColor,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Text(
-                              chat.unreadCount.toString(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                      ],
+                    Text(state.message),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _loadChats,
+                      child: const Text('Retry'),
                     ),
                   ],
                 ),
+              );
+            }
+        
+            if (state is ChatsLoaded) {
+              return StreamBuilder<List<ChatModel>>(
+                stream: state.chats,
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+        
+                  if (!snapshot.hasData) {
+                    return _buildShimmerLoader(context);
+                  }
+        
+                  final chats = snapshot.data!;
+        
+                  if (chats.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'No chats yet',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    );
+                  }
+        
+                  return RefreshIndicator(
+                    onRefresh: () async => _loadChats(),
+                    child: ListView.separated(
+                      itemCount: chats.length,
+                      separatorBuilder: (context, index) => const Divider(
+                        color: Colors.grey,
+                      ),
+                      itemBuilder: (context, index) {
+                        final chat = chats[index];
+                        final otherUser = chat.sellerId == _currentUserId 
+                            ? chat.buyer 
+                            : chat.seller;
+                        final ad = chat.ad;
+                        final lastMessage = chat.lastMessage;
+                        final initials = otherUser?.fullName?.isNotEmpty ?? false
+                            ? otherUser!.fullName!.substring(0, 1).toUpperCase()
+                            : '?';
+
+                        return ListTile(
+                          leading: Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.zPrimaryColor.withOpacity(0.2),
+                            ),
+                            child: Center(
+                              child: Text(
+                                initials,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.zPrimaryColor,
+                                ),
+                              ),
+                            ),
+                          ),
+                          title: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  otherUser?.fullName ?? 'Unknown User',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                              if (chat.unreadCount > 0)
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.zPrimaryColor,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    chat.unreadCount.toString(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (ad != null)
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '${ad.brand} ${ad.model}',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[100],
+                                        ),
+                                      ),
+                                    ),
+                                    if (lastMessage != null)
+                                      Text(
+                                        _formatTime(lastMessage.timestamp),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[500],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              if (lastMessage != null)
+                                Text(
+                                  lastMessage.content,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                            ],
+                          ),
+                          onTap: () async {
+                            context.read<ChatBloc>().add(
+                              MarkMessagesReadEvent(
+                                chatId: chat.id,
+                                userId: _currentUserId,
+                              ),
+                            );
+        
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BlocProvider.value(
+                                  value: context.read<ChatBloc>(),
+                                  child: ScreenAdChat(
+                                    chatId: chat.id,
+                                    otherUser: otherUser,
+                                    ad: ad,
+                                  ),
+                                ),
+                              ),
+                            );
+                            _loadChats();
+                          },
+                        );
+                      },
+                    ),
+                  );
+                },
+              );
+            }
+            return _buildShimmerLoader(context);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShimmerLoader(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDarkMode ? AppColors.zSecondBackground : Colors.grey[300]!;
+    final highlightColor = isDarkMode 
+        ? AppColors.zSecondBackground.withOpacity(0.6)
+        : Colors.grey[100]!;
+
+    return Shimmer.fromColors(
+      baseColor: baseColor,
+      highlightColor: highlightColor,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(8.0),
+        itemCount: 9,
+        separatorBuilder: (context, index) => const Divider(
+          color: Colors.grey,
+          height: 1,
+        ),
+        itemBuilder: (context, index) {
+          return ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            leading: Container(
+              width: 56,
+              height: 56,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
               ),
+            ),
+            title: Container(
+              width: 120,
+              height: 16,
+              color: Colors.white,
+              margin: const EdgeInsets.only(bottom: 4),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: 14,
+                  color: Colors.white,
+                  margin: const EdgeInsets.only(bottom: 4),
+                ),
+                Container(
+                  width: 80,
+                  height: 12,
+                  color: Colors.white,
+                ),
+              ],
             ),
           );
         },

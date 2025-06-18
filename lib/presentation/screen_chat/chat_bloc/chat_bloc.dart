@@ -52,26 +52,22 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   }
 
   Future<void> _onLoadChats(LoadChatsEvent event, Emitter<ChatState> emit) async {
-    emit(ChatLoading());
+    emit(ChatsLoading());
     try {
       final stream = _getChatsUseCase(param: event.userId);
       emit(ChatsLoaded(stream));
     } catch (e) {
       emit(ChatError('Failed to load chats: ${e.toString()}'));
-      await Future.delayed(const Duration(seconds: 2));
-      emit(ChatInitial());
     }
   }
 
   Future<void> _onLoadMessages(LoadMessagesEvent event, Emitter<ChatState> emit) async {
-    emit(ChatLoading());
+    emit(MessagesLoading());
     try {
       final stream = _getMessagesUseCase(param: event.chatId);
       emit(MessagesLoaded(stream));
     } catch (e) {
       emit(ChatError('Failed to load messages: ${e.toString()}'));
-      await Future.delayed(const Duration(seconds: 2));
-      emit(ChatInitial());
     }
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:shiftwheels/core/common_widget/widget/ad_cards.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
 import 'package:shiftwheels/core/common_widget/widget/filter_brand_icon.dart';
@@ -19,17 +20,16 @@ class ScreenHome extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create:
-              (context) =>
-                  AddPostBloc(sl<GetBrandUsecase>(), sl<GetModelsUsecase>())
-                    ..add(FetchBrandsEvent(),
-              ),
+          create: (context) =>
+              AddPostBloc(sl<GetBrandUsecase>(), sl<GetModelsUsecase>())
+                ..add(FetchBrandsEvent()),
         ),
         BlocProvider(
           create: (context) => sl<GetPostAdBloc>()..add(const FetchActiveAds()),
         ),
       ],
       child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SafeArea(
           child: Column(
             children: [
@@ -49,7 +49,7 @@ class ScreenHome extends StatelessWidget {
                     if (state is GetPostAdInitial ||
                         (state is GetPostAdLoading &&
                             state.previousAds == null)) {
-                      return const Center(child: CircularProgressIndicator());
+                      return _buildShimmerLoader(context);
                     }
 
                     if (state is GetPostAdError) {
@@ -58,10 +58,9 @@ class ScreenHome extends StatelessWidget {
                       );
                     }
 
-                    final ads =
-                        state is GetPostAdLoaded
-                            ? state.ads
-                            : (state as GetPostAdLoading).previousAds ?? [];
+                    final ads = state is GetPostAdLoaded
+                        ? state.ads
+                        : (state as GetPostAdLoading).previousAds ?? [];
 
                     if (ads.isEmpty) {
                       return const Center(
@@ -115,7 +114,8 @@ class ScreenHome extends StatelessWidget {
                     Text(
                       'Search',
                       style: TextStyle(
-                        color: Colors.grey,
+                        color: Theme.of(context).textTheme.bodyMedium?.color ??
+                            Colors.grey,
                         fontSize: 20,
                         fontWeight: FontWeight.w400,
                       ),
@@ -186,6 +186,36 @@ class ScreenHome extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+
+  Widget _buildShimmerLoader(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDarkMode ? AppColors.zSecondBackground : Colors.grey[300]!;
+    final highlightColor = isDarkMode ? AppColors.zSecondBackground.withOpacity(0.6): Colors.grey[100]!;
+
+    return GridView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      itemCount: 6,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 2,
+        mainAxisSpacing: 2,
+        childAspectRatio: 0.75,
+      ),
+      itemBuilder: (context, index) {
+        return Shimmer.fromColors(
+          baseColor: baseColor,
+          highlightColor: highlightColor,
+          child: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isDarkMode ? AppColors.zGreen : AppColors.zPrimaryColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      },
     );
   }
 }

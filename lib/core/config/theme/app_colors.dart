@@ -14,4 +14,5 @@ class AppColors {
   static const zGrey = Colors.grey;
   static const zred = Colors.red;
   static const zGreen = Colors.green;
+  static const zOrange = Color.fromARGB(255, 230, 209, 22);
 }

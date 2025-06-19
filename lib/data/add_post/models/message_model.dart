@@ -67,7 +67,7 @@ class MessageModel {
     return {
       'chatId': chatId,
       'senderId': senderId,
-      'content': content,
+      'content': isDeleted ? 'This message was deleted' : content,
       'timestamp': Timestamp.fromDate(timestamp),
       'status': status.toString().split('.').last,
       'replyToMessageId': replyToMessageId,

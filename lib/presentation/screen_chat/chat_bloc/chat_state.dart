@@ -9,7 +9,14 @@ sealed class ChatState extends Equatable {
 
 final class ChatInitial extends ChatState {}
 
-final class ChatLoading extends ChatState {}
+final class ChatLoading extends ChatState {
+  final String? messageId;
+
+  const ChatLoading({this.messageId});
+
+  @override
+  List<Object> get props => [messageId ?? ''];
+}
 
 final class ChatCreated extends ChatState {
   final String chatId;
@@ -31,8 +38,15 @@ final class ChatsLoaded extends ChatState {
   List<Object> get props => [chats];
 }
 
-final class MessagesLoading extends ChatState {}
-final class MessageDeleted extends ChatState {}
+final class MessagesLoading extends ChatState {
+  final bool isInitialLoad;
+  
+  const MessagesLoading({this.isInitialLoad = false});
+
+  @override
+  List<Object> get props => [isInitialLoad];
+}
+
 final class MessagesLoaded extends ChatState {
   final Stream<List<MessageModel>> messages;
 

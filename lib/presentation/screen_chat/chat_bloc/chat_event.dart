@@ -33,11 +33,12 @@ class LoadChatsEvent extends ChatEvent {
 
 class LoadMessagesEvent extends ChatEvent {
   final String chatId;
+  final bool isInitialLoad;
 
-  const LoadMessagesEvent(this.chatId);
+  const LoadMessagesEvent(this.chatId, {this.isInitialLoad = true});
 
   @override
-  List<Object> get props => [chatId];
+  List<Object> get props => [chatId, isInitialLoad];
 }
 
 class SendMessageEvent extends ChatEvent {
@@ -58,6 +59,7 @@ class SendMessageEvent extends ChatEvent {
   @override
   List<Object> get props => [chatId, senderId, content, replyToMessageId ?? '', replyToContent ?? ''];
 }
+
 class DeleteMessageEvent extends ChatEvent {
   final String chatId;
   final String messageId;
@@ -70,6 +72,7 @@ class DeleteMessageEvent extends ChatEvent {
   @override
   List<Object> get props => [chatId, messageId];
 }
+
 class MarkMessagesReadEvent extends ChatEvent {
   final String chatId;
   final String userId;

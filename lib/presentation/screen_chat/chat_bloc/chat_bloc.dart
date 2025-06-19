@@ -27,13 +27,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     required SendMessageUseCase sendMessageUseCase,
     required MarkMessagesReadUseCase markMessagesReadUseCase,
     required DeleteMessageUseCase deleteMessageUseCase,
-  })  : _createChatUseCase = createChatUseCase,
-        _getChatsUseCase = getChatsUseCase,
-        _getMessagesUseCase = getMessagesUseCase,
-        _sendMessageUseCase = sendMessageUseCase,
-        _markMessagesReadUseCase = markMessagesReadUseCase,
-        _deleteMessageUseCase = deleteMessageUseCase,
-        super(ChatInitial()) {
+  }) : _createChatUseCase = createChatUseCase,
+       _getChatsUseCase = getChatsUseCase,
+       _getMessagesUseCase = getMessagesUseCase,
+       _sendMessageUseCase = sendMessageUseCase,
+       _markMessagesReadUseCase = markMessagesReadUseCase,
+       _deleteMessageUseCase = deleteMessageUseCase,
+       super(ChatInitial()) {
     on<CreateChatEvent>(_onCreateChat);
     on<LoadChatsEvent>(_onLoadChats);
     on<LoadMessagesEvent>(_onLoadMessages);
@@ -42,13 +42,18 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<DeleteMessageEvent>(_onDeleteMessage);
   }
 
-  Future<void> _onCreateChat(CreateChatEvent event, Emitter<ChatState> emit) async {
+  Future<void> _onCreateChat(
+    CreateChatEvent event,
+    Emitter<ChatState> emit,
+  ) async {
     emit(ChatLoading());
-    final result = await _createChatUseCase(param: CreateChatParams(
-      adId: event.adId,
-      sellerId: event.sellerId,
-      buyerId: event.buyerId,
-    ));
+    final result = await _createChatUseCase(
+      param: CreateChatParams(
+        adId: event.adId,
+        sellerId: event.sellerId,
+        buyerId: event.buyerId,
+      ),
+    );
 
     result.fold(
       (failure) => emit(ChatError(failure)),
@@ -56,7 +61,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     );
   }
 
-  Future<void> _onLoadChats(LoadChatsEvent event, Emitter<ChatState> emit) async {
+  Future<void> _onLoadChats(
+    LoadChatsEvent event,
+    Emitter<ChatState> emit,
+  ) async {
     emit(ChatsLoading());
     try {
       final stream = _getChatsUseCase(param: event.userId);
@@ -66,7 +74,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }
   }
 
-  Future<void> _onLoadMessages(LoadMessagesEvent event, Emitter<ChatState> emit) async {
+  Future<void> _onLoadMessages(
+    LoadMessagesEvent event,
+    Emitter<ChatState> emit,
+  ) async {
     emit(MessagesLoading());
     try {
       final stream = _getMessagesUseCase(param: event.chatId);
@@ -76,14 +87,19 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }
   }
 
-  Future<void> _onSendMessage(SendMessageEvent event, Emitter<ChatState> emit) async {
-    final result = await _sendMessageUseCase(param: SendMessageParams(
-      chatId: event.chatId,
-      senderId: event.senderId,
-      content: event.content,
-      replyToMessageId: event.replyToMessageId,
-      replyToContent: event.replyToContent,
-    ));
+  Future<void> _onSendMessage(
+    SendMessageEvent event,
+    Emitter<ChatState> emit,
+  ) async {
+    final result = await _sendMessageUseCase(
+      param: SendMessageParams(
+        chatId: event.chatId,
+        senderId: event.senderId,
+        content: event.content,
+        replyToMessageId: event.replyToMessageId,
+        replyToContent: event.replyToContent,
+      ),
+    );
 
     result.fold(
       (failure) => emit(ChatError(failure)),
@@ -91,11 +107,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     );
   }
 
-  Future<void> _onMarkMessagesRead(MarkMessagesReadEvent event, Emitter<ChatState> emit) async {
-    final result = await _markMessagesReadUseCase(param: MarkMessagesReadParams(
-      chatId: event.chatId,
-      userId: event.userId,
-    ));
+  Future<void> _onMarkMessagesRead(
+    MarkMessagesReadEvent event,
+    Emitter<ChatState> emit,
+  ) async {
+    final result = await _markMessagesReadUseCase(
+      param: MarkMessagesReadParams(chatId: event.chatId, userId: event.userId),
+    );
 
     result.fold(
       (failure) => emit(ChatError(failure)),
@@ -103,20 +121,20 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     );
   }
 
-  Future<void> _onDeleteMessage(DeleteMessageEvent event, Emitter<ChatState> emit) async {
-    emit(MessagesLoading()); // Emit loading state to show indicator briefly
-    final result = await _deleteMessageUseCase(param: DeleteMessageParams(
-      chatId: event.chatId,
-      messageId: event.messageId,
-    ));
+  Future<void> _onDeleteMessage(
+    DeleteMessageEvent event,
+    Emitter<ChatState> emit,
+  ) async {
+    final result = await _deleteMessageUseCase(
+      param: DeleteMessageParams(
+        chatId: event.chatId,
+        messageId: event.messageId,
+      ),
+    );
 
     result.fold(
       (failure) => emit(ChatError(failure)),
-      (_) {
-        // Reload messages to ensure the stream reflects the deletion
-        final stream = _getMessagesUseCase(param: event.chatId);
-        emit(MessagesLoaded(stream));
-      },
+      (_) => null, 
     );
   }
 }

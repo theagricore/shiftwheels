@@ -30,17 +30,14 @@ class _ScreenAdChatState extends State<ScreenAdChat> {
   final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
   MessageModel? _replyingToMessage;
 
+  final Map<String, GlobalKey> _messageKeys = {};
+  String? _highlightedMessageId;
+
   @override
   void initState() {
     super.initState();
     context.read<ChatBloc>().add(LoadMessagesEvent(widget.chatId));
     _markMessagesAsRead();
-  }
-
-  void _markMessagesAsRead() {
-    context.read<ChatBloc>().add(
-          MarkMessagesReadEvent(chatId: widget.chatId, userId: currentUserId),
-        );
   }
 
   @override
@@ -50,182 +47,48 @@ class _ScreenAdChatState extends State<ScreenAdChat> {
     super.dispose();
   }
 
+  void _markMessagesAsRead() {
+    context.read<ChatBloc>().add(
+      MarkMessagesReadEvent(chatId: widget.chatId, userId: currentUserId),
+    );
+  }
+
   void _handleReply(MessageModel message) {
-    setState(() {
-      _replyingToMessage = message;
-    });
+    setState(() => _replyingToMessage = message);
   }
 
   void _cancelReply() {
-    setState(() {
-      _replyingToMessage = null;
-    });
+    setState(() => _replyingToMessage = null);
+  }
+
+  void _scrollToMessage(String messageId) {
+    final key = _messageKeys[messageId];
+    if (key != null && key.currentContext != null) {
+      Scrollable.ensureVisible(
+        key.currentContext!,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+      setState(() => _highlightedMessageId = messageId);
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) setState(() => _highlightedMessageId = null);
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.otherUser?.fullName ?? 'Unknown User'),
-            if (widget.ad != null)
-              Text(
-                '${widget.ad!.brand} ${widget.ad!.model}',
-                style: const TextStyle(fontSize: 12),
-              ),
-          ],
-        ),
-        backgroundColor: AppColors.zPrimaryColor,
-      ),
+      appBar: _buildAppBar(),
       body: BlocListener<ChatBloc, ChatState>(
         listener: (context, state) {
-          if (state is ChatError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+          if (state is MessagesLoaded) {
+            _markMessagesAsRead();
           }
         },
         child: Column(
           children: [
-            Expanded(
-              child: BlocBuilder<ChatBloc, ChatState>(
-                builder: (context, state) {
-                  if (state is MessagesLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (state is MessagesLoaded) {
-                    return StreamBuilder<List<MessageModel>>(
-                      stream: state.messages,
-                      builder: (context, snapshot) {
-                        if (snapshot.hasError) {
-                          return Center(child: Text('Error: ${snapshot.error}'));
-                        }
-
-                        if (!snapshot.hasData) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
-
-                        final messages = snapshot.data!;
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (_scrollController.hasClients) {
-                            _scrollController.jumpTo(
-                              _scrollController.position.maxScrollExtent,
-                            );
-                          }
-                        });
-
-                        return ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.all(8),
-                          itemCount: messages.length + _calculateDateTags(messages),
-                          itemBuilder: (context, index) {
-                            final dateTagIndex = _getDateTagIndex(messages, index);
-                            if (dateTagIndex != null) {
-                              return _buildDateTag(messages[dateTagIndex].timestamp);
-                            }
-
-                            final messageIndex = index - _calculateDateTagsBefore(messages, index);
-                            if (messageIndex < 0 || messageIndex >= messages.length) {
-                              return const SizedBox.shrink();
-                            }
-
-                            final message = messages[messageIndex];
-                            final isMe = message.senderId == currentUserId;
-
-                            // Skip rendering if message is deleted and not from current user
-                            if (message.isDeleted && !isMe) {
-                              return const SizedBox.shrink();
-                            }
-
-                            return GestureDetector(
-                              onLongPress: () {
-                                if (isMe && !message.isDeleted) {
-                                  showModalBottomSheet(
-                                    context: context,
-                                    builder: (context) => _buildMessageOptions(message, isMe),
-                                  );
-                                }
-                              },
-                              child: Align(
-                                alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                                child: Container(
-                                  margin: const EdgeInsets.symmetric(vertical: 4),
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: isMe
-                                        ? AppColors.zPrimaryColor
-                                        : Colors.grey[300],
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: const Radius.circular(12),
-                                      topRight: const Radius.circular(12),
-                                      bottomLeft: isMe ? const Radius.circular(12) : const Radius.circular(0),
-                                      bottomRight: isMe ? const Radius.circular(0) : const Radius.circular(12),
-                                    ),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                                    children: [
-                                      if (message.replyToContent != null && !message.isDeleted)
-                                        Container(
-                                          padding: const EdgeInsets.all(8),
-                                          margin: const EdgeInsets.only(bottom: 8),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black12,
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Text(
-                                            message.replyToContent!,
-                                            style: TextStyle(
-                                              color: isMe ? Colors.white70 : Colors.black54,
-                                              fontStyle: FontStyle.italic,
-                                            ),
-                                          ),
-                                        ),
-                                      Text(
-                                        message.displayContent,
-                                        style: TextStyle(
-                                          color: isMe ? Colors.white : Colors.black,
-                                          fontStyle: message.isDeleted ? FontStyle.italic : FontStyle.normal,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            _formatTime(message.timestamp),
-                                            style: TextStyle(
-                                              color: isMe ? Colors.white70 : Colors.black54,
-                                              fontSize: 10,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          if (isMe && !message.isDeleted)
-                                            _buildMessageStatus(message.status),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    );
-                  }
-
-                  if (state is ChatError) {
-                    return Center(child: Text(state.message));
-                  }
-
-                  return const SizedBox.shrink(); // Avoid showing indicator for other states
-                },
-              ),
-            ),
+            Expanded(child: _buildMessageList()),
             _buildMessageInput(),
           ],
         ),
@@ -233,117 +96,243 @@ class _ScreenAdChatState extends State<ScreenAdChat> {
     );
   }
 
-  Widget _buildMessageOptions(MessageModel message, bool isMe) {
-    return BottomSheet(
-      onClosing: () {},
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: AppColors.zPrimaryColor,
+      elevation: 2,
+      leading: const BackButton(color: Colors.white),
+      title: Row(
         children: [
-          ListTile(
-            leading: const Icon(Icons.reply),
-            title: const Text('Reply'),
-            onTap: () {
-              _handleReply(message);
-              Navigator.pop(context);
-            },
-          ),
-          if (isMe)
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete', style: TextStyle(color: Colors.red)),
-              onTap: () {
-                context.read<ChatBloc>().add(DeleteMessageEvent(
-                  chatId: widget.chatId,
-                  messageId: message.id,
-                ));
-                Navigator.pop(context);
-              },
+          CircleAvatar(
+            backgroundColor: Colors.white,
+            child: Text(
+              widget.otherUser?.fullName?[0].toUpperCase() ?? "?",
+              style: const TextStyle(color: AppColors.zPrimaryColor),
             ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.otherUser?.fullName ?? 'Unknown User',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              if (widget.ad != null)
+                Text(
+                  '${widget.ad!.brand} ${widget.ad!.model}',
+                  style: const TextStyle(fontSize: 12, color: Colors.white70),
+                ),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  int _calculateDateTags(List<MessageModel> messages) {
-    if (messages.isEmpty) return 0;
-    if (messages.length == 1) return 1;
-    var count = 1;
-    var lastDate = DateFormat('yyyy-MM-dd').format(messages[0].timestamp);
-    for (var i = 1; i < messages.length; i++) {
-      var currentDate = DateFormat('yyyy-MM-dd').format(messages[i].timestamp);
-      if (currentDate != lastDate) {
-        count++;
-        lastDate = currentDate;
-      }
-    }
-    return count;
+  Widget _buildMessageList() {
+    return BlocBuilder<ChatBloc, ChatState>(
+      builder: (context, state) {
+        if (state is MessagesLoading && state.isInitialLoad) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (state is MessagesLoaded) {
+          return StreamBuilder<List<MessageModel>>(
+            stream: state.messages,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+
+              final messages = snapshot.data!;
+              final chatItems = _buildChatItems(messages);
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_scrollController.hasClients) {
+                  _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+                }
+              });
+
+              return ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(8),
+                itemCount: chatItems.length,
+                itemBuilder: (context, index) {
+                  final item = chatItems[index];
+                  if (item is String) {
+                    return _buildDateTag(item);
+                  } else if (item is MessageModel) {
+                    final isMe = item.senderId == currentUserId;
+                    final key = _messageKeys[item.id] ??= GlobalKey();
+                    return Container(
+                      key: key,
+                      decoration: BoxDecoration(
+                        color: item.id == _highlightedMessageId 
+                          ? Colors.yellow.shade100 
+                          : null,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: _buildMessageWidget(item, isMe),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              );
+            },
+          );
+        }
+
+        return const SizedBox.shrink();
+      },
+    );
   }
 
-  int _calculateDateTagsBefore(List<MessageModel> messages, int index) {
-    if (messages.isEmpty || index <= 0) return 0;
-    var count = 1;
-    var lastDate = DateFormat('yyyy-MM-dd').format(messages[0].timestamp);
-    var messageIndex = 0;
-    for (var i = 1; i < messages.length && messageIndex < index; i++) {
-      var currentDate = DateFormat('yyyy-MM-dd').format(messages[i].timestamp);
-      if (currentDate != lastDate) {
-        count++;
-        lastDate = currentDate;
+Widget _buildDateTag(String dateText) {
+  return Center(
+    child: Container(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        dateText,
+        style: const TextStyle(fontSize: 12, color: Colors.black54),
+      ),
+    ),
+  );
+}
+
+  List<dynamic> _buildChatItems(List<MessageModel> messages) {
+    final chatItems = <dynamic>[];
+    String? lastDate;
+    for (final message in messages) {
+      final msgDate = DateFormat('yyyy-MM-dd').format(message.timestamp);
+      if (lastDate != msgDate) {
+        chatItems.add(_formatDateTag(message.timestamp));
+        lastDate = msgDate;
       }
-      messageIndex++;
-      if (messageIndex + count >= index) break;
+      chatItems.add(message);
     }
-    return count;
+    return chatItems;
   }
 
-  int? _getDateTagIndex(List<MessageModel> messages, int index) {
-    if (messages.isEmpty) return null;
-    var dateTagCount = 0;
-    var messageIndex = 0;
-    var lastDate = DateFormat('yyyy-MM-dd').format(messages[0].timestamp);
-
-    if (index == 0) return 0;
-
-    for (var i = 1; i < messages.length; i++) {
-      var currentDate = DateFormat('yyyy-MM-dd').format(messages[i].timestamp);
-      if (currentDate != lastDate) {
-        dateTagCount++;
-        if (index == messageIndex + dateTagCount) return i;
-        lastDate = currentDate;
-      }
-      messageIndex++;
-      if (messageIndex + dateTagCount >= index) break;
-    }
-    return null;
-  }
-
-  Widget _buildDateTag(DateTime timestamp) {
-    final formattedDate = DateFormat('MMMM dd, yyyy').format(timestamp);
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          formattedDate,
-          style: const TextStyle(fontSize: 12, color: Colors.black54),
+  Widget _buildMessageWidget(MessageModel message, bool isMe) {
+    return GestureDetector(
+      onLongPress: () => _showMessageOptions(message, isMe),
+      child: Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.8,
+          ),
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: isMe
+                  ? const LinearGradient(
+                      colors: [AppColors.zOrange, AppColors.zPrimaryColor],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : const LinearGradient(
+                      colors: [AppColors.zGrey, Color(0xFFE2E2E2)],
+                    ),
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(16),
+                topRight: const Radius.circular(16),
+                bottomLeft: isMe ? const Radius.circular(16) : const Radius.circular(0),
+                bottomRight: isMe ? const Radius.circular(0) : const Radius.circular(16),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                if (message.replyToContent != null && !message.isDeleted)
+                  GestureDetector(
+                    onTap: () => _scrollToMessage(message.replyToMessageId ?? ''),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black12,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        message.replyToContent!,
+                        style: TextStyle(
+                          color: isMe ? Colors.white70 : Colors.black54,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ),
+                Text(
+                  message.displayContent,
+                  style: TextStyle(
+                    color: isMe ? Colors.white : Colors.black87,
+                    fontStyle: message.isDeleted ? FontStyle.italic : FontStyle.normal,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _formatTime(message.timestamp),
+                      style: TextStyle(
+                        color: isMe ? Colors.white70 : Colors.black54,
+                        fontSize: 10,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    if (isMe && !message.isDeleted) _buildMessageStatus(message.status),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildMessageStatus(MessageStatus status) {
-    switch (status) {
-      case MessageStatus.sent:
-        return const Icon(Icons.check, size: 12, color: Colors.white70);
-      case MessageStatus.delivered:
-        return const Icon(Icons.check_circle, size: 12, color: Colors.white70);
-      case MessageStatus.read:
-        return const Icon(Icons.check_circle, size: 12, color: Colors.blue);
-    }
+  void _showMessageOptions(MessageModel message, bool isMe) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.reply),
+              title: const Text('Reply'),
+              onTap: () {
+                _handleReply(message);
+                Navigator.pop(context);
+              },
+            ),
+            if (isMe && !message.isDeleted)
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text('Delete', style: TextStyle(color: Colors.red)),
+                onTap: () {
+                  context.read<ChatBloc>().add(
+                    DeleteMessageEvent(
+                      chatId: widget.chatId,
+                      messageId: message.id,
+                    ),
+                  );
+                  Navigator.pop(context);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildMessageInput() {
@@ -351,8 +340,13 @@ class _ScreenAdChatState extends State<ScreenAdChat> {
       children: [
         if (_replyingToMessage != null)
           Container(
-            color: Colors.grey[200],
-            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              border: Border(
+                left: BorderSide(color: AppColors.zPrimaryColor, width: 4),
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
               children: [
                 Expanded(
@@ -361,12 +355,13 @@ class _ScreenAdChatState extends State<ScreenAdChat> {
                     children: [
                       Text(
                         'Replying to ${_replyingToMessage!.senderId == currentUserId ? "yourself" : widget.otherUser?.fullName ?? "Unknown"}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                       ),
                       Text(
                         _replyingToMessage!.displayContent,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.black54),
                       ),
                     ],
                   ),
@@ -379,64 +374,57 @@ class _ScreenAdChatState extends State<ScreenAdChat> {
             ),
           ),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: AppColors.zBackGround,
-          ),
+          padding: const EdgeInsets.all(12),
+          color: Colors.transparent,
           child: Row(
             children: [
               Expanded(
                 child: Container(
-                  height: 60,
+                  padding: const EdgeInsets.symmetric(horizontal: 13),
                   decoration: BoxDecoration(
-                    color: AppColors.zBackGround,
-                    borderRadius: BorderRadius.circular(35),
-                    border: Border.all(color: Colors.grey[300]!, width: 1.5),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: AppColors.zPrimaryColor,width: 2),
                   ),
                   child: Row(
                     children: [
-                      const SizedBox(width: 16),
                       Expanded(
-                        child: TextField(
-                          controller: _messageController,
-                          decoration: const InputDecoration(
-                            hintText: 'Type a message...',
-                            border: InputBorder.none,
-                            fillColor: AppColors.zBackGround,
-                            contentPadding: EdgeInsets.symmetric(vertical: 12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: TextField(
+                            
+                            controller: _messageController,
+                            decoration: const InputDecoration(
+                              hintText: 'Type your message...',
+                              border: InputBorder.none,
+                              fillColor: AppColors.zWhite,
+                              
+                            ),
+                            maxLines: null,
                           ),
-                          maxLines: null,
                         ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.attach_file, color: AppColors.zBackGround),
-                        onPressed: () {},
                       ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              Container(
-                height: 60,
-                width: 60,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.zPrimaryColor,
-                ),
+              CircleAvatar(
+                radius: 26,
+                backgroundColor: AppColors.zPrimaryColor,
                 child: IconButton(
                   icon: const Icon(Icons.send, color: Colors.white),
                   onPressed: () {
                     if (_messageController.text.trim().isNotEmpty) {
                       context.read<ChatBloc>().add(
-                            SendMessageEvent(
-                              chatId: widget.chatId,
-                              senderId: currentUserId,
-                              content: _messageController.text.trim(),
-                              replyToMessageId: _replyingToMessage?.id,
-                              replyToContent: _replyingToMessage?.displayContent,
-                            ),
-                          );
+                        SendMessageEvent(
+                          chatId: widget.chatId,
+                          senderId: currentUserId,
+                          content: _messageController.text.trim(),
+                          replyToMessageId: _replyingToMessage?.id,
+                          replyToContent: _replyingToMessage?.displayContent,
+                        ),
+                      );
                       _messageController.clear();
                       _cancelReply();
                     }
@@ -450,7 +438,34 @@ class _ScreenAdChatState extends State<ScreenAdChat> {
     );
   }
 
+  String _formatDateTag(DateTime timestamp) {
+    final now = DateTime.now();
+    final diff = now.difference(timestamp);
+    if (diff.inDays >= 1) {
+      return DateFormat('MMM dd, hh:mm a').format(timestamp);
+    } else {
+      return DateFormat('hh:mm a').format(timestamp);
+    }
+  }
+
   String _formatTime(DateTime timestamp) {
-    return '${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}';
+    final now = DateTime.now();
+    final diff = now.difference(timestamp);
+    if (diff.inDays >= 1) {
+      return DateFormat('MMM dd, hh:mm a').format(timestamp);
+    } else {
+      return DateFormat('hh:mm a').format(timestamp);
+    }
+  }
+
+  Widget _buildMessageStatus(MessageStatus status) {
+    switch (status) {
+      case MessageStatus.sent:
+        return const Icon(Icons.check, size: 14, color: Colors.white70);
+      case MessageStatus.delivered:
+        return const Icon(Icons.done_all, size: 14, color: Colors.white70);
+      case MessageStatus.read:
+        return const Icon(Icons.done_all, size: 14, color: Colors.blue);
+    }
   }
 }

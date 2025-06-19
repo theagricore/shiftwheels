@@ -501,124 +501,126 @@ class PostFirebaseServiceImpl extends FirebasePostService {
     }
   }
 
-  @override
-  Stream<List<ChatModel>> getChatsForUser(String userId) {
-    return _firestore
-        .collection('chats')
-        .where('participants', arrayContains: userId)
-        .orderBy('updatedAt', descending: true)
-        .snapshots()
-        .asyncMap((snapshot) async {
-          final chats = <ChatModel>[];
+@override
+Stream<List<ChatModel>> getChatsForUser(String userId) {
+  return _firestore
+      .collection('chats')
+      .where('participants', arrayContains: userId)
+      .orderBy('updatedAt', descending: true)
+      .snapshots()
+      .asyncMap((snapshot) async {
+        final chats = <ChatModel>[];
 
-          for (final doc in snapshot.docs) {
-            try {
-              final chat = ChatModel.fromMap(doc.data(), doc.id);
+        for (final doc in snapshot.docs) {
+          try {
+            final chat = ChatModel.fromMap(doc.data(), doc.id);
 
-              final lastMessage = await _firestore
-                  .collection('chats')
-                  .doc(doc.id)
-                  .collection('messages')
-                  .orderBy('timestamp', descending: true)
-                  .limit(1)
-                  .get()
-                  .then(
-                    (snap) =>
-                        snap.docs.isNotEmpty
-                            ? MessageModel.fromMap(
-                              snap.docs.first.data(),
-                              snap.docs.first.id,
-                            )
-                            : null,
-                  );
+            final lastMessage = await _firestore
+                .collection('chats')
+                .doc(doc.id)
+                .collection('messages')
+                .orderBy('timestamp', descending: true)
+                .limit(1)
+                .get()
+                .then(
+                  (snap) =>
+                      snap.docs.isNotEmpty
+                          ? MessageModel.fromMap(
+                            snap.docs.first.data(),
+                            snap.docs.first.id,
+                          )
+                          : null,
+                );
 
-              final unreadCount = await _firestore
-                  .collection('chats')
-                  .doc(doc.id)
-                  .collection('messages')
-                  .where('status', whereIn: ['sent', 'delivered'])
-                  .where('senderId', isNotEqualTo: userId)
-                  .get()
-                  .then((snap) => snap.size);
+            // Updated unread count query to exclude deleted messages
+            final unreadCount = await _firestore
+                .collection('chats')
+                .doc(doc.id)
+                .collection('messages')
+                .where('status', whereIn: ['sent', 'delivered'])
+                .where('senderId', isNotEqualTo: userId)
+                .where('isDeleted', isEqualTo: false)  // Add this condition
+                .get()
+                .then((snap) => snap.size);
 
-              final otherUserId =
-                  chat.sellerId == userId ? chat.buyerId : chat.sellerId;
-              final userDoc =
-                  await _firestore.collection('Users').doc(otherUserId).get();
-              final user =
-                  userDoc.exists ? UserModel.fromMap(userDoc.data()!) : null;
+            final otherUserId =
+                chat.sellerId == userId ? chat.buyerId : chat.sellerId;
+            final userDoc =
+                await _firestore.collection('Users').doc(otherUserId).get();
+            final user =
+                userDoc.exists ? UserModel.fromMap(userDoc.data()!) : null;
 
-              final adDoc =
-                  await _firestore.collection('car_ads').doc(chat.adId).get();
-              final ad =
-                  adDoc.exists
-                      ? AdsModel.fromMap(adDoc.data()!, adDoc.id)
-                      : null;
+            final adDoc =
+                await _firestore.collection('car_ads').doc(chat.adId).get();
+            final ad =
+                adDoc.exists
+                    ? AdsModel.fromMap(adDoc.data()!, adDoc.id)
+                    : null;
 
-              chats.add(
-                chat.copyWith(
-                  lastMessage: lastMessage,
-                  unreadCount: unreadCount,
-                  seller: chat.sellerId == userId ? null : user,
-                  buyer: chat.buyerId == userId ? null : user,
-                  ad: ad,
-                ),
-              );
-            } catch (e) {
-              continue;
-            }
+            chats.add(
+              chat.copyWith(
+                lastMessage: lastMessage,
+                unreadCount: unreadCount,
+                seller: chat.sellerId == userId ? null : user,
+                buyer: chat.buyerId == userId ? null : user,
+                ad: ad,
+              ),
+            );
+          } catch (e) {
+            continue;
           }
+        }
 
-          return chats;
-        });
-  }
+        return chats;
+      });
+}
 
-  @override
-  Stream<List<MessageModel>> getMessagesForChat(String chatId) {
-    return _firestore
-        .collection('chats')
-        .doc(chatId)
-        .collection('messages')
-        .orderBy('timestamp', descending: false)
-        .snapshots()
-        .map(
-          (snapshot) =>
-              snapshot.docs.map((doc) {
-                final data = doc.data();
-                return MessageModel.fromMap(data, doc.id);
-              }).toList(),
-        );
-  }
+@override
+Stream<List<MessageModel>> getMessagesForChat(String chatId) {
+  return _firestore
+      .collection('chats')
+      .doc(chatId)
+      .collection('messages')
+      .orderBy('timestamp', descending: false)
+      .snapshots()
+      .map(
+        (snapshot) =>
+            snapshot.docs.map((doc) {
+              final data = doc.data();
+              return MessageModel.fromMap(data, doc.id);
+            }).toList(),
+      );
+}
 
-  @override
-  Future<Either<String, void>> markMessagesAsRead({
-    required String chatId,
-    required String userId,
-  }) async {
-    try {
-      final messages =
-          await _firestore
-              .collection('chats')
-              .doc(chatId)
-              .collection('messages')
-              .where('status', whereIn: ['sent', 'delivered'])
-              .where('senderId', isNotEqualTo: userId)
-              .where('isDeleted', isEqualTo: false)
-              .get();
+@override
+Future<Either<String, void>> markMessagesAsRead({
+  required String chatId,
+  required String userId,
+}) async {
+  try {
+    final messages =
+        await _firestore
+            .collection('chats')
+            .doc(chatId)
+            .collection('messages')
+            .where('status', whereIn: ['sent', 'delivered'])
+            .where('senderId', isNotEqualTo: userId)
+            .where('isDeleted', isEqualTo: false)  // Add this condition
+            .get();
 
-      final batch = _firestore.batch();
-      for (final doc in messages.docs) {
-        batch.update(doc.reference, {'status': 'read'});
-      }
-
-      await batch.commit();
-      return const Right(null);
-    } on FirebaseException catch (e) {
-      return Left('Firebase error: ${e.message}');
-    } catch (e) {
-      return Left('Unexpected error: ${e.toString()}');
+    final batch = _firestore.batch();
+    for (final doc in messages.docs) {
+      batch.update(doc.reference, {'status': 'read'});
     }
+
+    await batch.commit();
+    return const Right(null);
+  } on FirebaseException catch (e) {
+    return Left('Firebase error: ${e.message}');
+  } catch (e) {
+    return Left('Unexpected error: ${e.toString()}');
   }
+}
 
   @override
   Future<Either<String, void>> sendMessage({
@@ -660,7 +662,7 @@ class PostFirebaseServiceImpl extends FirebasePostService {
     }
   }
 
-  @override
+ @override
 Future<Either<String, void>> deleteMessage({
   required String chatId,
   required String messageId,
@@ -672,12 +674,7 @@ Future<Either<String, void>> deleteMessage({
         .collection('messages')
         .doc(messageId);
 
-    final messageDoc = await messageRef.get();
-    if (!messageDoc.exists) {
-      return Left('Message not found');
-    }
-
-    // Soft delete by marking as deleted and clearing content
+    // Update the message with deleted status and content
     await messageRef.update({
       'isDeleted': true,
       'content': 'This message was deleted',

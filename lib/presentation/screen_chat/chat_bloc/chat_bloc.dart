@@ -40,6 +40,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<SendMessageEvent>(_onSendMessage);
     on<MarkMessagesReadEvent>(_onMarkMessagesRead);
     on<DeleteMessageEvent>(_onDeleteMessage);
+    on<SetReplyMessageEvent>(_onSetReplyMessage);
+    on<ClearReplyMessageEvent>(_onClearReplyMessage);
+    on<HighlightMessageEvent>(_onHighlightMessage);
   }
 
   Future<void> _onCreateChat(
@@ -81,7 +84,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     emit(MessagesLoading());
     try {
       final stream = _getMessagesUseCase(param: event.chatId);
-      emit(MessagesLoaded(stream));
+      emit(ChatScreenState(messages: stream));
     } catch (e) {
       emit(ChatError('Failed to load messages: ${e.toString()}'));
     }
@@ -103,7 +106,15 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
     result.fold(
       (failure) => emit(ChatError(failure)),
-      (_) => null, // No need to emit a state, stream will handle updates
+      (_) {
+        if (state is ChatScreenState) {
+          emit((state as ChatScreenState).copyWith(
+            messages: _getMessagesUseCase(param: event.chatId),
+            replyingToMessage: null,
+            highlightedMessageId: null,
+          ));
+        }
+      },
     );
   }
 
@@ -134,7 +145,44 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
     result.fold(
       (failure) => emit(ChatError(failure)),
-      (_) => null, 
+      (_) => null, // Stream will handle updates
     );
+  }
+
+  void _onSetReplyMessage(
+    SetReplyMessageEvent event,
+    Emitter<ChatState> emit,
+  ) {
+    if (state is ChatScreenState) {
+      emit((state as ChatScreenState).copyWith(replyingToMessage: event.message));
+    } else {
+      emit(ChatScreenState(
+        messages: _getMessagesUseCase(param: event.chatId),
+        replyingToMessage: event.message,
+      ));
+    }
+  }
+
+  void _onClearReplyMessage(
+    ClearReplyMessageEvent event,
+    Emitter<ChatState> emit,
+  ) {
+    if (state is ChatScreenState) {
+      emit((state as ChatScreenState).copyWith(replyingToMessage: null));
+    }
+  }
+
+  void _onHighlightMessage(
+    HighlightMessageEvent event,
+    Emitter<ChatState> emit,
+  ) {
+    if (state is ChatScreenState) {
+      emit((state as ChatScreenState).copyWith(highlightedMessageId: event.messageId));
+      Future.delayed(const Duration(seconds: 2), () {
+        if (state is ChatScreenState) {
+          emit((state as ChatScreenState).copyWith(highlightedMessageId: null));
+        }
+      });
+    }
   }
 }

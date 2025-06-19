@@ -40,20 +40,38 @@ final class ChatsLoaded extends ChatState {
 
 final class MessagesLoading extends ChatState {
   final bool isInitialLoad;
-  
+
   const MessagesLoading({this.isInitialLoad = false});
 
   @override
   List<Object> get props => [isInitialLoad];
 }
 
-final class MessagesLoaded extends ChatState {
+final class ChatScreenState extends ChatState {
   final Stream<List<MessageModel>> messages;
+  final MessageModel? replyingToMessage;
+  final String? highlightedMessageId;
 
-  const MessagesLoaded(this.messages);
+  const ChatScreenState({
+    required this.messages,
+    this.replyingToMessage,
+    this.highlightedMessageId,
+  });
+
+  ChatScreenState copyWith({
+    Stream<List<MessageModel>>? messages,
+    MessageModel? replyingToMessage,
+    String? highlightedMessageId,
+  }) {
+    return ChatScreenState(
+      messages: messages ?? this.messages,
+      replyingToMessage: replyingToMessage,
+      highlightedMessageId: highlightedMessageId,
+    );
+  }
 
   @override
-  List<Object> get props => [messages];
+  List<Object> get props => [messages, replyingToMessage ?? '', highlightedMessageId ?? ''];
 }
 
 final class MessageSent extends ChatState {}

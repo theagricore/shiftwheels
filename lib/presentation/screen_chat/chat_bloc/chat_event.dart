@@ -85,3 +85,30 @@ class MarkMessagesReadEvent extends ChatEvent {
   @override
   List<Object> get props => [chatId, userId];
 }
+
+class SetReplyMessageEvent extends ChatEvent {
+  final MessageModel message;
+  final String chatId;
+
+  const SetReplyMessageEvent({
+    required this.message,
+    required this.chatId,
+  });
+
+  @override
+  List<Object> get props => [message, chatId];
+}
+
+class ClearReplyMessageEvent extends ChatEvent {
+  @override
+  List<Object> get props => [];
+}
+
+class HighlightMessageEvent extends ChatEvent {
+  final String messageId;
+
+  const HighlightMessageEvent(this.messageId);
+
+  @override
+  List<Object> get props => [messageId];
+}

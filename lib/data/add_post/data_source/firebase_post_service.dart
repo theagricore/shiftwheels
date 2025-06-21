@@ -47,6 +47,7 @@ abstract class FirebasePostService {
     required String chatId,
     required String messageId,
   });
+  
 }
 
 class PostFirebaseServiceImpl extends FirebasePostService {
@@ -532,14 +533,13 @@ Stream<List<ChatModel>> getChatsForUser(String userId) {
                           : null,
                 );
 
-            // Updated unread count query to exclude deleted messages
             final unreadCount = await _firestore
                 .collection('chats')
                 .doc(doc.id)
                 .collection('messages')
                 .where('status', whereIn: ['sent', 'delivered'])
                 .where('senderId', isNotEqualTo: userId)
-                .where('isDeleted', isEqualTo: false)  // Add this condition
+                .where('isDeleted', isEqualTo: false)
                 .get()
                 .then((snap) => snap.size);
 
@@ -605,7 +605,7 @@ Future<Either<String, void>> markMessagesAsRead({
             .collection('messages')
             .where('status', whereIn: ['sent', 'delivered'])
             .where('senderId', isNotEqualTo: userId)
-            .where('isDeleted', isEqualTo: false)  // Add this condition
+            .where('isDeleted', isEqualTo: false)  
             .get();
 
     final batch = _firestore.batch();
@@ -674,14 +674,12 @@ Future<Either<String, void>> deleteMessage({
         .collection('messages')
         .doc(messageId);
 
-    // Update the message with deleted status and content
     await messageRef.update({
       'isDeleted': true,
       'content': 'This message was deleted',
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
-    // Update chat's last updated timestamp
     await _firestore.collection('chats').doc(chatId).update({
       'updatedAt': FieldValue.serverTimestamp(),
     });

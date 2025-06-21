@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftwheels/presentation/search_screen/search_bloc/search_bloc.dart';
+import 'package:shiftwheels/presentation/search_screen/search_screen.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:shiftwheels/core/common_widget/widget/ad_cards.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
@@ -26,6 +28,9 @@ class ScreenHome extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => sl<GetPostAdBloc>()..add(const FetchActiveAds()),
+        ),
+        BlocProvider(
+          create: (context) => SearchBloc(),
         ),
       ],
       child: Scaffold(
@@ -89,7 +94,12 @@ class ScreenHome extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const SearchPage()),
+                  MaterialPageRoute(
+                    builder: (context) => BlocProvider.value(
+                      value: BlocProvider.of<SearchBloc>(context),
+                      child: const SearchScreen(),
+                    ),
+                  ),
                 );
               },
               child: Container(
@@ -216,20 +226,6 @@ class ScreenHome extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class SearchPage extends StatelessWidget {
-  const SearchPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Search')),
-      body: const Center(
-        child: Text('Search functionality will be implemented here'),
-      ),
     );
   }
 }

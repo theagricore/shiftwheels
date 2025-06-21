@@ -43,6 +43,7 @@ import 'package:shiftwheels/presentation/screen_home/get_post_ad_bloc/get_post_a
 import 'package:shiftwheels/presentation/screen_my_ads/active_ads_bloc/active_ads_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/add_favourite_bloc/add_favourite_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/update_ad_bloc/update_ad_bloc.dart';
+import 'package:shiftwheels/presentation/search_screen/search_bloc/search_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -152,4 +153,5 @@ Future<void> initializeDependencies() async {
       deleteMessageUseCase: sl<DeleteMessageUseCase>(),
     ),
   );
+  sl.registerFactory<SearchBloc>(() => SearchBloc());
 }

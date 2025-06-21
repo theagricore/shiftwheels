@@ -22,24 +22,9 @@ abstract class PostRepository {
   Future<Either<String, void>> updateAd(AdsModel ad);
   Stream<List<ChatModel>> getChatsForUser(String userId);
   Stream<List<MessageModel>> getMessagesForChat(String chatId);
-  Future<Either<String, String>> createChat({
-    required String adId,
-    required String sellerId,
-    required String buyerId,
-  });
-  Future<Either<String, void>> sendMessage({
-    required String chatId,
-    required String senderId,
-    required String content,
-    String? replyToMessageId,
-    String? replyToContent,
-  });
-  Future<Either<String, void>> markMessagesAsRead({
-    required String chatId,
-    required String userId,
-  });
-    Future<Either<String, void>> deleteMessage({
-    required String chatId,
-    required String messageId,
-  });
+  Future<Either<String, String>> createChat({required String adId,required String sellerId,required String buyerId});
+  Future<Either<String, void>> sendMessage({required String chatId,required String senderId,required String content,String? replyToMessageId,String? replyToContent,});
+  Future<Either<String, void>> markMessagesAsRead({required String chatId,required String userId});
+    Future<Either<String, void>> deleteMessage({required String chatId,required String messageId});
+
 }

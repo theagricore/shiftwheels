@@ -10,7 +10,7 @@ sealed class ProfileImageEvent extends Equatable {
 class PickProfileImageEvent extends ProfileImageEvent {
   final ImageSource source;
 
-  const PickProfileImageEvent({this.source = ImageSource.gallery});
+  const PickProfileImageEvent({required this.source});
 
   @override
   List<Object> get props => [source];

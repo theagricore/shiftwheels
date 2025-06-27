@@ -182,14 +182,25 @@ class AuthFirebaseServiceImpl extends FirebaseAuthService {
       return Left("An unexpected error occurred: ${e.toString()}");
     }
   }
-  
+
   @override
-  Future<Either<String, void>> updateProfileImage(String imageUrl) {
-    // TODO: implement updateProfileImage
-    throw UnimplementedError();
+  Future<Either<String, void>> updateProfileImage(String imageUrl) async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        return Left("User not logged in");
+      }
+
+      await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(currentUser.uid)
+          .update({'image': imageUrl});
+
+      return const Right(null);
+    } on FirebaseException catch (e) {
+      return Left("Firebase error: ${e.message}");
+    } catch (e) {
+      return Left("Failed to update profile image: ${e.toString()}");
+    }
   }
-
-
-
-  
 }

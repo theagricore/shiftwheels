@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/presentation/main_screen/screen_profile/profile_image_bloc/profile_image_bloc.dart';
-import 'image_option_button.dart';
+import 'package:shiftwheels/presentation/main_screen/screen_profile/widget/image_option_button.dart';
 
 class ImageSourceBottomSheet extends StatelessWidget {
   const ImageSourceBottomSheet({super.key});
@@ -14,7 +14,6 @@ class ImageSourceBottomSheet extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(
             child: Container(
@@ -38,8 +37,8 @@ class ImageSourceBottomSheet extends StatelessWidget {
                   iconColor: AppColors.zGrey,
                   onTap: () {
                     context.read<ProfileImageBloc>().add(
-                      PickProfileImageEvent(source: ImageSource.gallery),
-                    );
+                          PickProfileImageEvent(source: ImageSource.gallery),
+                        );
                     Navigator.of(context).pop();
                   },
                 ),
@@ -49,8 +48,8 @@ class ImageSourceBottomSheet extends StatelessWidget {
                   iconColor: AppColors.zGrey,
                   onTap: () {
                     context.read<ProfileImageBloc>().add(
-                      PickProfileImageEvent(source: ImageSource.camera),
-                    );
+                          PickProfileImageEvent(source: ImageSource.camera),
+                        );
                     Navigator.of(context).pop();
                   },
                 ),
@@ -62,3 +61,4 @@ class ImageSourceBottomSheet extends StatelessWidget {
     );
   }
 }
+

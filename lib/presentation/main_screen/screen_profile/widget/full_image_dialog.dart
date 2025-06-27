@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shiftwheels/presentation/main_screen/screen_profile/profile_image_bloc/profile_image_bloc.dart';
 import 'dart:io';
+import 'package:shiftwheels/presentation/main_screen/screen_profile/profile_image_bloc/profile_image_bloc.dart';
 
 class FullImageDialog extends StatelessWidget {
   final File image;
@@ -15,7 +15,9 @@ class FullImageDialog extends StatelessWidget {
       backgroundColor: Colors.black,
       child: Stack(
         children: [
-          SizedBox.expand(child: Image.file(image, fit: BoxFit.cover)),
+          SizedBox.expand(
+            child: Image.file(image, fit: BoxFit.cover),
+          ),
           Positioned(
             bottom: 20,
             left: 0,
@@ -27,19 +29,21 @@ class FullImageDialog extends StatelessWidget {
                   onTap: () => Navigator.of(context).pop(),
                   child: const CircleAvatar(
                     radius: 30,
-                    child: Icon(Icons.close, size: 30),
+                    backgroundColor: Colors.white,
+                    child: Icon(Icons.close, size: 30, color: Colors.black),
                   ),
                 ),
                 GestureDetector(
                   onTap: () {
                     context.read<ProfileImageBloc>().add(
-                      ConfirmProfileImageEvent(image),
-                    );
+                          ConfirmProfileImageEvent(image),
+                        );
                     Navigator.of(context).pop();
                   },
                   child: const CircleAvatar(
                     radius: 30,
-                    child: Icon(Icons.check, size: 30),
+                    backgroundColor: Colors.white,
+                    child: Icon(Icons.check, size: 30, color: Colors.black),
                   ),
                 ),
               ],

@@ -9,6 +9,8 @@ sealed class ProfileImageState extends Equatable {
 
 final class ProfileImageInitial extends ProfileImageState {}
 
+final class ProfileImageLoading extends ProfileImageState {}
+
 final class ProfileImagePicked extends ProfileImageState {
   final File image;
 
@@ -19,12 +21,12 @@ final class ProfileImagePicked extends ProfileImageState {
 }
 
 final class ProfileImageConfirmed extends ProfileImageState {
-  final File image;
+  final String imageUrl;
 
-  const ProfileImageConfirmed(this.image);
+  const ProfileImageConfirmed({required this.imageUrl});
 
   @override
-  List<Object> get props => [image];
+  List<Object> get props => [imageUrl];
 }
 
 final class ProfileImageError extends ProfileImageState {

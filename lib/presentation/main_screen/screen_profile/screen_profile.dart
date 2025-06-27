@@ -1,80 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:shiftwheels/core/common_widget/basic_app_bar.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_alert_box.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_elevated_app_button.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
-import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/core/config/theme/text_string.dart';
 import 'package:shiftwheels/presentation/auth/auth_bloc/auth_bloc.dart';
 import 'package:shiftwheels/presentation/auth/screens/signin_screen.dart';
 import 'package:shiftwheels/presentation/main_screen/screen_profile/ProfileBloc/profile_bloc.dart';
 import 'package:shiftwheels/presentation/main_screen/screen_profile/profile_image_bloc/profile_image_bloc.dart';
-import 'package:shiftwheels/presentation/main_screen/screen_profile/widget/image_option_button.dart';
+import 'package:shiftwheels/presentation/main_screen/screen_profile/widget/full_image_dialog.dart';
+import 'package:shiftwheels/presentation/main_screen/screen_profile/widget/image_source_bottom_sheet.dart';
+import 'package:shiftwheels/presentation/main_screen/screen_profile/widget/profile_avathar.dart';
 
 class ScreenProfile extends StatelessWidget {
   const ScreenProfile({super.key});
-
-  void _showImageSourceDialog(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder:
-          (dialogContext) => Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      ImageOptionButton(
-                        icon: Icons.photo_library_rounded,
-                        label: 'Gallery',
-                        iconColor: AppColors.zGrey,
-                        onTap: () {
-                          context.read<ProfileImageBloc>().add(
-                            PickProfileImageEvent(source: ImageSource.gallery),
-                          );
-                          Navigator.of(dialogContext).pop();
-                        },
-                      ),
-                      ImageOptionButton(
-                        icon: Icons.camera_alt_rounded,
-                        label: 'Camera',
-                        iconColor: AppColors.zGrey,
-                        onTap: () {
-                          context.read<ProfileImageBloc>().add(
-                            PickProfileImageEvent(source: ImageSource.camera),
-                          );
-                          Navigator.of(dialogContext).pop();
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,50 +40,44 @@ class ScreenProfile extends StatelessWidget {
                         message: imageState.message,
                         backgroundColor: Colors.red,
                       ).show(context);
+                    } else if (imageState is ProfileImageConfirmed) {
+                      BasicSnackbar(
+                        message: 'Profile image updated successfully',
+                        backgroundColor: Colors.green,
+                      ).show(context);
                     }
                   },
                   builder: (context, imageState) {
                     return GestureDetector(
                       onTap: () => _showImageSourceDialog(context),
-                      child: CircleAvatar(
-                        radius: 60,
-                        backgroundColor: AppColors.zPrimaryColor,
-                        child: CircleAvatar(
-                          radius: 57,
-                          backgroundColor: AppColors.zPrimaryColor,
-                          backgroundImage:
-                              imageState is ProfileImageConfirmed
-                                  ? FileImage(imageState.image)
-                                  : (profileState is Profileloaded &&
-                                          profileState.user.image != null
-                                      ? NetworkImage(profileState.user.image!)
-                                      : null),
-                          child:
-                              imageState is! ProfileImageConfirmed &&
-                                      (profileState is! Profileloaded ||
-                                          profileState.user.image == null)
-                                  ? const Icon(
-                                    Icons.person,
-                                    size: 60,
-                                    color: Colors.white,
-                                  )
-                                  : null,
-                        ),
+                      child: ProfileAvatar(
+                        profileState: profileState,
+                        imageState: imageState,
+                        onTap: () => _showImageSourceDialog(context),
                       ),
                     );
                   },
                 ),
                 const SizedBox(height: 20),
-                if (profileState is Profileloaded)
+                if (profileState is Profileloading)
+                  const CircularProgressIndicator(),
+                if (profileState is Profileloaded) ...[
                   Text(
                     profileState.user.fullName,
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                const SizedBox(height: 10),
-                if (profileState is Profileloaded)
+                  const SizedBox(height: 10),
                   Text(
                     profileState.user.email,
                     style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ],
+                if (profileState is ProfileInfoFailure)
+                  Text(
+                    profileState.message ?? 'Failed to load profile',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge?.copyWith(color: Colors.red),
                   ),
                 const SizedBox(height: 20),
                 BlocConsumer<AuthBloc, AuthState>(
@@ -178,7 +112,6 @@ class ScreenProfile extends StatelessWidget {
                     );
                   },
                 ),
-                const SizedBox(height: 20),
               ],
             );
           },
@@ -187,61 +120,23 @@ class ScreenProfile extends StatelessWidget {
     );
   }
 
-  Future<dynamic> _showImageScreen(
+  void _showImageSourceDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => const ImageSourceBottomSheet(),
+    );
+  }
+
+  Future<void> _showImageScreen(
     BuildContext context,
     ProfileImagePicked imageState,
   ) {
     return showDialog(
       context: context,
-      builder:
-          (dialogContext) => Dialog(
-            insetPadding: EdgeInsets.zero,
-            backgroundColor: Colors.black, 
-            child: Stack(
-              children: [
-                SizedBox.expand(
-                  child: Image.file(imageState.image, fit: BoxFit.cover),
-                ),
-                Positioned(
-                  bottom: 20,
-                  left: 0,
-                  right: 0,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.of(dialogContext).pop();
-                        },
-                        child: CircleAvatar(
-                          radius: 30,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Icon(Icons.close, size: 30),
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          context.read<ProfileImageBloc>().add(
-                            ConfirmProfileImageEvent(imageState.image),
-                          );
-                          Navigator.of(dialogContext).pop();
-                        },
-                        child: CircleAvatar(
-                          radius: 30,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Icon(Icons.check, size: 30),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+      builder: (_) => FullImageDialog(image: imageState.image),
     );
   }
 }

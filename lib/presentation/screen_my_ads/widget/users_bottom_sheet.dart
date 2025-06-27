@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/data/auth/models/user_model.dart';
@@ -18,6 +19,10 @@ class InterestedUsersBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,27 +74,33 @@ class InterestedUsersBottomSheet extends StatelessWidget {
   Widget _buildUserList(BuildContext context) {
     return ListView.builder(
       shrinkWrap: true,
+      physics: const BouncingScrollPhysics(),
       itemCount: users.length,
       itemBuilder: (context, index) {
         final user = users[index];
+        final hasImage = user.image != null && user.image!.isNotEmpty;
+
         return ListTile(
           contentPadding: const EdgeInsets.symmetric(vertical: 4),
-          leading: Container(
-            width: 50,
-            height: 50,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.zPrimaryColor,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              user.fullName?.isNotEmpty == true
-                  ? user.fullName![0].toUpperCase()
-                  : '?',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-          ),
-
+          leading:
+              hasImage
+                  ? CircleAvatar(
+                    radius: 25,
+                    backgroundImage: CachedNetworkImageProvider(user.image!),
+                  )
+                  : CircleAvatar(
+                    radius: 25,
+                    backgroundColor: AppColors.zPrimaryColor,
+                    child: Text(
+                      user.fullName?.isNotEmpty == true
+                          ? user.fullName![0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
           title: Text(
             user.fullName ?? 'Unknown User',
             style: Theme.of(context).textTheme.bodyLarge,
@@ -97,16 +108,22 @@ class InterestedUsersBottomSheet extends StatelessWidget {
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                user.phoneNo ?? 'No phone number',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              Text(
-                user.email ?? 'No email',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              if (user.phoneNo != null && user.phoneNo!.isNotEmpty)
+                Text(
+                  user.phoneNo!,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              if (user.email != null && user.email!.isNotEmpty)
+                Text(user.email!, style: Theme.of(context).textTheme.bodySmall),
             ],
           ),
+          trailing:
+              onChatPressed != null
+                  ? IconButton(
+                    icon: const Icon(Icons.chat),
+                    onPressed: () => onChatPressed!(user),
+                  )
+                  : null,
         );
       },
     );

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -33,10 +34,7 @@ class ChatCardWidget extends StatelessWidget {
             chat.sellerId == currentUserId ? chat.buyer : chat.seller;
         final ad = chat.ad;
         final lastMessage = chat.lastMessage;
-        final initials =
-            otherUser?.fullName?.isNotEmpty ?? false
-                ? otherUser!.fullName![0].toUpperCase()
-                : '?';
+        final profileImageUrl = otherUser?.image;
 
         return InkWell(
           onTap: () async {
@@ -46,15 +44,14 @@ class ChatCardWidget extends StatelessWidget {
             await Navigator.push(
               context,
               MaterialPageRoute(
-                builder:
-                    (context) => BlocProvider.value(
-                      value: context.read<ChatBloc>(),
-                      child: ScreenAdChat(
-                        chatId: chat.id,
-                        otherUser: otherUser,
-                        ad: ad,
-                      ),
-                    ),
+                builder: (context) => BlocProvider.value(
+                  value: context.read<ChatBloc>(),
+                  child: ScreenAdChat(
+                    chatId: chat.id,
+                    otherUser: otherUser,
+                    ad: ad,
+                  ),
+                ),
               ),
             );
             onRefresh();
@@ -63,18 +60,28 @@ class ChatCardWidget extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 26,
-                  backgroundColor: AppColors.zGrey.withOpacity(0.15),
-                  child: Text(
-                    initials,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.zPrimaryColor,
+                // Profile image with fallback to initials
+                if (profileImageUrl != null && profileImageUrl.isNotEmpty)
+                  CircleAvatar(
+                    radius: 26,
+                    backgroundImage: CachedNetworkImageProvider(profileImageUrl),
+                  )
+                else
+                  CircleAvatar(
+                    radius: 26,
+                    backgroundColor: AppColors.zGrey.withOpacity(0.15),
+                    child: Text(
+                      otherUser?.fullName?.isNotEmpty ?? false
+                          ? otherUser!.fullName![0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.zPrimaryColor,
+                      ),
                     ),
                   ),
-                ),
+                
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -148,10 +155,9 @@ class ChatCardWidget extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 14,
                                 color: AppColors.zGrey,
-                                fontWeight:
-                                    chat.unreadCount > 0
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
+                                fontWeight: chat.unreadCount > 0
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,

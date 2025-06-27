@@ -299,6 +299,7 @@ class PostFirebaseServiceImpl extends FirebasePostService {
               phoneNo: userData['phoneNo'] as String?,
               uid: userData['uid'] as String?,
               createdAt: userData['createdAt']?.toString(),
+              image: userData['image'] as String?,
             );
 
             result.add(AdWithUserModel(ad: ad, userData: userModel));

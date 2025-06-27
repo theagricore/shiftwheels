@@ -16,11 +16,13 @@ import 'package:shiftwheels/domain/add_post/usecase/get_active_ads_usecase.dart'
 import 'package:shiftwheels/domain/add_post/usecase/get_brand_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_favorites_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_fuels_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/get_interested_users_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_location_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_models_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_user_active_ads_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/post_ad_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/search_location_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/toggleIntrestUsecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/toggle_favoriteUsecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/upadate_ad_usecate.dart';
 import 'package:shiftwheels/domain/auth/repository/auth_repository.dart';
@@ -31,6 +33,7 @@ import 'package:shiftwheels/domain/auth/usecase/logout_usecase.dart';
 import 'package:shiftwheels/domain/auth/usecase/password_reset_email.dart';
 import 'package:shiftwheels/domain/auth/usecase/sigin_usecase.dart';
 import 'package:shiftwheels/domain/auth/usecase/siginup_usecase.dart';
+import 'package:shiftwheels/domain/auth/usecase/update_profile_image_usecase.dart';
 import 'package:shiftwheels/presentation/add_post/get_images_bloc/get_images_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/get_location_bloc/get_location_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/post_ad_bloc/post_ad_bloc.dart';
@@ -38,10 +41,12 @@ import 'package:shiftwheels/presentation/main_screen/screen_profile/ProfileBloc/
 import 'package:shiftwheels/presentation/add_post/add_post_bloc/add_post_bloc.dart';
 import 'package:shiftwheels/presentation/auth/google_auth/google_auth_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/get_fuels_bloc/get_fuels_bloc.dart';
+import 'package:shiftwheels/presentation/main_screen/screen_profile/profile_image_bloc/profile_image_bloc.dart';
 import 'package:shiftwheels/presentation/screen_chat/chat_bloc/chat_bloc.dart';
 import 'package:shiftwheels/presentation/screen_home/get_post_ad_bloc/get_post_ad_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/active_ads_bloc/active_ads_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/add_favourite_bloc/add_favourite_bloc.dart';
+import 'package:shiftwheels/presentation/screen_my_ads/interest_bloc/interest_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/update_ad_bloc/update_ad_bloc.dart';
 import 'package:shiftwheels/presentation/search_screen/search_bloc/search_bloc.dart';
 
@@ -103,6 +108,15 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<DeleteMessageUseCase>(
     DeleteMessageUseCase(sl<PostRepository>()),
   );
+  sl.registerSingleton<ToggleInterestUsecase>(
+    ToggleInterestUsecase(sl<PostRepository>()),
+  );
+  sl.registerSingleton<GetInterestedUsersUsecase>(
+    GetInterestedUsersUsecase(sl<PostRepository>()),
+  );
+  sl.registerSingleton<UpdateProfileImageUsecase>(
+    UpdateProfileImageUsecase(sl<AuthRepository>()),
+  );
 
   // Blocs
   sl.registerFactory<GoogleAuthBloc>(() => GoogleAuthBloc());
@@ -154,4 +168,7 @@ Future<void> initializeDependencies() async {
     ),
   );
   sl.registerFactory<SearchBloc>(() => SearchBloc());
+
+  sl.registerFactory<InterestBloc>(() => InterestBloc(sl<PostRepository>()));
+  sl.registerFactory<ProfileImageBloc>(() => ProfileImageBloc());
 }

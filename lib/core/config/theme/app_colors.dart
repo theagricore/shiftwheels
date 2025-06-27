@@ -13,6 +13,8 @@ class AppColors {
   static const zblack = Colors.black;
   static const zGrey = Colors.grey;
   static const zred = Colors.red;
+    static const zTransprant = Colors.transparent;
   static const zGreen = Colors.green;
+    static const zBlue = Colors.blue;
   static const zOrange = Color.fromARGB(255, 230, 209, 22);
 }

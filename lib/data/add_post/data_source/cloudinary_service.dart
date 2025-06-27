@@ -13,8 +13,6 @@ class CloudinaryServiceImpl implements CloudinaryService {
     CloudinaryConfig.uploadPreset,
   );
 
-
-  
   @override
   Future<Either<String, List<String>>> uploadImages(
     List<File> imageFiles,
@@ -24,7 +22,7 @@ class CloudinaryServiceImpl implements CloudinaryService {
 
       for (final imageFile in imageFiles) {
         final response = await cloudinary.uploadFile(
-          CloudinaryFile .fromFile(imageFile.path, folder: 'car_ads'),
+          CloudinaryFile.fromFile(imageFile.path, folder: 'car_ads'),
         );
         imageUrls.add(response.secureUrl);
       }

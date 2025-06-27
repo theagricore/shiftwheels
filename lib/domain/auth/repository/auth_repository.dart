@@ -9,5 +9,6 @@ abstract class AuthRepository {
   Future<Either> logout();
   Future<Either> passwordResetEmail(String email);
   Future<Either> getUser();
- Future<Either> signInWithGoogle();
+  Future<Either> signInWithGoogle();
+  Future<Either<String, void>> updateProfileImage(String imageUrl);
 }

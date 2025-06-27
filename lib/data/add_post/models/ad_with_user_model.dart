@@ -3,12 +3,14 @@ import 'package:shiftwheels/data/auth/models/user_model.dart';
 
 class AdWithUserModel {
   final AdsModel ad;
-  final UserModel? userData; 
+  final UserModel? userData;
   final bool isFavorite;
-  
+  final bool isInterested;
+
   AdWithUserModel({
     required this.ad,
-     this.userData, 
+    this.userData,
     this.isFavorite = false,
+    this.isInterested = false,
   });
 }

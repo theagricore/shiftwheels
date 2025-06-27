@@ -7,6 +7,7 @@ import 'package:shiftwheels/data/add_post/models/chat_model.dart';
 import 'package:shiftwheels/data/add_post/models/fuels_model.dart';
 import 'package:shiftwheels/data/add_post/models/location_model.dart';
 import 'package:shiftwheels/data/add_post/models/message_model.dart';
+import 'package:shiftwheels/data/auth/models/user_model.dart';
 import 'package:shiftwheels/domain/add_post/repository/post_repository.dart';
 import 'package:shiftwheels/service_locater/service_locater.dart';
 
@@ -142,7 +143,7 @@ class PostRepositoryImpl extends PostRepository {
       userId: userId,
     );
   }
-  
+
   @override
   Future<Either<String, void>> deleteMessage({
     required String chatId,
@@ -153,5 +154,26 @@ class PostRepositoryImpl extends PostRepository {
       messageId: messageId,
     );
   }
-  
+
+  @override
+  Future<Either<String, List<UserModel>>> getInterestedUsers(
+    String adId,
+  ) async {
+    return await sl<FirebasePostService>().getInterestedUsers(adId);
+  }
+
+  @override
+  Future<Either<String, void>> toggleInterest(
+    String adId,
+    String userId,
+  ) async {
+    return await sl<FirebasePostService>().toggleInterest(adId, userId);
+  }
+
+  @override
+  Future<Either<String, List<AdWithUserModel>>> getUserInterests(
+    String userId,
+  ) async {
+    return await sl<FirebasePostService>().getUserInterests(userId);
+  }
 }

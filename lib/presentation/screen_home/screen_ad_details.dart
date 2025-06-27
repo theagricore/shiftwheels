@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/data/add_post/models/ad_with_user_model.dart';
-import 'package:shiftwheels/data/add_post/models/ads_model.dart';
-import 'package:shiftwheels/data/auth/models/user_model.dart';
 import 'package:shiftwheels/domain/add_post/repository/post_repository.dart';
 import 'package:shiftwheels/presentation/screen_chat/chat_bloc/chat_bloc.dart';
 import 'package:shiftwheels/presentation/screen_chat/screen_ad_chat.dart';
@@ -14,6 +12,7 @@ import 'package:shiftwheels/presentation/screen_home/widget/deatils_app_bar_widg
 import 'package:shiftwheels/presentation/screen_home/widget/over_view_grid.dart';
 import 'package:shiftwheels/presentation/screen_home/widget/user_info_widget.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/add_favourite_bloc/add_favourite_bloc.dart';
+import 'package:shiftwheels/presentation/screen_my_ads/interest_bloc/interest_bloc.dart';
 import 'package:shiftwheels/service_locater/service_locater.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -27,9 +26,12 @@ class ScreenAdDetails extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => AddFavouriteBloc(sl<PostRepository>())
-            ..add(LoadFavoritesEvent(adWithUser.ad.userId)),
+          create:
+              (context) =>
+                  AddFavouriteBloc(sl<PostRepository>())
+                    ..add(LoadFavoritesEvent(adWithUser.ad.userId)),
         ),
+        BlocProvider(create: (context) => InterestBloc(sl<PostRepository>())),
         BlocProvider.value(value: sl<ChatBloc>()),
       ],
       child: _AdDetailsContent(adWithUser: adWithUser),
@@ -48,67 +50,75 @@ class _AdDetailsContent extends StatefulWidget {
 
 class _AdDetailsContentState extends State<_AdDetailsContent> {
   StreamSubscription<ChatState>? _chatSubscription;
+  StreamSubscription? _favoriteSubscription;
+  StreamSubscription? _interestSubscription;
 
   @override
   void dispose() {
     _chatSubscription?.cancel();
+    _favoriteSubscription?.cancel();
+    _interestSubscription?.cancel();
     super.dispose();
   }
 
+
+
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AddFavouriteBloc, AddFavouriteState>(
-      listener: (context, state) {
-        if (state is AddFavouriteError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
-        }
-      },
-      builder: (context, state) {
-        final isFavorite = _getFavoriteStatus(state, widget.adWithUser.ad);
-        final ad = widget.adWithUser.ad;
-        final userData = widget.adWithUser.userData;
-        final textTheme = Theme.of(context).textTheme;
-
-        return Scaffold(
-          backgroundColor: AppColors.zWhite,
-          appBar: const DeatilsAppBarWidget(),
-          body: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildImageSection(context, isFavorite),
-                _buildBasicInfoSection(textTheme, ad),
-                _buildDetailsSection(ad, userData),
-              ],
-            ),
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<AddFavouriteBloc, AddFavouriteState>(
+          listener: (context, state) {
+            if (state is AddFavouriteError) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(state.message)));
+            }
+          },
+        ),
+        BlocListener<InterestBloc, InterestState>(
+          listener: (context, state) {
+            if (state is InterestError) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(state.message)));
+            }
+          },
+        ),
+      ],
+      child: Scaffold(
+        backgroundColor: AppColors.zWhite,
+        appBar: const DeatilsAppBarWidget(),
+        body: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildImageSection(context),
+              _buildBasicInfoSection(),
+              _buildDetailsSection(),
+            ],
           ),
-          bottomNavigationBar: _buildBottomButtons(context, ad),
-        );
-      },
+        ),
+        bottomNavigationBar: _buildBottomButtons(context),
+      ),
     );
   }
 
-  bool _getFavoriteStatus(AddFavouriteState state, AdsModel ad) {
-    if (state is FavoritesLoaded) {
-      return state.favorites.any((fav) => fav.ad.id == ad.id);
-    } else if (state is FavoriteToggled && state.adId == ad.id) {
-      return state.isNowFavorite;
-    }
-    return widget.adWithUser.isFavorite;
-  }
+  Widget _buildImageSection(BuildContext context) {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final adId = widget.adWithUser.ad.id!;
 
-  Widget _buildImageSection(BuildContext context, bool isFavorite) {
     return AutoScrollImageCarousel(
       imageUrls: widget.adWithUser.ad.imageUrls,
-      isFavorite: isFavorite,
-      adId: widget.adWithUser.ad.id!,
-      currentUserId: widget.adWithUser.ad.userId,
+      adId: adId,
+      currentUserId: currentUserId,
     );
   }
 
-  Widget _buildBasicInfoSection(TextTheme textTheme, AdsModel ad) {
+  Widget _buildBasicInfoSection() {
+    final ad = widget.adWithUser.ad;
+    final textTheme = Theme.of(context).textTheme;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
@@ -128,7 +138,11 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
               ),
               Row(
                 children: [
-                  const Icon(Icons.access_time, size: 16, color: AppColors.zblack),
+                  const Icon(
+                    Icons.access_time,
+                    size: 16,
+                    color: AppColors.zblack,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     timeago.format(ad.postedDate),
@@ -154,7 +168,10 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
     );
   }
 
-  Widget _buildDetailsSection(AdsModel ad, UserModel? userData) {
+  Widget _buildDetailsSection() {
+    final ad = widget.adWithUser.ad;
+    final userData = widget.adWithUser.userData;
+
     return Material(
       elevation: 8,
       borderRadius: const BorderRadius.only(
@@ -215,7 +232,7 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
     );
   }
 
-  Widget _buildBottomButtons(BuildContext context, AdsModel ad) {
+  Widget _buildBottomButtons(BuildContext context) {
     return Container(
       color: AppColors.zblack,
       padding: const EdgeInsets.all(16),
@@ -223,7 +240,7 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
         children: [
           Expanded(
             child: ElevatedButton.icon(
-              onPressed: () => _handleChatPressed(context, ad),
+              onPressed: () => _handleChatPressed(context),
               icon: const Icon(Icons.chat, color: Colors.white, size: 25),
               label: const Text(
                 "Chat",
@@ -241,14 +258,16 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
-  void _handleChatPressed(BuildContext context, AdsModel ad) {
+  void _handleChatPressed(BuildContext context) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    final ad = widget.adWithUser.ad;
+
     if (currentUserId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please log in to start a chat')),
@@ -262,9 +281,9 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
       return;
     }
     if (ad.id == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid ad ID')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Invalid ad ID')));
       return;
     }
 
@@ -275,11 +294,13 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
     );
 
     final chatBloc = context.read<ChatBloc>();
-    chatBloc.add(CreateChatEvent(
-      adId: ad.id!,
-      sellerId: ad.userId,
-      buyerId: currentUserId,
-    ));
+    chatBloc.add(
+      CreateChatEvent(
+        adId: ad.id!,
+        sellerId: ad.userId,
+        buyerId: currentUserId,
+      ),
+    );
 
     _chatSubscription?.cancel();
     _chatSubscription = chatBloc.stream.listen((state) {
@@ -287,24 +308,23 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
         Navigator.of(context).pop();
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => BlocProvider.value(
-              value: chatBloc,
-              child: ScreenAdChat(
-                chatId: state.chatId,
-                otherUser: widget.adWithUser.userData,
-                ad: ad,
-              ),
-            ),
+            builder:
+                (context) => BlocProvider.value(
+                  value: chatBloc,
+                  child: ScreenAdChat(
+                    chatId: state.chatId,
+                    otherUser: widget.adWithUser.userData,
+                    ad: ad,
+                  ),
+                ),
           ),
         );
       } else if (state is ChatError) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(state.message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(state.message)));
       }
     });
   }
-
-
 }

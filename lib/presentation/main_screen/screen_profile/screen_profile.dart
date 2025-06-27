@@ -1,17 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shiftwheels/core/common_widget/basic_app_bar.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_alert_box.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_elevated_app_button.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
-import 'package:shiftwheels/core/common_widget/basic_app_bar.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/core/config/theme/text_string.dart';
 import 'package:shiftwheels/presentation/auth/auth_bloc/auth_bloc.dart';
 import 'package:shiftwheels/presentation/auth/screens/signin_screen.dart';
 import 'package:shiftwheels/presentation/main_screen/screen_profile/ProfileBloc/profile_bloc.dart';
+import 'package:shiftwheels/presentation/main_screen/screen_profile/profile_image_bloc/profile_image_bloc.dart';
+import 'package:shiftwheels/presentation/main_screen/screen_profile/widget/image_option_button.dart';
 
 class ScreenProfile extends StatelessWidget {
   const ScreenProfile({super.key});
+
+  void _showImageSourceDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder:
+          (dialogContext) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      ImageOptionButton(
+                        icon: Icons.photo_library_rounded,
+                        label: 'Gallery',
+                        iconColor: AppColors.zGrey,
+                        onTap: () {
+                          context.read<ProfileImageBloc>().add(
+                            PickProfileImageEvent(source: ImageSource.gallery),
+                          );
+                          Navigator.of(dialogContext).pop();
+                        },
+                      ),
+                      ImageOptionButton(
+                        icon: Icons.camera_alt_rounded,
+                        label: 'Camera',
+                        iconColor: AppColors.zGrey,
+                        onTap: () {
+                          context.read<ProfileImageBloc>().add(
+                            PickProfileImageEvent(source: ImageSource.camera),
+                          );
+                          Navigator.of(dialogContext).pop();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,40 +86,63 @@ class ScreenProfile extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: BlocBuilder<ProfileBloc, ProfileState>(
-          builder: (context, state) {
+          builder: (context, profileState) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 20),
-                CircleAvatar(
-                  radius: 60,
-                  backgroundColor: AppColors.zPrimaryColor,
-                  child: CircleAvatar(
-                    radius: 57,
-                    backgroundColor: AppColors.zPrimaryColor,
-                    backgroundImage:
-                        state is Profileloaded && state.user.image != null
-                            ? NetworkImage(state.user.image!)
-                            : null,
-                    child: state is! Profileloaded || state.user.image == null
-                        ? const Icon(
-                            Icons.person,
-                            size: 60,
-                            color: Colors.white,
-                          )
-                        : null,
-                  ),
+                BlocConsumer<ProfileImageBloc, ProfileImageState>(
+                  listener: (context, imageState) {
+                    if (imageState is ProfileImagePicked) {
+                      _showImageScreen(context, imageState);
+                    } else if (imageState is ProfileImageError) {
+                      BasicSnackbar(
+                        message: imageState.message,
+                        backgroundColor: Colors.red,
+                      ).show(context);
+                    }
+                  },
+                  builder: (context, imageState) {
+                    return GestureDetector(
+                      onTap: () => _showImageSourceDialog(context),
+                      child: CircleAvatar(
+                        radius: 60,
+                        backgroundColor: AppColors.zPrimaryColor,
+                        child: CircleAvatar(
+                          radius: 57,
+                          backgroundColor: AppColors.zPrimaryColor,
+                          backgroundImage:
+                              imageState is ProfileImageConfirmed
+                                  ? FileImage(imageState.image)
+                                  : (profileState is Profileloaded &&
+                                          profileState.user.image != null
+                                      ? NetworkImage(profileState.user.image!)
+                                      : null),
+                          child:
+                              imageState is! ProfileImageConfirmed &&
+                                      (profileState is! Profileloaded ||
+                                          profileState.user.image == null)
+                                  ? const Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: Colors.white,
+                                  )
+                                  : null,
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 20),
-                if (state is Profileloaded)
+                if (profileState is Profileloaded)
                   Text(
-                    state.user.fullName,
+                    profileState.user.fullName,
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                 const SizedBox(height: 10),
-                if (state is Profileloaded)
+                if (profileState is Profileloaded)
                   Text(
-                    state.user.email,
+                    profileState.user.email,
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                 const SizedBox(height: 20),
@@ -81,9 +167,11 @@ class ScreenProfile extends StatelessWidget {
                     return BasicElevatedAppButton(
                       onPressed: () {
                         showLogoutConfirmationDialog(
-                          context: context, onConfirm: (){
-                          context.read<AuthBloc>().add(LogoutEvent());
-                        });
+                          context: context,
+                          onConfirm: () {
+                            context.read<AuthBloc>().add(LogoutEvent());
+                          },
+                        );
                       },
                       isLoading: state is AuthLoading,
                       title: zSignOut,
@@ -96,6 +184,64 @@ class ScreenProfile extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+
+  Future<dynamic> _showImageScreen(
+    BuildContext context,
+    ProfileImagePicked imageState,
+  ) {
+    return showDialog(
+      context: context,
+      builder:
+          (dialogContext) => Dialog(
+            insetPadding: EdgeInsets.zero,
+            backgroundColor: Colors.black, 
+            child: Stack(
+              children: [
+                SizedBox.expand(
+                  child: Image.file(imageState.image, fit: BoxFit.cover),
+                ),
+                Positioned(
+                  bottom: 20,
+                  left: 0,
+                  right: 0,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(dialogContext).pop();
+                        },
+                        child: CircleAvatar(
+                          radius: 30,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Icon(Icons.close, size: 30),
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          context.read<ProfileImageBloc>().add(
+                            ConfirmProfileImageEvent(imageState.image),
+                          );
+                          Navigator.of(dialogContext).pop();
+                        },
+                        child: CircleAvatar(
+                          radius: 30,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Icon(Icons.check, size: 30),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
     );
   }
 }

@@ -2,13 +2,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:shiftwheels/core/common_widget/widget/basic_alert_box.dart';
 import 'package:shiftwheels/core/common_widget/widget/swipe_botton.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/data/add_post/models/ad_with_user_model.dart';
 import 'package:shiftwheels/data/add_post/models/ads_model.dart';
+import 'package:shiftwheels/domain/add_post/usecase/get_interested_users_usecase.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/active_ads_bloc/active_ads_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/screen_edit_ad.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/update_ad_bloc/update_ad_bloc.dart';
+import 'package:shiftwheels/presentation/screen_my_ads/widget/users_bottom_sheet.dart';
 import 'package:shiftwheels/service_locater/service_locater.dart';
 
 class ActiveAdCard extends StatelessWidget {
@@ -36,7 +39,10 @@ class ActiveAdCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildPostedDate(adData.postedDate),
+            Text(
+              "Posted: ${_formatDate(adData.postedDate)}",
+              style: TextStyle(fontSize: 12, color: AppColors.zGrey[500]),
+            ),
             const SizedBox(height: 12),
             _buildAdMainDetails(context, adData),
             const SizedBox(height: 16),
@@ -48,64 +54,100 @@ class ActiveAdCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPostedDate(DateTime? date) {
-    return Text(
-      "Posted: ${_formatDate(date)}",
-      style: TextStyle(fontSize: 12, color: AppColors.zGrey[500]),
-    );
-  }
-
   Widget _buildAdMainDetails(BuildContext context, AdsModel adData) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildAdImage(adData.imageUrls.first),
-        const SizedBox(width: 12),
-        Expanded(child: _buildAdInfoText(context, adData)),
-      ],
-    );
-  }
-
-  Widget _buildAdImage(String imageUrl) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: Image.network(
-        imageUrl,
-        height: 100,
-        width: 100,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const Icon(Icons.image, size: 80),
-      ),
-    );
-  }
-
-  Widget _buildAdInfoText(BuildContext context, AdsModel adData) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              '${adData.brand} ${adData.model}',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              adData.year.toString(),
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-          ],
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.network(
+            adData.imageUrls.first,
+            height: 100,
+            width: 100,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const Icon(Icons.image, size: 80),
+          ),
         ),
-        const SizedBox(height: 4),
-        Text("Fuel: ${adData.fuelType}",
-            style: Theme.of(context).textTheme.labelLarge),
-        Text("Transmission: ${adData.transmissionType}",
-            style: Theme.of(context).textTheme.labelMedium),
-        Text("KM Driven: ${adData.kmDriven}",
-            style: Theme.of(context).textTheme.labelMedium),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${adData.brand} ${adData.model}',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  Text(
+                    "${adData.year}",
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Icon(Icons.local_gas_station, size: 14, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  Text(
+                    "Fuel: ${adData.fuelType}",
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Icon(Icons.settings, size: 14, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  Text(
+                    "Transmission: ${adData.transmissionType}",
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Icon(Icons.speed, size: 14, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  Text(
+                    "KM Driven: ${adData.kmDriven}",
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  _buildCountButton(
+                    context,
+                    icon: Icons.favorite,
+                    color: AppColors.zPrimaryColor,
+                    count: adData.favoritedByUsers.length,
+                    onTap: () {},
+                  ),
+                  const SizedBox(width: 12),
+                  _buildCountButton(
+                    context,
+                    icon: Icons.thumb_up,
+                    color: AppColors.zPrimaryColor,
+                    count: adData.interestedUsers.length,
+                    onTap:
+                        () => _showInterestedUsersBottomSheet(
+                          context,
+                          adData.id!,
+                        ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -126,8 +168,14 @@ class ActiveAdCard extends StatelessWidget {
             _buildActionButton(
               context,
               label: "Delete",
-              onTap: () =>
-                  context.read<ActiveAdsBloc>().add(DeactivateAd(ad.ad.id!)),
+              onTap: () {
+                showDeleteConfirmationDialog(
+                  context: context,
+                  onConfirm: () {
+                    context.read<ActiveAdsBloc>().add(DeactivateAd(ad.ad.id!));
+                  },
+                );
+              },
               color: secondaryTextColor,
             ),
           ],
@@ -140,10 +188,12 @@ class ActiveAdCard extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton(BuildContext context,
-      {required String label,
-      required VoidCallback onTap,
-      required Color color}) {
+  Widget _buildActionButton(
+    BuildContext context, {
+    required String label,
+    required VoidCallback onTap,
+    required Color color,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -156,10 +206,52 @@ class ActiveAdCard extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: Theme.of(context)
-              .textTheme
-              .titleSmall
-              ?.copyWith(fontWeight: FontWeight.w500),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCountButton(
+    BuildContext context, {
+    required IconData icon,
+    required Color color,
+    required int count,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.zGrey[900]
+                  : AppColors.zGrey[100],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.zGrey[300]!, width: 0.8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 6),
+            Text(
+              count.toString(),
+              style: Theme.of(
+                context,
+              ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w500),
+            ),
+          ],
         ),
       ),
     );
@@ -169,20 +261,46 @@ class ActiveAdCard extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MultiBlocProvider(
-          providers: [
-            BlocProvider.value(
-              value: BlocProvider.of<ActiveAdsBloc>(context),
+        builder:
+            (context) => MultiBlocProvider(
+              providers: [
+                BlocProvider.value(
+                  value: BlocProvider.of<ActiveAdsBloc>(context),
+                ),
+                BlocProvider(create: (_) => sl<UpdateAdBloc>()),
+              ],
+              child: ScreenEditAd(ad: ad),
             ),
-            BlocProvider(create: (context) => sl<UpdateAdBloc>()),
-          ],
-          child: ScreenEditAd(ad: ad),
-        ),
       ),
     ).then((_) {
       final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
       context.read<ActiveAdsBloc>().add(LoadActiveAds(userId));
     });
+  }
+
+  void _showInterestedUsersBottomSheet(
+    BuildContext context,
+    String adId,
+  ) async {
+    final getInterestedUsersUsecase = sl<GetInterestedUsersUsecase>();
+    final result = await getInterestedUsersUsecase(param: adId);
+
+    result.fold(
+      (error) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error)));
+      },
+      (users) {
+        showModalBottomSheet(
+          context: context,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          builder: (context) => InterestedUsersBottomSheet(users: users),
+        );
+      },
+    );
   }
 
   String _formatDate(DateTime? date) {

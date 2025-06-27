@@ -12,7 +12,8 @@ abstract class FirebaseAuthService {
   Future<Either> logout();
   Future<Either> passwordResetEmail(String email);
   Future<Either> getUser();
-   Future<Either> signInWithGoogle();
+  Future<Either> signInWithGoogle();
+  Future<Either<String, void>> updateProfileImage(String imageUrl);
 }
 
 class AuthFirebaseServiceImpl extends FirebaseAuthService {
@@ -114,72 +115,81 @@ class AuthFirebaseServiceImpl extends FirebaseAuthService {
     }
   }
 
-   @override
+  @override
   Future<Either> getUser() async {
     try {
       var currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) {
         return Left("User not logged in");
       }
-      
+
       var userData = await FirebaseFirestore.instance
           .collection('Users')
           .doc(currentUser.uid)
           .get()
           .then((value) => value.data());
-          
+
       if (userData == null) {
         return Left("User data not found");
       }
-      
+
       return Right(userData);
     } catch (e) {
       return Left("Failed to get user data: $e");
     }
   }
-  
- @override
-Future<Either> signInWithGoogle() async {
-  try {
-    final GoogleSignIn googleSignIn = GoogleSignIn();
-    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
-    if (googleUser == null) {
-      return Left("Google sign-in was cancelled");
+  @override
+  Future<Either> signInWithGoogle() async {
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+      if (googleUser == null) {
+        return Left("Google sign-in was cancelled");
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithCredential(credential);
+
+      final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
+
+      if (isNewUser) {
+        await FirebaseFirestore.instance
+            .collection('Users')
+            .doc(userCredential.user!.uid)
+            .set({
+              'fullName': userCredential.user!.displayName ?? '',
+              'email': userCredential.user!.email ?? '',
+              'phoneNo': userCredential.user!.phoneNumber ?? '',
+              'uid': userCredential.user!.uid,
+              'createdAt': FieldValue.serverTimestamp(),
+            });
+      }
+
+      return const Right("Google sign-in successful");
+    } on FirebaseAuthException catch (e) {
+      return Left(e.message ?? "Google sign-in failed");
+    } catch (e) {
+      return Left("An unexpected error occurred: ${e.toString()}");
     }
-
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-
-    final UserCredential userCredential = 
-        await FirebaseAuth.instance.signInWithCredential(credential);
-
-    final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
-
-    if (isNewUser) {
-      await FirebaseFirestore.instance
-          .collection('Users')
-          .doc(userCredential.user!.uid)
-          .set({
-        'fullName': userCredential.user!.displayName ?? '',
-        'email': userCredential.user!.email ?? '',
-        'phoneNo': userCredential.user!.phoneNumber ?? '',
-        'uid': userCredential.user!.uid,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    }
-
-    return const Right("Google sign-in successful");
-  } on FirebaseAuthException catch (e) {
-    return Left(e.message ?? "Google sign-in failed");
-  } catch (e) {
-    return Left("An unexpected error occurred: ${e.toString()}");
   }
-}
-}
+  
+  @override
+  Future<Either<String, void>> updateProfileImage(String imageUrl) {
+    // TODO: implement updateProfileImage
+    throw UnimplementedError();
+  }
 
 
+
+  
+}

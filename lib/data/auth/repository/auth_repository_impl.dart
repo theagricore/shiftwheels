@@ -40,4 +40,9 @@ class AuthRepositoryImpl extends AuthRepository {
   Future<Either> signInWithGoogle() async {
     return await sl<FirebaseAuthService>().signInWithGoogle();
   }
+   
+  @override
+  Future<Either<String, void>> updateProfileImage(String imageUrl) async {
+    return await sl<FirebaseAuthService>().updateProfileImage(imageUrl);
+  }
 }

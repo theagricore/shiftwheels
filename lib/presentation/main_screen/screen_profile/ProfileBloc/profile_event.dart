@@ -1,4 +1,3 @@
-// profile_event.dart
 part of 'profile_bloc.dart';
 
 @immutable

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lottie/lottie.dart';
 import 'package:shiftwheels/presentation/search_screen/search_bloc/search_bloc.dart';
 import 'package:shiftwheels/presentation/search_screen/search_screen.dart';
 import 'package:shimmer/shimmer.dart';
@@ -22,23 +23,64 @@ class ScreenHome extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) =>
-              AddPostBloc(sl<GetBrandUsecase>(), sl<GetModelsUsecase>())
-                ..add(FetchBrandsEvent()),
+          create:
+              (context) =>
+                  AddPostBloc(sl<GetBrandUsecase>(), sl<GetModelsUsecase>())
+                    ..add(FetchBrandsEvent()),
         ),
         BlocProvider(
           create: (context) => sl<GetPostAdBloc>()..add(const FetchActiveAds()),
         ),
-        BlocProvider(
-          create: (context) => SearchBloc(),
-        ),
+        BlocProvider(create: (context) => SearchBloc()),
       ],
       child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: AppColors.zTransprant,
+          elevation: 0,
+          automaticallyImplyLeading: true,
+          title: Container(
+            color: Colors.transparent,
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => BlocProvider.value(
+                              value: BlocProvider.of<SearchBloc>(context),
+                              child: const SearchScreen(),
+                            ),
+                      ),
+                    );
+                  },
+                  child: Lottie.asset(
+                    'assets/images/Animation - search-w1000-h1000.json',
+                    height: 60,
+                    width: 60,
+                    fit: BoxFit.contain,
+                    repeat: false,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Text(
+                    'Search',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          centerTitle: false,
+          toolbarHeight: 70,
+        ),
+
         body: SafeArea(
           child: Column(
             children: [
-              _buildSearchBar(context),
+              // _buildSearchBar(context),
               _buildBrandFilter(),
               Expanded(
                 child: BlocConsumer<GetPostAdBloc, GetPostAdState>(
@@ -63,9 +105,10 @@ class ScreenHome extends StatelessWidget {
                       );
                     }
 
-                    final ads = state is GetPostAdLoaded
-                        ? state.ads
-                        : (state as GetPostAdLoading).previousAds ?? [];
+                    final ads =
+                        state is GetPostAdLoaded
+                            ? state.ads
+                            : (state as GetPostAdLoading).previousAds ?? [];
 
                     if (ads.isEmpty) {
                       return const Center(
@@ -95,10 +138,11 @@ class ScreenHome extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => BlocProvider.value(
-                      value: BlocProvider.of<SearchBloc>(context),
-                      child: const SearchScreen(),
-                    ),
+                    builder:
+                        (context) => BlocProvider.value(
+                          value: BlocProvider.of<SearchBloc>(context),
+                          child: const SearchScreen(),
+                        ),
                   ),
                 );
               },
@@ -124,7 +168,8 @@ class ScreenHome extends StatelessWidget {
                     Text(
                       'Search',
                       style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyMedium?.color ??
+                        color:
+                            Theme.of(context).textTheme.bodyMedium?.color ??
                             Colors.grey,
                         fontSize: 20,
                         fontWeight: FontWeight.w400,
@@ -201,8 +246,12 @@ class ScreenHome extends StatelessWidget {
 
   Widget _buildShimmerLoader(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDarkMode ? AppColors.zSecondBackground : Colors.grey[300]!;
-    final highlightColor = isDarkMode ? AppColors.zSecondBackground.withOpacity(0.6): Colors.grey[100]!;
+    final baseColor =
+        isDarkMode ? AppColors.zSecondBackground : Colors.grey[300]!;
+    final highlightColor =
+        isDarkMode
+            ? AppColors.zSecondBackground.withOpacity(0.6)
+            : Colors.grey[100]!;
 
     return GridView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),

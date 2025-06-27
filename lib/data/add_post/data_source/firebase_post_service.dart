@@ -21,12 +21,15 @@ abstract class FirebasePostService {
   Future<Either<String, String>> postAd(AdsModel ad);
   Future<Either<String, List<AdWithUserModel>>> getActiveAdsWithUsers();
   Future<Either<String, void>> toggleFavorite(String adId, String userId);
+  Future<Either<String, void>> toggleInterest(String adId, String userId);
+  Future<Either<String, List<AdWithUserModel>>> getUserInterests(String userId);
   Future<Either<String, List<AdWithUserModel>>> getUserFavorites(String userId);
   Future<Either<String, List<AdWithUserModel>>> getUserActiveAds(String userId);
   Future<Either<String, void>> deactivateAd(String adId);
   Future<Either<String, void>> updateAd(AdsModel ad);
   Stream<List<ChatModel>> getChatsForUser(String userId);
   Stream<List<MessageModel>> getMessagesForChat(String chatId);
+  Future<Either<String, List<UserModel>>> getInterestedUsers(String adId);
   Future<Either<String, String>> createChat({
     required String adId,
     required String sellerId,
@@ -47,7 +50,6 @@ abstract class FirebasePostService {
     required String chatId,
     required String messageId,
   });
-  
 }
 
 class PostFirebaseServiceImpl extends FirebasePostService {
@@ -322,6 +324,76 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   }
 
   @override
+  Future<Either<String, void>> toggleFavorite(
+    String adId,
+    String userId,
+  ) async {
+    try {
+      final adRef = _firestore.collection('car_ads').doc(adId);
+
+      await _firestore.runTransaction((transaction) async {
+        final adDoc = await transaction.get(adRef);
+        if (!adDoc.exists) {
+          throw Exception('Ad not found');
+        }
+
+        final currentFavorites = List<String>.from(
+          adDoc['favoritedByUsers'] ?? [],
+        );
+        final isFavorite = currentFavorites.contains(userId);
+
+        if (isFavorite) {
+          currentFavorites.remove(userId);
+        } else {
+          currentFavorites.add(userId);
+        }
+
+        transaction.update(adRef, {'favoritedByUsers': currentFavorites});
+      });
+
+      return const Right(null);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Failed to toggle favorite: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Either<String, void>> toggleInterest(
+    String adId,
+    String userId,
+  ) async {
+    try {
+      final adRef = _firestore.collection('car_ads').doc(adId);
+      await _firestore.runTransaction((transaction) async {
+        final adSnapshot = await transaction.get(adRef);
+        if (!adSnapshot.exists) {
+          throw Exception('Ad not found');
+        }
+
+        final adData = adSnapshot.data()!;
+        final interestedUsers = List<String>.from(
+          adData['interestedUsers'] ?? [],
+        );
+
+        if (interestedUsers.contains(userId)) {
+          interestedUsers.remove(userId);
+        } else {
+          interestedUsers.add(userId);
+        }
+
+        transaction.update(adRef, {'interestedUsers': interestedUsers});
+      });
+      return const Right(null);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Failed to toggle interest: ${e.toString()}');
+    }
+  }
+
+  @override
   Future<Either<String, List<AdWithUserModel>>> getUserFavorites(
     String userId,
   ) async {
@@ -361,42 +433,6 @@ class PostFirebaseServiceImpl extends FirebasePostService {
       return Left('Firebase error: ${e.message}');
     } catch (e) {
       return Left('Failed to get favorites: ${e.toString()}');
-    }
-  }
-
-  @override
-  Future<Either<String, void>> toggleFavorite(
-    String adId,
-    String userId,
-  ) async {
-    try {
-      final adRef = _firestore.collection('car_ads').doc(adId);
-
-      await _firestore.runTransaction((transaction) async {
-        final adDoc = await transaction.get(adRef);
-        if (!adDoc.exists) {
-          throw Exception('Ad not found');
-        }
-
-        final currentFavorites = List<String>.from(
-          adDoc['favoritedByUsers'] ?? [],
-        );
-        final isFavorite = currentFavorites.contains(userId);
-
-        if (isFavorite) {
-          currentFavorites.remove(userId);
-        } else {
-          currentFavorites.add(userId);
-        }
-
-        transaction.update(adRef, {'favoritedByUsers': currentFavorites});
-      });
-
-      return const Right(null);
-    } on FirebaseException catch (e) {
-      return Left('Firebase error: ${e.message}');
-    } catch (e) {
-      return Left('Failed to toggle favorite: ${e.toString()}');
     }
   }
 
@@ -502,125 +538,125 @@ class PostFirebaseServiceImpl extends FirebasePostService {
     }
   }
 
-@override
-Stream<List<ChatModel>> getChatsForUser(String userId) {
-  return _firestore
-      .collection('chats')
-      .where('participants', arrayContains: userId)
-      .orderBy('updatedAt', descending: true)
-      .snapshots()
-      .asyncMap((snapshot) async {
-        final chats = <ChatModel>[];
+  @override
+  Stream<List<ChatModel>> getChatsForUser(String userId) {
+    return _firestore
+        .collection('chats')
+        .where('participants', arrayContains: userId)
+        .orderBy('updatedAt', descending: true)
+        .snapshots()
+        .asyncMap((snapshot) async {
+          final chats = <ChatModel>[];
 
-        for (final doc in snapshot.docs) {
-          try {
-            final chat = ChatModel.fromMap(doc.data(), doc.id);
+          for (final doc in snapshot.docs) {
+            try {
+              final chat = ChatModel.fromMap(doc.data(), doc.id);
 
-            final lastMessage = await _firestore
-                .collection('chats')
-                .doc(doc.id)
-                .collection('messages')
-                .orderBy('timestamp', descending: true)
-                .limit(1)
-                .get()
-                .then(
-                  (snap) =>
-                      snap.docs.isNotEmpty
-                          ? MessageModel.fromMap(
-                            snap.docs.first.data(),
-                            snap.docs.first.id,
-                          )
-                          : null,
-                );
+              final lastMessage = await _firestore
+                  .collection('chats')
+                  .doc(doc.id)
+                  .collection('messages')
+                  .orderBy('timestamp', descending: true)
+                  .limit(1)
+                  .get()
+                  .then(
+                    (snap) =>
+                        snap.docs.isNotEmpty
+                            ? MessageModel.fromMap(
+                              snap.docs.first.data(),
+                              snap.docs.first.id,
+                            )
+                            : null,
+                  );
 
-            final unreadCount = await _firestore
-                .collection('chats')
-                .doc(doc.id)
-                .collection('messages')
-                .where('status', whereIn: ['sent', 'delivered'])
-                .where('senderId', isNotEqualTo: userId)
-                .where('isDeleted', isEqualTo: false)
-                .get()
-                .then((snap) => snap.size);
+              final unreadCount = await _firestore
+                  .collection('chats')
+                  .doc(doc.id)
+                  .collection('messages')
+                  .where('status', whereIn: ['sent', 'delivered'])
+                  .where('senderId', isNotEqualTo: userId)
+                  .where('isDeleted', isEqualTo: false)
+                  .get()
+                  .then((snap) => snap.size);
 
-            final otherUserId =
-                chat.sellerId == userId ? chat.buyerId : chat.sellerId;
-            final userDoc =
-                await _firestore.collection('Users').doc(otherUserId).get();
-            final user =
-                userDoc.exists ? UserModel.fromMap(userDoc.data()!) : null;
+              final otherUserId =
+                  chat.sellerId == userId ? chat.buyerId : chat.sellerId;
+              final userDoc =
+                  await _firestore.collection('Users').doc(otherUserId).get();
+              final user =
+                  userDoc.exists ? UserModel.fromMap(userDoc.data()!) : null;
 
-            final adDoc =
-                await _firestore.collection('car_ads').doc(chat.adId).get();
-            final ad =
-                adDoc.exists
-                    ? AdsModel.fromMap(adDoc.data()!, adDoc.id)
-                    : null;
+              final adDoc =
+                  await _firestore.collection('car_ads').doc(chat.adId).get();
+              final ad =
+                  adDoc.exists
+                      ? AdsModel.fromMap(adDoc.data()!, adDoc.id)
+                      : null;
 
-            chats.add(
-              chat.copyWith(
-                lastMessage: lastMessage,
-                unreadCount: unreadCount,
-                seller: chat.sellerId == userId ? null : user,
-                buyer: chat.buyerId == userId ? null : user,
-                ad: ad,
-              ),
-            );
-          } catch (e) {
-            continue;
+              chats.add(
+                chat.copyWith(
+                  lastMessage: lastMessage,
+                  unreadCount: unreadCount,
+                  seller: chat.sellerId == userId ? null : user,
+                  buyer: chat.buyerId == userId ? null : user,
+                  ad: ad,
+                ),
+              );
+            } catch (e) {
+              continue;
+            }
           }
-        }
 
-        return chats;
-      });
-}
-
-@override
-Stream<List<MessageModel>> getMessagesForChat(String chatId) {
-  return _firestore
-      .collection('chats')
-      .doc(chatId)
-      .collection('messages')
-      .orderBy('timestamp', descending: false)
-      .snapshots()
-      .map(
-        (snapshot) =>
-            snapshot.docs.map((doc) {
-              final data = doc.data();
-              return MessageModel.fromMap(data, doc.id);
-            }).toList(),
-      );
-}
-
-@override
-Future<Either<String, void>> markMessagesAsRead({
-  required String chatId,
-  required String userId,
-}) async {
-  try {
-    final messages =
-        await _firestore
-            .collection('chats')
-            .doc(chatId)
-            .collection('messages')
-            .where('status', whereIn: ['sent', 'delivered'])
-            .where('senderId', isNotEqualTo: userId)
-            .where('isDeleted', isEqualTo: false)  
-            .get();
-
-    final batch = _firestore.batch();
-    for (final doc in messages.docs) {
-      batch.update(doc.reference, {'status': 'read'});
-    }
-
-    await batch.commit();
-    return const Right(null);
-  } on FirebaseException catch (e) {
-    return Left('Firebase error: ${e.message}');
-  } catch (e) {
-    return Left('Unexpected error: ${e.toString()}');
+          return chats;
+        });
   }
-}
+
+  @override
+  Stream<List<MessageModel>> getMessagesForChat(String chatId) {
+    return _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('timestamp', descending: false)
+        .snapshots()
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) {
+                final data = doc.data();
+                return MessageModel.fromMap(data, doc.id);
+              }).toList(),
+        );
+  }
+
+  @override
+  Future<Either<String, void>> markMessagesAsRead({
+    required String chatId,
+    required String userId,
+  }) async {
+    try {
+      final messages =
+          await _firestore
+              .collection('chats')
+              .doc(chatId)
+              .collection('messages')
+              .where('status', whereIn: ['sent', 'delivered'])
+              .where('senderId', isNotEqualTo: userId)
+              .where('isDeleted', isEqualTo: false)
+              .get();
+
+      final batch = _firestore.batch();
+      for (final doc in messages.docs) {
+        batch.update(doc.reference, {'status': 'read'});
+      }
+
+      await batch.commit();
+      return const Right(null);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Unexpected error: ${e.toString()}');
+    }
+  }
 
   @override
   Future<Either<String, void>> sendMessage({
@@ -662,33 +698,114 @@ Future<Either<String, void>> markMessagesAsRead({
     }
   }
 
- @override
-Future<Either<String, void>> deleteMessage({
-  required String chatId,
-  required String messageId,
-}) async {
-  try {
-    final messageRef = _firestore
-        .collection('chats')
-        .doc(chatId)
-        .collection('messages')
-        .doc(messageId);
+  @override
+  Future<Either<String, void>> deleteMessage({
+    required String chatId,
+    required String messageId,
+  }) async {
+    try {
+      final messageRef = _firestore
+          .collection('chats')
+          .doc(chatId)
+          .collection('messages')
+          .doc(messageId);
 
-    await messageRef.update({
-      'isDeleted': true,
-      'content': 'This message was deleted',
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+      await messageRef.update({
+        'isDeleted': true,
+        'content': 'This message was deleted',
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
-    await _firestore.collection('chats').doc(chatId).update({
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+      await _firestore.collection('chats').doc(chatId).update({
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
-    return const Right(null);
-  } on FirebaseException catch (e) {
-    return Left('Firebase error: ${e.message ?? 'Unknown error'}');
-  } catch (e) {
-    return Left('Failed to delete message: ${e.toString()}');
+      return const Right(null);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message ?? 'Unknown error'}');
+    } catch (e) {
+      return Left('Failed to delete message: ${e.toString()}');
+    }
   }
-}
+
+  @override
+  Future<Either<String, List<AdWithUserModel>>> getUserInterests(
+    String userId,
+  ) async {
+    try {
+      final adsSnapshot =
+          await _firestore
+              .collection('car_ads')
+              .where('interestedUsers', arrayContains: userId)
+              .where('isActive', isEqualTo: true)
+              .get();
+
+      final ads =
+          adsSnapshot.docs
+              .map((doc) => AdsModel.fromMap(doc.data(), doc.id))
+              .toList();
+
+      final result = <AdWithUserModel>[];
+
+      for (final ad in ads) {
+        try {
+          final userDoc =
+              await _firestore.collection('Users').doc(ad.userId).get();
+          UserModel? userModel;
+          if (userDoc.exists) {
+            userModel = UserModel.fromMap(userDoc.data()!);
+          }
+          result.add(
+            AdWithUserModel(ad: ad, userData: userModel, isInterested: true),
+          );
+        } catch (e) {
+          result.add(AdWithUserModel(ad: ad, isInterested: true));
+        }
+      }
+
+      return Right(result);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Failed to get interested ads: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Either<String, List<UserModel>>> getInterestedUsers(
+    String adId,
+  ) async {
+    try {
+      final adDoc = await _firestore.collection('car_ads').doc(adId).get();
+
+      if (!adDoc.exists) {
+        return Left('Ad not found');
+      }
+
+      final interestedUserIds = List<String>.from(
+        adDoc['interestedUsers'] ?? [],
+      );
+
+      if (interestedUserIds.isEmpty) {
+        return Right([]);
+      }
+
+      final usersSnapshot =
+          await _firestore
+              .collection('Users')
+              .where(FieldPath.documentId, whereIn: interestedUserIds)
+              .get();
+
+      final users =
+          usersSnapshot.docs
+              .map((doc) => UserModel.fromMap(doc.data()))
+              .toList();
+
+      return Right(users);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Failed to get interested users: ${e.toString()}');
+    }
+  }
 }

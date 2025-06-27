@@ -6,6 +6,7 @@ import 'package:shiftwheels/data/add_post/models/chat_model.dart';
 import 'package:shiftwheels/data/add_post/models/fuels_model.dart';
 import 'package:shiftwheels/data/add_post/models/location_model.dart';
 import 'package:shiftwheels/data/add_post/models/message_model.dart';
+import 'package:shiftwheels/data/auth/models/user_model.dart';
 
 abstract class PostRepository {
   Future<Either<String, List<BrandModel>>> getBrands();
@@ -18,13 +19,15 @@ abstract class PostRepository {
   Future<Either<String, void>> toggleFavorite(String adId, String userId);
   Future<Either<String, List<AdWithUserModel>>> getUserFavorites(String userId);
   Future<Either<String, List<AdWithUserModel>>> getUserActiveAds(String userId);
+  Future<Either<String, void>> toggleInterest(String adId, String userId);
+  Future<Either<String, List<AdWithUserModel>>> getUserInterests(String userId);
   Future<Either<String, void>> deactivateAd(String adId);
   Future<Either<String, void>> updateAd(AdsModel ad);
   Stream<List<ChatModel>> getChatsForUser(String userId);
   Stream<List<MessageModel>> getMessagesForChat(String chatId);
+  Future<Either<String, List<UserModel>>> getInterestedUsers(String adId);
   Future<Either<String, String>> createChat({required String adId,required String sellerId,required String buyerId});
   Future<Either<String, void>> sendMessage({required String chatId,required String senderId,required String content,String? replyToMessageId,String? replyToContent,});
   Future<Either<String, void>> markMessagesAsRead({required String chatId,required String userId});
-    Future<Either<String, void>> deleteMessage({required String chatId,required String messageId});
-
+  Future<Either<String, void>> deleteMessage({required String chatId,required String messageId});
 }

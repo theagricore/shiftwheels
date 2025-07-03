@@ -57,10 +57,9 @@ class ChatCardWidget extends StatelessWidget {
             onRefresh();
           },
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
-                // Profile image with fallback to initials
                 if (profileImageUrl != null && profileImageUrl.isNotEmpty)
                   CircleAvatar(
                     radius: 26,

@@ -6,38 +6,39 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shiftwheels/data/auth/models/user_sigin_model.dart';
 
 abstract class FirebaseAuthService {
-  Future<Either> signup(UserModel user);
-  Future<Either> signin(UserSiginModel user);
+  Future<Either<String, String>> signup(UserModel user);
+  Future<Either<String, String>> signin(UserSiginModel user);
   Future<bool> isLoggedin();
-  Future<Either> logout();
-  Future<Either> passwordResetEmail(String email);
-  Future<Either> getUser();
-  Future<Either> signInWithGoogle();
-  Future<Either<String, void>> updateProfileImage(String imageUrl);
+  Future<Either<String, String>> logout();
+  Future<Either<String, String>> passwordResetEmail(String email);
+  Future<Either<String, Map<String, dynamic>>> getUser();
+  Future<Either<String, String>> signInWithGoogle();
+  Future<Either<String, String>> updateProfileImage(String imageUrl);
 }
 
 class AuthFirebaseServiceImpl extends FirebaseAuthService {
-  @override
-  Future<Either> signup(UserModel user) async {
-    try {
-      var returnedData = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-            email: user.email!,
-            password: user.password!,
-          );
-      await FirebaseFirestore.instance
-          .collection('Users')
-          .doc(returnedData.user!.uid)
-          .set({
-            'fullName': user.fullName,
-            'email': user.email,
-            'phoneNo': user.phoneNo,
-            'password': user.password,
-            'uid': returnedData.user!.uid,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-      return const Right("Sign up was successful");
+  @override
+  Future<Either<String, String>> signup(UserModel user) async {
+    try {
+      final userCredential = await _auth.createUserWithEmailAndPassword(
+        email: user.email!,
+        password: user.password!,
+      );
+
+      await _firestore.collection('Users').doc(userCredential.user!.uid).set({
+        'fullName': user.fullName,
+        'email': user.email,
+        'phoneNo': user.phoneNo,
+        'password': user.password,
+        'uid': userCredential.user!.uid,
+        'isBlocked': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      return const Right("Sign-up successful");
     } on FirebaseAuthException catch (e) {
       String message = '';
       if (e.code == 'weak-password') {
@@ -54,13 +55,26 @@ class AuthFirebaseServiceImpl extends FirebaseAuthService {
   }
 
   @override
-  Future<Either> signin(UserSiginModel user) async {
+  Future<Either<String, String>> signin(UserSiginModel user) async {
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final userQuery = await _firestore
+          .collection('Users')
+          .where('email', isEqualTo: user.email)
+          .limit(1)
+          .get();
+
+      if (userQuery.docs.isNotEmpty) {
+        final userData = userQuery.docs.first.data();
+        if (userData['isBlocked'] == true) {
+          return Left("Your account has been blocked by admin");
+        }
+      }
+
+      await _auth.signInWithEmailAndPassword(
         email: user.email!,
         password: user.password!,
       );
-      return const Right("Sign in was successful");
+      return const Right("Sign-in successful");
     } on FirebaseAuthException catch (e) {
       String message = '';
       if (e.code == 'user-not-found' || e.code == 'invalid-email') {
@@ -78,28 +92,24 @@ class AuthFirebaseServiceImpl extends FirebaseAuthService {
 
   @override
   Future<bool> isLoggedin() async {
-    if (FirebaseAuth.instance.currentUser != null) {
-      return true;
-    } else {
-      return false;
-    }
+    return _auth.currentUser != null;
   }
 
   @override
-  Future<Either> logout() async {
+  Future<Either<String, String>> logout() async {
     try {
-      await FirebaseAuth.instance.signOut();
-      return const Right("log out successful");
+      await _auth.signOut();
+      return const Right("Logout successful");
     } catch (e) {
       return Left("Failed to log out: $e");
     }
   }
 
   @override
-  Future<Either> passwordResetEmail(String email) async {
+  Future<Either<String, String>> passwordResetEmail(String email) async {
     try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      return Right("Password reset email sent successfully");
+      await _auth.sendPasswordResetEmail(email: email);
+      return const Right("Password reset email sent");
     } on FirebaseAuthException catch (e) {
       String message = 'Failed to send reset email';
       if (e.code == 'user-not-found') {
@@ -116,31 +126,26 @@ class AuthFirebaseServiceImpl extends FirebaseAuthService {
   }
 
   @override
-  Future<Either> getUser() async {
+  Future<Either<String, Map<String, dynamic>>> getUser() async {
     try {
-      var currentUser = FirebaseAuth.instance.currentUser;
+      final currentUser = _auth.currentUser;
       if (currentUser == null) {
         return Left("User not logged in");
       }
 
-      var userData = await FirebaseFirestore.instance
-          .collection('Users')
-          .doc(currentUser.uid)
-          .get()
-          .then((value) => value.data());
-
-      if (userData == null) {
+      final userDoc = await _firestore.collection('Users').doc(currentUser.uid).get();
+      if (!userDoc.exists) {
         return Left("User data not found");
       }
 
-      return Right(userData);
+      return Right(userDoc.data()!);
     } catch (e) {
       return Left("Failed to get user data: $e");
     }
   }
 
   @override
-  Future<Either> signInWithGoogle() async {
+  Future<Either<String, String>> signInWithGoogle() async {
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn();
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
@@ -149,30 +154,38 @@ class AuthFirebaseServiceImpl extends FirebaseAuthService {
         return Left("Google sign-in was cancelled");
       }
 
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+      final userQuery = await _firestore
+          .collection('Users')
+          .where('email', isEqualTo: googleUser.email)
+          .limit(1)
+          .get();
+
+      if (userQuery.docs.isNotEmpty) {
+        final userData = userQuery.docs.first.data();
+        if (userData['isBlocked'] == true) {
+          return Left("Your account has been blocked by admin");
+        }
+      }
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      final UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithCredential(credential);
-
+      final UserCredential userCredential = await _auth.signInWithCredential(credential);
       final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
 
       if (isNewUser) {
-        await FirebaseFirestore.instance
-            .collection('Users')
-            .doc(userCredential.user!.uid)
-            .set({
-              'fullName': userCredential.user!.displayName ?? '',
-              'email': userCredential.user!.email ?? '',
-              'phoneNo': userCredential.user!.phoneNumber ?? '',
-              'uid': userCredential.user!.uid,
-              'createdAt': FieldValue.serverTimestamp(),
-            });
+        await _firestore.collection('Users').doc(userCredential.user!.uid).set({
+          'fullName': userCredential.user!.displayName ?? '',
+          'email': userCredential.user!.email ?? '',
+          'phoneNo': userCredential.user!.phoneNumber ?? '',
+          'uid': userCredential.user!.uid,
+          'isBlocked': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
       }
 
       return const Right("Google sign-in successful");
@@ -184,19 +197,18 @@ class AuthFirebaseServiceImpl extends FirebaseAuthService {
   }
 
   @override
-  Future<Either<String, void>> updateProfileImage(String imageUrl) async {
+  Future<Either<String, String>> updateProfileImage(String imageUrl) async {
     try {
-      final currentUser = FirebaseAuth.instance.currentUser;
+      final currentUser = _auth.currentUser;
       if (currentUser == null) {
         return Left("User not logged in");
       }
 
-      await FirebaseFirestore.instance
-          .collection('Users')
-          .doc(currentUser.uid)
-          .update({'image': imageUrl});
+      await _firestore.collection('Users').doc(currentUser.uid).update({
+        'image': imageUrl,
+      });
 
-      return const Right(null);
+      return const Right("Profile image updated");
     } on FirebaseException catch (e) {
       return Left("Firebase error: ${e.message}");
     } catch (e) {

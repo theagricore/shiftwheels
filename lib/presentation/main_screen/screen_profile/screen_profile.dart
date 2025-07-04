@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lottie/lottie.dart';
 import 'package:shiftwheels/core/common_widget/basic_app_bar.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_alert_box.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_elevated_app_button.dart';
@@ -111,6 +112,16 @@ class ScreenProfile extends StatelessWidget {
                       title: zSignOut,
                     );
                   },
+                ),
+                Container(
+                  height: 200,
+                  width: 200,
+                  alignment: Alignment.center,
+                  child: Lottie.asset(
+                    'assets/images/Animation - error.json',
+                    fit: BoxFit.contain,
+                    repeat: false,
+                  ),
                 ),
               ],
             );

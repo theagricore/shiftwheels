@@ -10,6 +10,7 @@ import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/data/add_post/models/location_model.dart';
 import 'package:shiftwheels/presentation/add_post/post_ad_bloc/post_ad_bloc.dart';
+import 'package:shiftwheels/presentation/add_post/post_limit_reached.dart/screen_post_limit_reached.dart';
 
 class ScreenPrice extends StatelessWidget {
   final String userId;
@@ -52,13 +53,27 @@ class ScreenPrice extends StatelessWidget {
               builder: (context) => const DonePostingSplashScreen(),
             ),
           );
-          
+
           Future.delayed(const Duration(seconds: 3), () {
-            // ignore: use_build_context_synchronously
             Navigator.of(context).popUntil((route) => route.isFirst);
           });
         } else if (state is PostAdError) {
-          BasicSnackbar(message: state.message, backgroundColor: Colors.red).show(context);
+          BasicSnackbar(
+            message: state.message,
+            backgroundColor: Colors.red,
+          ).show(context);
+        } else if (state is PostLimitReached) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ScreenPostLimitReached(limit: state.limit),
+            ),
+          ).then((shouldRefresh) {
+            if (shouldRefresh == true) {
+              // User upgraded to premium, refresh the state
+              context.read<PostAdBloc>().add(CheckPostLimitEvent(userId));
+            }
+          });
         }
       },
       child: Scaffold(
@@ -120,7 +135,7 @@ class ScreenPrice extends StatelessWidget {
                           );
                         },
                         isLoading: state is PostAdLoading,
-                        title: "Done",
+                        title: "Post Ad",
                       );
                     },
                   ),
@@ -215,7 +230,6 @@ class _DonePostingSplashScreenState extends State<DonePostingSplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.zPrimaryColor,
-     
       body: Center(
         child: Lottie.asset(
           'assets/images/Animation - Done-w3000-h3000.json',

@@ -11,6 +11,8 @@ import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_chats_useca
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_messages_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/mark_messages_read_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/send_message_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/check_post_limit_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/create_payment_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/deactive-ad_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_active_ads_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_brand_usecase.dart';
@@ -25,6 +27,7 @@ import 'package:shiftwheels/domain/add_post/usecase/search_location_usecase.dart
 import 'package:shiftwheels/domain/add_post/usecase/toggleIntrestUsecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/toggle_favoriteUsecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/upadate_ad_usecate.dart';
+import 'package:shiftwheels/domain/add_post/usecase/update_payment_status_usecase.dart';
 import 'package:shiftwheels/domain/auth/repository/auth_repository.dart';
 import 'package:shiftwheels/domain/auth/usecase/get_user_data_usecase.dart';
 import 'package:shiftwheels/domain/auth/usecase/google_signin_usecase.dart';
@@ -37,6 +40,7 @@ import 'package:shiftwheels/domain/auth/usecase/update_profile_image_usecase.dar
 import 'package:shiftwheels/presentation/add_post/get_images_bloc/get_images_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/get_location_bloc/get_location_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/post_ad_bloc/post_ad_bloc.dart';
+import 'package:shiftwheels/presentation/add_post/post_limit_bloc/post_limit_bloc.dart';
 import 'package:shiftwheels/presentation/main_screen/screen_profile/ProfileBloc/profile_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/add_post_bloc/add_post_bloc.dart';
 import 'package:shiftwheels/presentation/auth/google_auth/google_auth_bloc.dart';
@@ -117,6 +121,15 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<UpdateProfileImageUsecase>(
     UpdateProfileImageUsecase(sl<AuthRepository>()),
   );
+  sl.registerSingleton<CheckPostLimitUsecase>(
+    CheckPostLimitUsecase(sl<PostRepository>()),
+  );
+  sl.registerSingleton<CreatePaymentUsecase>(
+    CreatePaymentUsecase(sl<PostRepository>()),
+  );
+  sl.registerSingleton<UpdatePaymentStatusUsecase>(
+    UpdatePaymentStatusUsecase(sl<PostRepository>()),
+  );
 
   // Blocs
   sl.registerFactory<GoogleAuthBloc>(() => GoogleAuthBloc());
@@ -140,7 +153,12 @@ Future<void> initializeDependencies() async {
     () => PostAdBloc(
       postAdUsecase: sl<PostAdUsecase>(),
       cloudinaryService: sl<CloudinaryService>(),
+      checkPostLimitUsecase: sl<CheckPostLimitUsecase>(),
+      createPaymentUsecase: sl<CreatePaymentUsecase>(),
     ),
+  );
+  sl.registerFactory<PostLimitBloc>(
+    () => PostLimitBloc(sl<CheckPostLimitUsecase>()),
   );
   sl.registerFactory<GetPostAdBloc>(
     () => GetPostAdBloc(getActiveAdsUsecase: sl<GetActiveAdsUsecase>()),

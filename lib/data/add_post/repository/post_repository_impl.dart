@@ -7,6 +7,8 @@ import 'package:shiftwheels/data/add_post/models/chat_model.dart';
 import 'package:shiftwheels/data/add_post/models/fuels_model.dart';
 import 'package:shiftwheels/data/add_post/models/location_model.dart';
 import 'package:shiftwheels/data/add_post/models/message_model.dart';
+import 'package:shiftwheels/data/add_post/models/payment_model.dart';
+import 'package:shiftwheels/data/add_post/models/user_post_limit.dart';
 import 'package:shiftwheels/data/auth/models/user_model.dart';
 import 'package:shiftwheels/domain/add_post/repository/post_repository.dart';
 import 'package:shiftwheels/service_locater/service_locater.dart';
@@ -175,5 +177,35 @@ class PostRepositoryImpl extends PostRepository {
     String userId,
   ) async {
     return await sl<FirebasePostService>().getUserInterests(userId);
+  }
+
+  @override
+  Future<Either<String, UserPostLimit>> getUserPostLimit(String userId) async {
+    return await sl<FirebasePostService>().getUserPostLimit(userId);
+  }
+
+  @override
+  Future<Either<String, String>> createPaymentRecord(
+    PaymentModel payment,
+  ) async {
+    return await sl<FirebasePostService>().createPaymentRecord(payment);
+  }
+
+  @override
+  Future<Either<String, void>> updatePaymentStatus({
+    required String paymentId,
+    required String status,
+    required String transactionId,
+  }) async {
+    return await sl<FirebasePostService>().updatePaymentStatus(
+      paymentId: paymentId,
+      status: status,
+      transactionId: transactionId,
+    );
+  }
+
+  @override
+  Future<Either<String, void>> incrementPostCount(String userId) async {
+    return await sl<FirebasePostService>().incrementPostCount(userId);
   }
 }

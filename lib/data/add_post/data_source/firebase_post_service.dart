@@ -10,6 +10,8 @@ import 'package:shiftwheels/data/add_post/models/chat_model.dart';
 import 'package:shiftwheels/data/add_post/models/fuels_model.dart';
 import 'package:shiftwheels/data/add_post/models/location_model.dart';
 import 'package:shiftwheels/data/add_post/models/message_model.dart';
+import 'package:shiftwheels/data/add_post/models/payment_model.dart';
+import 'package:shiftwheels/data/add_post/models/user_post_limit.dart';
 import 'package:shiftwheels/data/auth/models/user_model.dart';
 
 abstract class FirebasePostService {
@@ -50,6 +52,14 @@ abstract class FirebasePostService {
     required String chatId,
     required String messageId,
   });
+   Future<Either<String, UserPostLimit>> getUserPostLimit(String userId);
+  Future<Either<String, String>> createPaymentRecord(PaymentModel payment);
+  Future<Either<String, void>> updatePaymentStatus({
+    required String paymentId,
+    required String status,
+    required String transactionId,
+  });
+  Future<Either<String, void>> incrementPostCount(String userId);
 }
 
 class PostFirebaseServiceImpl extends FirebasePostService {
@@ -809,4 +819,97 @@ class PostFirebaseServiceImpl extends FirebasePostService {
       return Left('Failed to get interested users: ${e.toString()}');
     }
   }
+  
+@override
+Future<Either<String, String>> createPaymentRecord(PaymentModel payment) async {
+  try {
+    final docRef = await _firestore.collection('payments').add(payment.toMap());
+    return Right(docRef.id);
+  } on FirebaseException catch (e) {
+    return Left('Firebase error: ${e.message}');
+  } catch (e) {
+    return Left('Unexpected error: ${e.toString()}');
+  }
+}
+  
+@override
+Future<Either<String, UserPostLimit>> getUserPostLimit(String userId) async {
+  try {
+    final doc = await _firestore.collection('user_post_limits').doc(userId).get();
+    
+    if (!doc.exists) {
+      // Create a new limit record if it doesn't exist
+      final resetDate = DateTime.now().add(const Duration(days: 30));
+      final newLimit = UserPostLimit(
+        userId: userId,
+        postCount: 0,
+        resetDate: resetDate,
+      );
+      
+      await _firestore.collection('user_post_limits').doc(userId).set(newLimit.toMap());
+      return Right(newLimit);
+    }
+    
+    final limit = UserPostLimit.fromMap(doc.data()!);
+    
+    // Check if reset date has passed
+    if (DateTime.now().isAfter(limit.resetDate)) {
+      final newResetDate = DateTime.now().add(const Duration(days: 30));
+      await _firestore.collection('user_post_limits').doc(userId).update({
+        'postCount': 0,
+        'resetDate': newResetDate.toIso8601String(),
+      });
+      return Right(limit.copyWith(postCount: 0, resetDate: newResetDate));
+    }
+    
+    return Right(limit);
+  } on FirebaseException catch (e) {
+    return Left('Firebase error: ${e.message}');
+  } catch (e) {
+    return Left('Unexpected error: ${e.toString()}');
+  }
+}
+  
+@override
+Future<Either<String, void>> incrementPostCount(String userId) async {
+  try {
+    await _firestore.collection('user_post_limits').doc(userId).update({
+      'postCount': FieldValue.increment(1),
+    });
+    return const Right(null);
+  } on FirebaseException catch (e) {
+    return Left('Firebase error: ${e.message}');
+  } catch (e) {
+    return Left('Unexpected error: ${e.toString()}');
+  }
+}
+  
+@override
+Future<Either<String, void>> updatePaymentStatus({
+  required String paymentId,
+  required String status,
+  required String transactionId,
+}) async {
+  try {
+    await _firestore.collection('payments').doc(paymentId).update({
+      'paymentStatus': status,
+      'transactionId': transactionId,
+      'paymentDate': FieldValue.serverTimestamp(),
+    });
+    
+    if (status == 'Success') {
+      final paymentDoc = await _firestore.collection('payments').doc(paymentId).get();
+      final userId = paymentDoc['userId'] as String;
+      await _firestore.collection('user_post_limits').doc(userId).update({
+        'isPremium': true,
+      });
+    }
+    
+    return const Right(null);
+  } on FirebaseException catch (e) {
+    return Left('Firebase error: ${e.message}');
+  } catch (e) {
+    return Left('Unexpected error: ${e.toString()}');
+  }
+}
 }

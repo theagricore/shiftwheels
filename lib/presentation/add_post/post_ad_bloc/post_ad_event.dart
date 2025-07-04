@@ -52,3 +52,12 @@ class SubmitAdEvent extends PostAdEvent {
         price,
       ];
 }
+
+class CheckPostLimitEvent extends PostAdEvent {
+  final String userId;
+
+  const CheckPostLimitEvent(this.userId);
+
+  @override
+  List<Object> get props => [userId];
+}

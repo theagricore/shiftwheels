@@ -28,3 +28,21 @@ class PostAdError extends PostAdState {
   @override
   List<Object> get props => [message];
 }
+
+class PostLimitChecked extends PostAdState {
+  final UserPostLimit limit;
+
+  const PostLimitChecked(this.limit);
+
+  @override
+  List<Object> get props => [limit];
+}
+
+class PostLimitReached extends PostAdState {
+  final UserPostLimit limit;
+
+  const PostLimitReached(this.limit);
+
+  @override
+  List<Object> get props => [limit];
+}

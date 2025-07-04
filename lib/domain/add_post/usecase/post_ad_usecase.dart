@@ -12,4 +12,8 @@ class PostAdUsecase implements UseCase<Either<String, String>, AdsModel> {
   Future<Either<String, String>> call({AdsModel? param}) async {
     return await repository.postAd(param!);
   }
+
+  Future<Either<String, void>> incrementPostCount(String userId) async {
+    return await repository.incrementPostCount(userId);
+  }
 }

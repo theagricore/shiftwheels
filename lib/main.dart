@@ -1,5 +1,7 @@
 import 'package:shiftwheels/core/config/theme/theme.dart';
 import 'package:shiftwheels/data/add_post/data_source/cloudinary_service.dart';
+import 'package:shiftwheels/domain/add_post/usecase/check_post_limit_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/create_payment_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_active_ads_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/post_ad_usecase.dart';
 import 'package:shiftwheels/presentation/add_post/get_fuels_bloc/get_fuels_bloc.dart';
@@ -73,8 +75,10 @@ class MyApp extends StatelessWidget {
             BlocProvider<PostAdBloc>(
               create:
                   (context) => PostAdBloc(
-                    postAdUsecase: sl<PostAdUsecase>(),
-                    cloudinaryService: sl<CloudinaryService>(),
+    postAdUsecase: sl<PostAdUsecase>(),
+    cloudinaryService: sl<CloudinaryService>(),
+    checkPostLimitUsecase: sl<CheckPostLimitUsecase>(),
+    createPaymentUsecase: sl<CreatePaymentUsecase>(),
                   ),
             ),
             BlocProvider<AddFavouriteBloc>(

@@ -6,6 +6,8 @@ import 'package:shiftwheels/data/add_post/models/chat_model.dart';
 import 'package:shiftwheels/data/add_post/models/fuels_model.dart';
 import 'package:shiftwheels/data/add_post/models/location_model.dart';
 import 'package:shiftwheels/data/add_post/models/message_model.dart';
+import 'package:shiftwheels/data/add_post/models/payment_model.dart';
+import 'package:shiftwheels/data/add_post/models/user_post_limit.dart';
 import 'package:shiftwheels/data/auth/models/user_model.dart';
 
 abstract class PostRepository {
@@ -30,4 +32,12 @@ abstract class PostRepository {
   Future<Either<String, void>> sendMessage({required String chatId,required String senderId,required String content,String? replyToMessageId,String? replyToContent,});
   Future<Either<String, void>> markMessagesAsRead({required String chatId,required String userId});
   Future<Either<String, void>> deleteMessage({required String chatId,required String messageId});
+   Future<Either<String, UserPostLimit>> getUserPostLimit(String userId);
+  Future<Either<String, String>> createPaymentRecord(PaymentModel payment);
+  Future<Either<String, void>> updatePaymentStatus({
+    required String paymentId,
+    required String status,
+    required String transactionId,
+  });
+  Future<Either<String, void>> incrementPostCount(String userId);
 }

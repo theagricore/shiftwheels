@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:shiftwheels/data/add_post/data_source/cloudinary_service.dart';
 import 'package:shiftwheels/data/add_post/data_source/firebase_post_service.dart';
+import 'package:shiftwheels/data/add_post/data_source/razorpay_service.dart';
 import 'package:shiftwheels/data/add_post/repository/post_repository_impl.dart';
 import 'package:shiftwheels/data/auth/data_dource/firebase_auth_service.dart';
 import 'package:shiftwheels/data/auth/repository/auth_repository_impl.dart';
@@ -61,6 +62,7 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<FirebaseAuthService>(AuthFirebaseServiceImpl());
   sl.registerSingleton<FirebasePostService>(PostFirebaseServiceImpl());
   sl.registerSingleton<CloudinaryService>(CloudinaryServiceImpl());
+  sl.registerSingleton<RazorpayService>(RazorpayService());
 
   // Repositories
   sl.registerSingleton<AuthRepository>(AuthRepositoryImpl());
@@ -131,6 +133,8 @@ Future<void> initializeDependencies() async {
     UpdatePaymentStatusUsecase(sl<PostRepository>()),
   );
 
+
+
   // Blocs
   sl.registerFactory<GoogleAuthBloc>(() => GoogleAuthBloc());
   sl.registerFactory<ProfileBloc>(
@@ -149,6 +153,7 @@ Future<void> initializeDependencies() async {
     ),
   );
   sl.registerFactory<GetImagesBloc>(() => GetImagesBloc());
+
   sl.registerFactory<PostAdBloc>(
     () => PostAdBloc(
       postAdUsecase: sl<PostAdUsecase>(),

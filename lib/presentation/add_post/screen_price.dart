@@ -1,6 +1,4 @@
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shiftwheels/core/common_widget/basic_app_bar.dart';
@@ -70,7 +68,6 @@ class ScreenPrice extends StatelessWidget {
             ),
           ).then((shouldRefresh) {
             if (shouldRefresh == true) {
-              // User upgraded to premium, refresh the state
               context.read<PostAdBloc>().add(CheckPostLimitEvent(userId));
             }
           });
@@ -150,81 +147,8 @@ class ScreenPrice extends StatelessWidget {
   }
 }
 
-class DonePostingSplashScreen extends StatefulWidget {
+class DonePostingSplashScreen extends StatelessWidget {
   const DonePostingSplashScreen({super.key});
-
-  @override
-  State<DonePostingSplashScreen> createState() =>
-      _DonePostingSplashScreenState();
-}
-
-class _DonePostingSplashScreenState extends State<DonePostingSplashScreen>
-    with TickerProviderStateMixin {
-  late final AnimationController _controller;
-  final AudioPlayer _audioPlayer = AudioPlayer();
-  bool _hasPlayedSound = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this);
-    _controller.addStatusListener((status) async {
-      if (status == AnimationStatus.completed) {
-        _navigateAfterAnimation();
-      } else if (status == AnimationStatus.forward && !_hasPlayedSound) {
-        await _playSuccessSound();
-      }
-    });
-
-    _audioPlayer.onPlayerStateChanged.listen((state) {
-      debugPrint('Player state: $state');
-      if (state == PlayerState.playing) {
-        _hasPlayedSound = true;
-      }
-    });
-
-    _audioPlayer.onLog.listen((event) {
-      debugPrint('AudioPlayer log: $event');
-    });
-  }
-
-  Future<void> _playSuccessSound() async {
-    try {
-      debugPrint('Attempting to play sound');
-
-      await _audioPlayer.stop();
-
-      await _audioPlayer.setSourceAsset('assets/images/success-1-6297.mp3');
-
-      await _audioPlayer.resume();
-
-      debugPrint('Sound playback initiated');
-    } catch (e) {
-      debugPrint('Error playing sound: $e');
-      await _tryAlternativePlayMethod();
-    }
-  }
-
-  Future<void> _tryAlternativePlayMethod() async {
-    try {
-      final bytes = await rootBundle.load('assets/images/success-1-6297.mp3');
-      await _audioPlayer.setSourceBytes(bytes.buffer.asUint8List());
-      await _audioPlayer.resume();
-    } catch (e) {
-      debugPrint('Alternative play method failed: $e');
-    }
-  }
-
-  void _navigateAfterAnimation() {
-    Navigator.of(context).pop();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _audioPlayer.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -233,12 +157,7 @@ class _DonePostingSplashScreenState extends State<DonePostingSplashScreen>
       body: Center(
         child: Lottie.asset(
           'assets/images/Animation - Done-w3000-h3000.json',
-          controller: _controller,
-          onLoaded: (composition) {
-            _controller
-              ..duration = composition.duration
-              ..forward();
-          },
+          fit: BoxFit.contain,
         ),
       ),
     );

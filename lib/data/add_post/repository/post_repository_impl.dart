@@ -178,7 +178,6 @@ class PostRepositoryImpl extends PostRepository {
   ) async {
     return await sl<FirebasePostService>().getUserInterests(userId);
   }
-
   @override
   Future<Either<String, UserPostLimit>> getUserPostLimit(String userId) async {
     return await sl<FirebasePostService>().getUserPostLimit(userId);

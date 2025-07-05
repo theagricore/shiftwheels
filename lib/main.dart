@@ -1,12 +1,11 @@
 import 'package:shiftwheels/core/config/theme/theme.dart';
-import 'package:shiftwheels/data/add_post/data_source/cloudinary_service.dart';
-import 'package:shiftwheels/domain/add_post/usecase/check_post_limit_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/create_payment_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_active_ads_usecase.dart';
-import 'package:shiftwheels/domain/add_post/usecase/post_ad_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/update_payment_status_usecase.dart';
 import 'package:shiftwheels/presentation/add_post/get_fuels_bloc/get_fuels_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/get_location_bloc/get_location_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/post_ad_bloc/post_ad_bloc.dart';
+import 'package:shiftwheels/presentation/add_post/post_limit_bloc/post_limit_bloc.dart';
 import 'package:shiftwheels/presentation/main_screen/screen_profile/ProfileBloc/profile_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/add_post_bloc/add_post_bloc.dart';
 import 'package:shiftwheels/presentation/auth/auth_bloc/auth_bloc.dart';
@@ -31,6 +30,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await initializeDependencies();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   runApp(const MyApp());
 }
 
@@ -39,7 +42,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-     SystemChrome.setSystemUIOverlayStyle(
+    SystemChrome.setSystemUIOverlayStyle(
       Theme.of(context).brightness == Brightness.dark
           ? SystemUiOverlayStyle.light
           : SystemUiOverlayStyle.dark,
@@ -72,31 +75,21 @@ class MyApp extends StatelessWidget {
             BlocProvider<GetLocationBloc>(
               create: (context) => sl<GetLocationBloc>(),
             ),
-            BlocProvider<PostAdBloc>(
-              create:
-                  (context) => PostAdBloc(
-    postAdUsecase: sl<PostAdUsecase>(),
-    cloudinaryService: sl<CloudinaryService>(),
-    checkPostLimitUsecase: sl<CheckPostLimitUsecase>(),
-    createPaymentUsecase: sl<CreatePaymentUsecase>(),
-                  ),
+            BlocProvider<PostAdBloc>(create: (context) => sl<PostAdBloc>()),
+            BlocProvider<PostLimitBloc>(
+              create: (context) => sl<PostLimitBloc>(),
             ),
             BlocProvider<AddFavouriteBloc>(
               create: (context) => sl<AddFavouriteBloc>(),
             ),
-             BlocProvider<ActiveAdsBloc>(
+            BlocProvider<ActiveAdsBloc>(
               create: (context) => sl<ActiveAdsBloc>(),
             ),
-             BlocProvider<UpdateAdBloc>(
-              create: (context) => sl<UpdateAdBloc>(),
-            ),
-             BlocProvider<ChatBloc>(
-              create: (context) => sl<ChatBloc>(),
-            ),
-             BlocProvider<SearchBloc>(
-              create: (context) => sl<SearchBloc>(),
-            ),
-             BlocProvider<ProfileImageBloc>(
+           
+            BlocProvider<UpdateAdBloc>(create: (context) => sl<UpdateAdBloc>()),
+            BlocProvider<ChatBloc>(create: (context) => sl<ChatBloc>()),
+            BlocProvider<SearchBloc>(create: (context) => sl<SearchBloc>()),
+            BlocProvider<ProfileImageBloc>(
               create: (context) => sl<ProfileImageBloc>(),
             ),
           ],

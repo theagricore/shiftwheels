@@ -1,3 +1,4 @@
+// post_ad_bloc.dart
 import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
@@ -51,7 +52,7 @@ class PostAdBloc extends Bloc<PostAdEvent, PostAdState> {
     emit(PostAdLoading());
 
     try {
-      // First check post limit
+      // First check post limit or premium status
       final limitResult = await checkPostLimitUsecase.call(param: event.userId);
 
       if (isClosed) return;
@@ -61,12 +62,15 @@ class PostAdBloc extends Bloc<PostAdEvent, PostAdState> {
           emit(PostAdError(error));
         },
         (limit) async {
+          // Check if user has reached limit AND is not premium
           if (limit.hasReachedLimit && !limit.isPremiumActive) {
             emit(PostLimitReached(limit));
             return;
           }
 
-          // Continue with ad posting if limit not reached or user is premium
+          // Continue with ad posting if:
+          // 1. User is premium, or
+          // 2. User hasn't reached the limit
           final uploadResult = await cloudinaryService.uploadImages(
             event.imageFiles.map((path) => File(path)).toList(),
           );

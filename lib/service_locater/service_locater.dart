@@ -133,12 +133,12 @@ Future<void> initializeDependencies() async {
     UpdatePaymentStatusUsecase(sl<PostRepository>()),
   );
 
-
-
   // Blocs
   sl.registerFactory<GoogleAuthBloc>(() => GoogleAuthBloc());
   sl.registerFactory<ProfileBloc>(
-    () => ProfileBloc(getUserDataUsecase: sl<GetUserDataUsecase>()),
+    () => ProfileBloc(
+      getUserDataUsecase: sl<GetUserDataUsecase>(),
+    ),
   );
   sl.registerFactory<AddPostBloc>(
     () => AddPostBloc(sl<GetBrandUsecase>(), sl<GetModelsUsecase>()),

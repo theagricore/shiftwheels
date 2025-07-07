@@ -52,7 +52,7 @@ abstract class FirebasePostService {
     required String chatId,
     required String messageId,
   });
-    Future<Either<String, UserPostLimit>> getUserPostLimit(String userId);
+  Future<Either<String, UserPostLimit>> getUserPostLimit(String userId);
   Future<Either<String, String>> createPaymentRecord(PaymentModel payment);
   Future<Either<String, void>> updatePaymentStatus({
     required String paymentId,
@@ -819,11 +819,15 @@ class PostFirebaseServiceImpl extends FirebasePostService {
       return Left('Failed to get interested users: ${e.toString()}');
     }
   }
-  
+
   @override
-  Future<Either<String, String>> createPaymentRecord(PaymentModel payment) async {
+  Future<Either<String, String>> createPaymentRecord(
+    PaymentModel payment,
+  ) async {
     try {
-      final docRef = await _firestore.collection('payments').add(payment.toMap());
+      final docRef = await _firestore
+          .collection('payments')
+          .add(payment.toMap());
       return Right(docRef.id);
     } on FirebaseException catch (e) {
       return Left('Firebase error: ${e.message}');
@@ -831,12 +835,13 @@ class PostFirebaseServiceImpl extends FirebasePostService {
       return Left('Unexpected error: ${e.toString()}');
     }
   }
-  
- @override
+
+  @override
   Future<Either<String, UserPostLimit>> getUserPostLimit(String userId) async {
     try {
-      final doc = await _firestore.collection('user_post_limits').doc(userId).get();
-      
+      final doc =
+          await _firestore.collection('user_post_limits').doc(userId).get();
+
       if (!doc.exists) {
         // Create a new limit record if it doesn't exist
         final resetDate = DateTime.now().add(const Duration(days: 30));
@@ -845,13 +850,16 @@ class PostFirebaseServiceImpl extends FirebasePostService {
           postCount: 0,
           resetDate: resetDate,
         );
-        
-        await _firestore.collection('user_post_limits').doc(userId).set(newLimit.toMap());
+
+        await _firestore
+            .collection('user_post_limits')
+            .doc(userId)
+            .set(newLimit.toMap());
         return Right(newLimit);
       }
-      
+
       final limit = UserPostLimit.fromMap(doc.data()!);
-      
+
       // Check if reset date has passed
       if (DateTime.now().isAfter(limit.resetDate)) {
         final newResetDate = DateTime.now().add(const Duration(days: 30));
@@ -861,7 +869,7 @@ class PostFirebaseServiceImpl extends FirebasePostService {
         });
         return Right(limit.copyWith(postCount: 0, resetDate: newResetDate));
       }
-      
+
       return Right(limit);
     } on FirebaseException catch (e) {
       return Left('Firebase error: ${e.message}');
@@ -869,9 +877,8 @@ class PostFirebaseServiceImpl extends FirebasePostService {
       return Left('Unexpected error: ${e.toString()}');
     }
   }
-  
-  
-@override
+
+  @override
   Future<Either<String, void>> incrementPostCount(String userId) async {
     try {
       await _firestore.collection('user_post_limits').doc(userId).update({
@@ -884,34 +891,47 @@ class PostFirebaseServiceImpl extends FirebasePostService {
       return Left('Unexpected error: ${e.toString()}');
     }
   }
-  
+
+  // In firebase_post_service.dart - update the updatePaymentStatus method
 @override
-  Future<Either<String, void>> updatePaymentStatus({
-    required String paymentId,
-    required String status,
-    required String transactionId,
-  }) async {
-    try {
-      await _firestore.collection('payments').doc(paymentId).update({
-        'paymentStatus': status,
-        'transactionId': transactionId,
-        'paymentDate': FieldValue.serverTimestamp(),
-      });
+Future<Either<String, void>> updatePaymentStatus({
+  required String paymentId,
+  required String status,
+  required String transactionId,
+}) async {
+  try {
+    final paymentRef = _firestore.collection('payments').doc(paymentId);
+    final paymentDoc = await paymentRef.get();
+    
+    if (!paymentDoc.exists) {
+      return Left('Payment record not found');
+    }
+
+    // Update payment status
+    await paymentRef.update({
+      'paymentStatus': status,
+      'transactionId': transactionId,
+      'paymentDate': FieldValue.serverTimestamp(),
+    });
+
+    if (status == 'Success') {
+      final userId = paymentDoc['userId'] as String;
+      final paymentType = paymentDoc['paymentType'] as String? ?? 'post_payment';
       
-      if (status == 'Success') {
-        final paymentDoc = await _firestore.collection('payments').doc(paymentId).get();
-        final userId = paymentDoc['userId'] as String;
+      if (paymentType == 'premium_upgrade') {
         await _firestore.collection('user_post_limits').doc(userId).update({
           'isPremium': true,
-          'premiumExpiryDate': DateTime.now().add(const Duration(days: 30)).toIso8601String(),
+          'premiumExpiryDate': 
+              DateTime.now().add(const Duration(days: 30)).toIso8601String(),
         });
       }
-      
-      return const Right(null);
-    } on FirebaseException catch (e) {
-      return Left('Firebase error: ${e.message}');
-    } catch (e) {
-      return Left('Unexpected error: ${e.toString()}');
     }
+
+    return const Right(null);
+  } on FirebaseException catch (e) {
+    return Left('Firebase error: ${e.message}');
+  } catch (e) {
+    return Left('Unexpected error: ${e.toString()}');
   }
+}
 }

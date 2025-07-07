@@ -1,3 +1,4 @@
+// post_ad_state.dart
 part of 'post_ad_bloc.dart';
 
 abstract class PostAdState extends Equatable {

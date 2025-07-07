@@ -18,4 +18,5 @@ class AppColors {
   static const zBlue = Colors.blue;
   static const zOrange = Color.fromARGB(255, 230, 209, 22);
   static Color zlite = Color(0xFFFFCC00).withOpacity(0.1);
+  static const zGold = Color(0xFFFFD700);
 }

@@ -1,5 +1,6 @@
 import 'package:shiftwheels/core/config/theme/theme.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_active_ads_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/get_premium_ads_usecase.dart';
 import 'package:shiftwheels/presentation/add_post/get_fuels_bloc/get_fuels_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/get_location_bloc/get_location_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/post_ad_bloc/post_ad_bloc.dart';
@@ -67,6 +68,7 @@ class MyApp extends StatelessWidget {
               create:
                   (context) => GetPostAdBloc(
                     getActiveAdsUsecase: sl<GetActiveAdsUsecase>(),
+                    getPremiumAdsUsecase: sl<GetPremiumAdsUsecase>(),
                   )..add(FetchActiveAds()),
             ),
             BlocProvider<AddPostBloc>(create: (context) => sl<AddPostBloc>()),

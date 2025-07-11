@@ -151,7 +151,7 @@ class ScreenAdChat extends StatelessWidget {
     for (final message in messages) {
       final msgDate = DateFormat('yyyy-MM-dd').format(message.timestamp);
       if (lastDate != msgDate) {
-        chatItems.add(_formatDateTag(message.timestamp));
+        chatItems.add(getDateTag(message.timestamp));
         lastDate = msgDate;
       }
       chatItems.add(message);
@@ -191,13 +191,29 @@ class ScreenAdChat extends StatelessWidget {
     );
   }
 
-  String _formatDateTag(DateTime timestamp) {
-    final now = DateTime.now();
-    final diff = now.difference(timestamp);
-    if (diff.inDays >= 1) {
-      return DateFormat('MMM dd, hh:mm a').format(timestamp);
-    } else {
-      return DateFormat('hh:mm a').format(timestamp);
-    }
+  String getDateTag(DateTime messageDate) {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final yesterday = today.subtract(const Duration(days: 1));
+  final msgDate = DateTime(messageDate.year, messageDate.month, messageDate.day);
+
+  if (msgDate == today) {
+    return 'Today';
+  } else if (msgDate == yesterday) {
+    return 'Yesterday';
+  } else {
+    return '${messageDate.day.toString().padLeft(2, '0')} '
+           '${_getMonthName(messageDate.month)} '
+           '${messageDate.year}';
   }
+}
+
+String _getMonthName(int month) {
+  const months = [
+    '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+  return months[month];
+}
+
 }

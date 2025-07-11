@@ -19,48 +19,46 @@ class FilterBrandIcon extends StatelessWidget {
       builder: (context, state) {
         final isSelected = state is GetPostAdLoaded && state.selectedBrand == brandName;
 
-        return SizedBox(
+        return SizedBox( // Reverted to SizedBox to control size directly
           child: Padding(
-            padding: const EdgeInsets.only(right: 10),
+            padding: const EdgeInsets.only(right: 10), // Original padding
             child: GestureDetector(
               onTap: () {
-                context.read<GetPostAdBloc>().add(FilterByBrandEvent(brandName));
+                final getPostAdBloc = context.read<GetPostAdBloc>();
+                if (isSelected) {
+                  // If already selected, unselect it (show all ads)
+                  getPostAdBloc.add(const FilterByBrandEvent('ALL')); // Use 'ALL' internally to signify no filter
+                } else {
+                  // If not selected, select it
+                  getPostAdBloc.add(FilterByBrandEvent(brandName));
+                }
               },
               child: Container(
                 width: 70,
-                height: 50,
+                height: 50, // Reverted height
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.zPrimaryColor : Colors.grey [100],
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.zfontColor.withOpacity(0.4))
+                  color: isSelected ? AppColors.zPrimaryColor : Colors.grey[100], // Reverted color pattern
+                  borderRadius: BorderRadius.circular(10), // Reverted border radius
+                  border: Border.all(color: AppColors.zfontColor.withOpacity(0.4)), // Reverted border
+                  // Removed boxShadow as per request
                 ),
-                child: brandName == 'ALL'
-                    ? Center(
-                      child: Text(
-                          'ALL',
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: isSelected ? Colors.white : Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                    )
-                    : imageUrl != null
-                        ? SizedBox(
-                          width: 30,
-                          height: 30,
-                          child: Image.network(
-                              imageUrl!,
-                              errorBuilder: (context, error, stackTrace) => const Icon(
-                                Icons.car_rental,
-                                color: Colors.black,
-                              ),
-                            ),
-                        )
-                        : const Icon(
+                child: imageUrl != null
+                    ? SizedBox( // Reverted to SizedBox for image container
+                        width: 30, // Original image width
+                        height: 30, // Original image height
+                        child: Image.network(
+                          imageUrl!,
+                          errorBuilder: (context, error, stackTrace) => const Icon( // Reverted error icon and color
                             Icons.car_rental,
                             color: Colors.black,
                           ),
+                          // Removed color tinting based on isSelected
+                        ),
+                      )
+                    : const Icon( // Reverted generic icon and color
+                        Icons.car_rental,
+                        color: Colors.black,
+                      ),
               ),
             ),
           ),

@@ -60,6 +60,7 @@ abstract class FirebasePostService {
     required String transactionId,
   });
   Future<Either<String, void>> incrementPostCount(String userId);
+  Future<Either<String, List<AdWithUserModel>>> getPremiumUserAds();
 }
 
 class PostFirebaseServiceImpl extends FirebasePostService {
@@ -843,7 +844,6 @@ class PostFirebaseServiceImpl extends FirebasePostService {
           await _firestore.collection('user_post_limits').doc(userId).get();
 
       if (!doc.exists) {
-        // Create a new limit record if it doesn't exist
         final resetDate = DateTime.now().add(const Duration(days: 30));
         final newLimit = UserPostLimit(
           userId: userId,
@@ -860,7 +860,6 @@ class PostFirebaseServiceImpl extends FirebasePostService {
 
       final limit = UserPostLimit.fromMap(doc.data()!);
 
-      // Check if reset date has passed
       if (DateTime.now().isAfter(limit.resetDate)) {
         final newResetDate = DateTime.now().add(const Duration(days: 30));
         await _firestore.collection('user_post_limits').doc(userId).update({
@@ -892,46 +891,115 @@ class PostFirebaseServiceImpl extends FirebasePostService {
     }
   }
 
-  // In firebase_post_service.dart - update the updatePaymentStatus method
-@override
-Future<Either<String, void>> updatePaymentStatus({
-  required String paymentId,
-  required String status,
-  required String transactionId,
-}) async {
-  try {
-    final paymentRef = _firestore.collection('payments').doc(paymentId);
-    final paymentDoc = await paymentRef.get();
-    
-    if (!paymentDoc.exists) {
-      return Left('Payment record not found');
-    }
+  @override
+  Future<Either<String, void>> updatePaymentStatus({
+    required String paymentId,
+    required String status,
+    required String transactionId,
+  }) async {
+    try {
+      final paymentRef = _firestore.collection('payments').doc(paymentId);
+      final paymentDoc = await paymentRef.get();
 
-    // Update payment status
-    await paymentRef.update({
-      'paymentStatus': status,
-      'transactionId': transactionId,
-      'paymentDate': FieldValue.serverTimestamp(),
-    });
-
-    if (status == 'Success') {
-      final userId = paymentDoc['userId'] as String;
-      final paymentType = paymentDoc['paymentType'] as String? ?? 'post_payment';
-      
-      if (paymentType == 'premium_upgrade') {
-        await _firestore.collection('user_post_limits').doc(userId).update({
-          'isPremium': true,
-          'premiumExpiryDate': 
-              DateTime.now().add(const Duration(days: 30)).toIso8601String(),
-        });
+      if (!paymentDoc.exists) {
+        return Left('Payment record not found');
       }
-    }
 
-    return const Right(null);
-  } on FirebaseException catch (e) {
-    return Left('Firebase error: ${e.message}');
-  } catch (e) {
-    return Left('Unexpected error: ${e.toString()}');
+      await paymentRef.update({
+        'paymentStatus': status,
+        'transactionId': transactionId,
+        'paymentDate': FieldValue.serverTimestamp(),
+      });
+
+      if (status == 'Success') {
+        final userId = paymentDoc['userId'] as String;
+        final paymentType =
+            paymentDoc['paymentType'] as String? ?? 'post_payment';
+
+        if (paymentType == 'premium_upgrade') {
+          await _firestore.collection('user_post_limits').doc(userId).update({
+            'isPremium': true,
+            'premiumExpiryDate':
+                DateTime.now().add(const Duration(days: 30)).toIso8601String(),
+          });
+        }
+      }
+
+      return const Right(null);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Unexpected error: ${e.toString()}');
+    }
   }
-}
+
+  @override
+  Future<Either<String, List<AdWithUserModel>>> getPremiumUserAds() async {
+    try {
+      final premiumUsersSnapshot =
+          await _firestore
+              .collection('user_post_limits')
+              .where('isPremium', isEqualTo: true)
+              .get();
+
+      final premiumUserIds =
+          premiumUsersSnapshot.docs.map((doc) => doc.id).toList();
+
+      if (premiumUserIds.isEmpty) return Right([]);
+
+      final adsSnapshot =
+          await _firestore
+              .collection('car_ads')
+              .where('userId', whereIn: premiumUserIds)
+              .where('isActive', isEqualTo: true)
+              .get();
+
+      final ads =
+          adsSnapshot.docs
+              .map((doc) => AdsModel.fromMap(doc.data(), doc.id))
+              .toList();
+
+      final result = <AdWithUserModel>[];
+
+      for (final ad in ads) {
+        try {
+          final userDoc =
+              await _firestore.collection('Users').doc(ad.userId).get();
+          final userModel =
+              userDoc.exists
+                  ? UserModel(
+                    fullName: userDoc.data()!['fullName'] as String?,
+                    email: userDoc.data()!['email'] as String?,
+                    phoneNo: userDoc.data()!['phoneNo'] as String?,
+                    uid: userDoc.data()!['uid'] as String?,
+                    createdAt: userDoc.data()?['createdAt']?.toString(),
+                    image: userDoc.data()!['image'] as String?,
+                  )
+                  : UserModel(uid: ad.userId);
+
+          result.add(
+            AdWithUserModel(
+              ad: ad,
+              userData: userModel,
+              isPremium: true, 
+            ),
+          );
+        } catch (e) {
+          result.add(
+            AdWithUserModel(
+              ad: ad,
+              userData: UserModel(uid: ad.userId),
+              isPremium: true,
+            ),
+          );
+        }
+      }
+
+      return Right(result);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Unexpected error: ${e.toString()}');
+    }
+  }
 }

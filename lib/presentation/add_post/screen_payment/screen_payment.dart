@@ -164,7 +164,6 @@ class _ScreenPaymentState extends State<ScreenPayment> {
               ),
             ),
 
-            // Content overlay
             SingleChildScrollView(
               child: SizedBox(
                 height: MediaQuery.of(context).size.height,
@@ -174,7 +173,7 @@ class _ScreenPaymentState extends State<ScreenPayment> {
                   children: [
                     const SizedBox(
                       height: kToolbarHeight + 20,
-                    ), // Space for app bar
+                    ), 
                     Container(
                       height: 200,
                       width: 200,
@@ -265,7 +264,7 @@ class _ScreenPaymentState extends State<ScreenPayment> {
       child: Card(
         color: Colors.white.withOpacity(0.2),
         margin: EdgeInsets.zero,
-        elevation: 8, // Added elevation for a subtle lift
+        elevation: 8, 
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
@@ -281,7 +280,7 @@ class _ScreenPaymentState extends State<ScreenPayment> {
                 "Premium Benefits",
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: Colors.white,
-                  fontWeight: FontWeight.bold, // Make it bolder
+                  fontWeight: FontWeight.bold, 
                 ),
               ),
               const SizedBox(height: 12),
@@ -301,7 +300,7 @@ class _ScreenPaymentState extends State<ScreenPayment> {
     return Padding(
       padding: const EdgeInsets.symmetric(
         vertical: 6.0,
-      ), // Increased vertical padding
+      ),
       child: Row(
         children: [
           const Icon(

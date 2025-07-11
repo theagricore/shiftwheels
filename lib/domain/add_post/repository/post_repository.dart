@@ -40,4 +40,5 @@ abstract class PostRepository {
     required String transactionId,
   });
   Future<Either<String, void>> incrementPostCount(String userId);
+   Future<Either<String, List<AdWithUserModel>>> getPremiumUserAds();
 }

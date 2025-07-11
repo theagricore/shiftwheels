@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
@@ -40,16 +42,28 @@ class EditImageWidget extends StatelessWidget {
   }
 
   Widget _buildImageItem(BuildContext context, int index) {
+    final imagePath = imagePaths[index];
+    final isNetworkImage = imagePath.startsWith('http');
+
     return Padding(
       padding: const EdgeInsets.only(right: 8.0),
       child: Stack(
         children: [
-          Image.network(
-            imagePaths[index],
-            width: 100,
-            height: 100,
-            fit: BoxFit.cover,
-          ),
+          isNetworkImage
+              ? Image.network(
+                  imagePath,
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                )
+              : Image.file(
+                  File(imagePath),
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                ),
           Positioned(
             top: 4,
             right: 4,
@@ -73,6 +87,15 @@ class EditImageWidget extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      width: 100,
+      height: 100,
+      color: Colors.grey[300],
+      child: const Icon(Icons.image, size: 40, color: Colors.grey),
     );
   }
 

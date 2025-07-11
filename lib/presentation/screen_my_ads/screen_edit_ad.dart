@@ -51,9 +51,14 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
     selectedBrand = BrandModel(id: '', brandName: widget.ad.brand);
     selectedModel = widget.ad.model;
     selectedFuel = FuelsModel(id: '', fuels: widget.ad.fuelType);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AddPostBloc>().add(FetchBrandsEvent());
       context.read<GetFuelsBloc>().add(FetchFuels());
+      // Fetch models for the preselected brand
+      if (selectedBrand != null && selectedBrand!.id!.isNotEmpty) {
+        context.read<AddPostBloc>().add(FetchModelsEvent(selectedBrand!.id!));
+      }
     });
   }
 
@@ -88,9 +93,8 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
                 create: (_) => GetImagesBloc()..add(SetInitialImages(imagePaths)),
               ),
               BlocProvider(
-                create: (_) => SeatTypeBloc()..add(
-                  ChangeTransmissionTypeEvent(widget.ad.transmissionType),
-                ),
+                create: (_) => SeatTypeBloc()
+                  ..add(ChangeTransmissionTypeEvent(widget.ad.transmissionType)),
               ),
             ],
             child: Column(
@@ -138,14 +142,15 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
         return BottomSheetSelector<BrandModel>(
           title: 'Select Brand',
           displayText: selectedBrand?.brandName ?? widget.ad.brand,
-          onTapFetchEvent: (context) => context.read<AddPostBloc>().add(FetchBrandsEvent()),
+          onTapFetchEvent: (context) =>
+              context.read<AddPostBloc>().add(FetchBrandsEvent()),
           selectorBloc: context.read<AddPostBloc>(),
           itemsSelector: (state) => state is BrandsLoaded ? state.brands : [],
           itemText: (brand) => brand.brandName ?? 'Unknown',
           onItemSelected: (brand) {
             setState(() {
               selectedBrand = brand;
-              selectedModel = null;
+              selectedModel = null; // Reset model when brand changes
             });
             context.read<AddPostBloc>().add(FetchModelsEvent(brand.id!));
           },
@@ -159,20 +164,15 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
   Widget _buildModelBottomSheet() {
     return BlocBuilder<AddPostBloc, AddPostState>(
       builder: (context, state) {
-        if (state is ModelsLoaded && selectedBrand != null) {
-          final exactModel = state.models.firstWhere(
-            (model) => model == widget.ad.model,
-            orElse: () => widget.ad.model,
-          );
-          selectedModel = exactModel;
-        }
+        // Ensure the displayText shows the selectedModel or falls back to widget.ad.model
+        final displayText = selectedModel ?? widget.ad.model;
 
         return BottomSheetSelector<String>(
           title: 'Select Model',
-          displayText: selectedModel ?? widget.ad.model,
+          displayText: displayText,
           isDisabled: selectedBrand == null,
           onTapFetchEvent: (context) {
-            if (selectedBrand != null) {
+            if (selectedBrand != null && selectedBrand!.id!.isNotEmpty) {
               context.read<AddPostBloc>().add(FetchModelsEvent(selectedBrand!.id!));
             }
           },
@@ -205,7 +205,8 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
         return BottomSheetSelector<FuelsModel>(
           title: 'Select Fuel Type',
           displayText: selectedFuel?.fuels ?? widget.ad.fuelType,
-          onTapFetchEvent: (context) => context.read<GetFuelsBloc>().add(FetchFuels()),
+          onTapFetchEvent: (context) =>
+              context.read<GetFuelsBloc>().add(FetchFuels()),
           selectorBloc: context.read<GetFuelsBloc>(),
           itemsSelector: (state) => state is GetFuelsLoaded ? state.fuels : [],
           itemText: (fuel) => fuel.fuels ?? 'Unknown',

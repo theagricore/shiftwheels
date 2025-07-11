@@ -207,4 +207,9 @@ class PostRepositoryImpl extends PostRepository {
   Future<Either<String, void>> incrementPostCount(String userId) async {
     return await sl<FirebasePostService>().incrementPostCount(userId);
   }
+  
+  @override
+  Future<Either<String, List<AdWithUserModel>>> getPremiumUserAds() async {
+    return await sl<FirebasePostService>().getPremiumUserAds();
+  }
 }

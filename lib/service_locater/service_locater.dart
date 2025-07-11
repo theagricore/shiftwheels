@@ -22,6 +22,7 @@ import 'package:shiftwheels/domain/add_post/usecase/get_fuels_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_interested_users_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_location_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_models_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/get_premium_ads_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_user_active_ads_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/post_ad_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/search_location_usecase.dart';
@@ -132,13 +133,14 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<UpdatePaymentStatusUsecase>(
     UpdatePaymentStatusUsecase(sl<PostRepository>()),
   );
+  sl.registerSingleton<GetPremiumAdsUsecase>(
+    GetPremiumAdsUsecase(sl<PostRepository>()),
+  );
 
   // Blocs
   sl.registerFactory<GoogleAuthBloc>(() => GoogleAuthBloc());
   sl.registerFactory<ProfileBloc>(
-    () => ProfileBloc(
-      getUserDataUsecase: sl<GetUserDataUsecase>(),
-    ),
+    () => ProfileBloc(getUserDataUsecase: sl<GetUserDataUsecase>()),
   );
   sl.registerFactory<AddPostBloc>(
     () => AddPostBloc(sl<GetBrandUsecase>(), sl<GetModelsUsecase>()),
@@ -166,7 +168,10 @@ Future<void> initializeDependencies() async {
     () => PostLimitBloc(sl<CheckPostLimitUsecase>()),
   );
   sl.registerFactory<GetPostAdBloc>(
-    () => GetPostAdBloc(getActiveAdsUsecase: sl<GetActiveAdsUsecase>()),
+    () => GetPostAdBloc(
+      getActiveAdsUsecase: sl<GetActiveAdsUsecase>(),
+      getPremiumAdsUsecase: sl<GetPremiumAdsUsecase>(),
+    ),
   );
   sl.registerFactory<AddFavouriteBloc>(
     () => AddFavouriteBloc(sl<PostRepository>()),

@@ -2,7 +2,7 @@ part of 'get_post_ad_bloc.dart';
 
 sealed class GetPostAdEvent extends Equatable {
   const GetPostAdEvent();
-  
+
   @override
   List<Object> get props => [];
 }
@@ -12,7 +12,12 @@ class FetchActiveAds extends GetPostAdEvent {
 }
 
 class RefreshActiveAds extends GetPostAdEvent {
-  const RefreshActiveAds();
+  final String? selectedBrand;
+
+  const RefreshActiveAds({this.selectedBrand});
+
+  @override
+  List<Object> get props => [selectedBrand ?? ''];
 }
 
 class FilterByBrandEvent extends GetPostAdEvent {

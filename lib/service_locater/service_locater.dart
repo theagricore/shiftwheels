@@ -13,6 +13,7 @@ import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/get_messages_us
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/mark_messages_read_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/chat_usecase/send_message_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/check_post_limit_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/compare_cars_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/create_payment_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/deactive-ad_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_active_ads_usecase.dart';
@@ -43,6 +44,7 @@ import 'package:shiftwheels/presentation/add_post/get_images_bloc/get_images_blo
 import 'package:shiftwheels/presentation/add_post/get_location_bloc/get_location_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/post_ad_bloc/post_ad_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/post_limit_bloc/post_limit_bloc.dart';
+import 'package:shiftwheels/presentation/compare_screen/compare_bloc/compare_bloc.dart';
 import 'package:shiftwheels/presentation/main_screen/screen_profile/ProfileBloc/profile_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/add_post_bloc/add_post_bloc.dart';
 import 'package:shiftwheels/presentation/auth/google_auth/google_auth_bloc.dart';
@@ -136,6 +138,9 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<GetPremiumAdsUsecase>(
     GetPremiumAdsUsecase(sl<PostRepository>()),
   );
+    sl.registerSingleton<CompareCarsUseCase>(
+    CompareCarsUseCase(sl<PostRepository>()),
+  );
 
   // Blocs
   sl.registerFactory<GoogleAuthBloc>(() => GoogleAuthBloc());
@@ -199,4 +204,5 @@ Future<void> initializeDependencies() async {
 
   sl.registerFactory<InterestBloc>(() => InterestBloc(sl<PostRepository>()));
   sl.registerFactory<ProfileImageBloc>(() => ProfileImageBloc());
+  sl.registerFactory<CompareBloc>(() => CompareBloc());
 }

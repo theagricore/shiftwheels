@@ -19,43 +19,41 @@ class FilterBrandIcon extends StatelessWidget {
       builder: (context, state) {
         final isSelected = state is GetPostAdLoaded && state.selectedBrand == brandName;
 
-        return SizedBox( // Reverted to SizedBox to control size directly
+        return SizedBox( 
           child: Padding(
-            padding: const EdgeInsets.only(right: 10), // Original padding
+            padding: const EdgeInsets.only(right: 10),
             child: GestureDetector(
               onTap: () {
                 final getPostAdBloc = context.read<GetPostAdBloc>();
                 if (isSelected) {
-                  // If already selected, unselect it (show all ads)
-                  getPostAdBloc.add(const FilterByBrandEvent('ALL')); // Use 'ALL' internally to signify no filter
+
+                  getPostAdBloc.add(const FilterByBrandEvent('ALL')); 
                 } else {
-                  // If not selected, select it
                   getPostAdBloc.add(FilterByBrandEvent(brandName));
                 }
               },
               child: Container(
                 width: 70,
-                height: 50, // Reverted height
+                height: 50, 
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.zPrimaryColor : Colors.grey[100], // Reverted color pattern
-                  borderRadius: BorderRadius.circular(10), // Reverted border radius
-                  border: Border.all(color: AppColors.zfontColor.withOpacity(0.4)), // Reverted border
-                  // Removed boxShadow as per request
+                  color: isSelected ? AppColors.zPrimaryColor : Colors.grey[100], 
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.zfontColor.withOpacity(0.4)), 
                 ),
                 child: imageUrl != null
-                    ? SizedBox( // Reverted to SizedBox for image container
-                        width: 30, // Original image width
-                        height: 30, // Original image height
+                    ? SizedBox( 
+                        width: 30, 
+                        height: 30, 
                         child: Image.network(
                           imageUrl!,
-                          errorBuilder: (context, error, stackTrace) => const Icon( // Reverted error icon and color
+                          errorBuilder: (context, error, stackTrace) => const Icon( 
                             Icons.car_rental,
                             color: Colors.black,
                           ),
-                          // Removed color tinting based on isSelected
+
                         ),
                       )
-                    : const Icon( // Reverted generic icon and color
+                    : const Icon( 
                         Icons.car_rental,
                         color: Colors.black,
                       ),

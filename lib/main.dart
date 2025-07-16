@@ -5,6 +5,7 @@ import 'package:shiftwheels/presentation/add_post/get_fuels_bloc/get_fuels_bloc.
 import 'package:shiftwheels/presentation/add_post/get_location_bloc/get_location_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/post_ad_bloc/post_ad_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/post_limit_bloc/post_limit_bloc.dart';
+import 'package:shiftwheels/presentation/compare_screen/compare_bloc/compare_bloc.dart';
 import 'package:shiftwheels/presentation/main_screen/screen_profile/ProfileBloc/profile_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/add_post_bloc/add_post_bloc.dart';
 import 'package:shiftwheels/presentation/auth/auth_bloc/auth_bloc.dart';
@@ -94,6 +95,9 @@ class MyApp extends StatelessWidget {
             BlocProvider<SearchBloc>(create: (context) => sl<SearchBloc>()),
             BlocProvider<ProfileImageBloc>(
               create: (context) => sl<ProfileImageBloc>(),
+            ),
+             BlocProvider<CompareBloc>(
+              create: (context) => sl<CompareBloc>(),
             ),
           ],
           child: MaterialApp(

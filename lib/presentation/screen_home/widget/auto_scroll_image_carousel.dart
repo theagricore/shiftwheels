@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
-import 'package:shiftwheels/presentation/screen_my_ads/add_favourite_bloc/add_favourite_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/interest_bloc/interest_bloc.dart';
 
 class AutoScrollImageCarousel extends StatefulWidget {
@@ -19,7 +18,8 @@ class AutoScrollImageCarousel extends StatefulWidget {
   });
 
   @override
-  State<AutoScrollImageCarousel> createState() => _AutoScrollImageCarouselState();
+  State<AutoScrollImageCarousel> createState() =>
+      _AutoScrollImageCarouselState();
 }
 
 class _AutoScrollImageCarouselState extends State<AutoScrollImageCarousel> {
@@ -32,13 +32,10 @@ class _AutoScrollImageCarouselState extends State<AutoScrollImageCarousel> {
     super.initState();
     _pageController = PageController();
     _startAutoScroll();
-    
+
     // Load initial interest state
     context.read<InterestBloc>().add(
-      LoadInitialInterestEvent(
-        widget.adId,
-        widget.currentUserId,
-      ),
+      LoadInitialInterestEvent(widget.adId, widget.currentUserId),
     );
   }
 
@@ -55,7 +52,7 @@ class _AutoScrollImageCarouselState extends State<AutoScrollImageCarousel> {
         timer.cancel();
         return;
       }
-      
+
       final nextPage = (_currentPage + 1) % widget.imageUrls.length;
       _pageController.animateToPage(
         nextPage,
@@ -90,10 +87,11 @@ class _AutoScrollImageCarouselState extends State<AutoScrollImageCarousel> {
                   if (loadingProgress == null) return child;
                   return Center(
                     child: CircularProgressIndicator(
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                          : null,
+                      value:
+                          loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
                     ),
                   );
                 },
@@ -109,106 +107,6 @@ class _AutoScrollImageCarouselState extends State<AutoScrollImageCarousel> {
             },
           ),
 
-          // Interest and Favorite buttons
-          Align(
-            alignment: Alignment.topRight,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Interest button
-                  BlocBuilder<InterestBloc, InterestState>(
-                    builder: (context, interestState) {
-                      bool isInterested = false;
-                      
-                      if (interestState is InitialInterestLoaded && 
-                          interestState.adId == widget.adId) {
-                        isInterested = interestState.isInterested;
-                      } else if (interestState is InterestToggled && 
-                                interestState.adId == widget.adId) {
-                        isInterested = interestState.isNowInterested;
-                      }
-
-                      return BlocListener<InterestBloc, InterestState>(
-                        listener: (context, state) {
-                          if (state is InterestError) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(state.message)),
-                            );
-                          }
-                        },
-                        child: IconButton(
-                          onPressed: () {
-                            context.read<InterestBloc>().add(
-                              ToggleInterestEvent(
-                                widget.adId,
-                                widget.currentUserId,
-                                isInterested,
-                              ),
-                            );
-                          },
-                          icon: Icon(
-                            isInterested
-                                ? Icons.thumb_up
-                                : Icons.thumb_up_alt_outlined,
-                            color: isInterested
-                                ? AppColors.zPrimaryColor
-                                : AppColors.zblack,
-                            size: 28,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  // Favorite button
-                  BlocBuilder<AddFavouriteBloc, AddFavouriteState>(
-                    builder: (context, favoriteState) {
-                      bool isFavorite = false;
-                      
-                      if (favoriteState is FavoritesLoaded) {
-                        isFavorite = favoriteState.favorites
-                            .any((fav) => fav.ad.id == widget.adId);
-                      } else if (favoriteState is FavoriteToggled && 
-                                favoriteState.adId == widget.adId) {
-                        isFavorite = favoriteState.isNowFavorite;
-                      }
-
-                      return BlocListener<AddFavouriteBloc, AddFavouriteState>(
-                        listener: (context, state) {
-                          if (state is AddFavouriteError) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(state.message)),
-                            );
-                          }
-                        },
-                        child: IconButton(
-                          onPressed: () {
-                            context.read<AddFavouriteBloc>().add(
-                              ToggleFavoriteEvent(
-                                widget.adId, 
-                                widget.currentUserId
-                              ),
-                            );
-                          },
-                          icon: Icon(
-                            isFavorite
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            color: isFavorite ? AppColors.zred : AppColors.zblack,
-                            size: 28,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Page indicator
           Positioned(
             bottom: 16,
             left: 0,
@@ -222,9 +120,10 @@ class _AutoScrollImageCarouselState extends State<AutoScrollImageCarousel> {
                   width: _currentPage == index ? 20 : 8,
                   height: 6,
                   decoration: BoxDecoration(
-                    color: _currentPage == index
-                        ? AppColors.zPrimaryColor
-                        : Colors.white.withOpacity(0.5),
+                    color:
+                        _currentPage == index
+                            ? AppColors.zPrimaryColor
+                            : Colors.white.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(3),
                   ),
                 );

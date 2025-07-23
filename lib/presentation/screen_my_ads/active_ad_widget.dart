@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shiftwheels/presentation/screen_home/widget/simmer%20effect.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/active_ads_bloc/active_ads_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/widget/active_ad_card.dart';
 import 'package:shiftwheels/service_locater/service_locater.dart';
@@ -13,8 +14,8 @@ class ActiveAdWidget extends StatelessWidget {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return BlocProvider(
-      create: (context) =>
-          sl<ActiveAdsBloc>()..add(LoadActiveAds(currentUserId)),
+      create:
+          (context) => sl<ActiveAdsBloc>()..add(LoadActiveAds(currentUserId)),
       child: const _ActiveAdContent(),
     );
   }
@@ -29,7 +30,7 @@ class _ActiveAdContent extends StatelessWidget {
       body: BlocBuilder<ActiveAdsBloc, ActiveAdsState>(
         builder: (context, state) {
           if (state is ActiveAdsInitial || state is ActiveAdsLoading) {
-            return _buildLoading();
+            return _buildShimmerLoading();
           } else if (state is ActiveAdsError) {
             return _buildError(state.message);
           } else if (state is ActiveAdsLoaded) {
@@ -39,15 +40,20 @@ class _ActiveAdContent extends StatelessWidget {
               return _buildAdList(context, state);
             }
           } else {
-            return const SizedBox(); 
+            return const SizedBox();
           }
         },
       ),
     );
   }
 
-  Widget _buildLoading() {
-    return const Center(child: CircularProgressIndicator());
+  Widget _buildShimmerLoading() {
+    return ListView.builder(
+      itemCount: 3,
+      itemBuilder: (context, index) {
+        return const AdActiveCardShimmer();
+      },
+    );
   }
 
   Widget _buildError(String message) {

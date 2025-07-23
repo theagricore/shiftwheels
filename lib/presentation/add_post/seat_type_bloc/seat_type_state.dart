@@ -9,7 +9,7 @@ abstract class SeatTypeState extends Equatable {
 }
 
 class SeatTypeInitial extends SeatTypeState {
-  const SeatTypeInitial() : super('Manual'); // Default to Manual
+  const SeatTypeInitial() : super(''); 
 }
 
 class TransmissionTypeChanged extends SeatTypeState {

@@ -14,51 +14,71 @@ class BottomContactBarWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.zblack,
-      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: AppColors.zblack,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           Expanded(
             child: ElevatedButton.icon(
               onPressed: onChatPressed,
-              icon: const Icon(Icons.chat, color: Colors.white,size: 25,),
+              icon: const Icon(
+                Icons.chat,
+                color: AppColors.zWhite,
+                size: 22,
+              ),
               label: const Text(
                 "Chat",
                 style: TextStyle(
-                  color: Colors.white,
-                   fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                  color: AppColors.zWhite,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
                 ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.zPrimaryColor,
-                minimumSize: const Size(double.infinity, 58), 
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                elevation: 0,
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
             child: ElevatedButton.icon(
               onPressed: onCallPressed,
-              icon: const Icon(Icons.call, color: Colors.white,size: 25,),
+              icon: const Icon(
+                Icons.call,
+                color: AppColors.zWhite,
+                size: 22,
+              ),
               label: const Text(
                 "Call",
                 style: TextStyle(
-                  fontSize: 20,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                  color: AppColors.zWhite,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.zPrimaryColor,
-                minimumSize: const Size(double.infinity, 58), 
+                backgroundColor: AppColors.zPrimaryColor.withOpacity(0.9),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                elevation: 0,
               ),
             ),
           ),

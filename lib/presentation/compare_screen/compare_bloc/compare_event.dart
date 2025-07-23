@@ -1,6 +1,5 @@
 part of 'compare_bloc.dart';
 
-
 sealed class CompareEvent extends Equatable {
   const CompareEvent();
 

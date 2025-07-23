@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:shiftwheels/data/add_post/data_source/cloudinary_service.dart';
 import 'package:shiftwheels/data/add_post/data_source/firebase_post_service.dart';
+import 'package:shiftwheels/data/add_post/data_source/pdf_service.dart';
 import 'package:shiftwheels/data/add_post/data_source/razorpay_service.dart';
 import 'package:shiftwheels/data/add_post/repository/post_repository_impl.dart';
 import 'package:shiftwheels/data/auth/data_dource/firebase_auth_service.dart';
@@ -45,17 +46,18 @@ import 'package:shiftwheels/presentation/add_post/get_location_bloc/get_location
 import 'package:shiftwheels/presentation/add_post/post_ad_bloc/post_ad_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/post_limit_bloc/post_limit_bloc.dart';
 import 'package:shiftwheels/presentation/compare_screen/compare_bloc/compare_bloc.dart';
-import 'package:shiftwheels/presentation/main_screen/screen_profile/ProfileBloc/profile_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/add_post_bloc/add_post_bloc.dart';
 import 'package:shiftwheels/presentation/auth/google_auth/google_auth_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/get_fuels_bloc/get_fuels_bloc.dart';
-import 'package:shiftwheels/presentation/main_screen/screen_profile/profile_image_bloc/profile_image_bloc.dart';
 import 'package:shiftwheels/presentation/screen_chat/chat_bloc/chat_bloc.dart';
+import 'package:shiftwheels/presentation/screen_home/call_bloc/call_bloc.dart';
 import 'package:shiftwheels/presentation/screen_home/get_post_ad_bloc/get_post_ad_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/active_ads_bloc/active_ads_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/add_favourite_bloc/add_favourite_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/interest_bloc/interest_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/update_ad_bloc/update_ad_bloc.dart';
+import 'package:shiftwheels/presentation/screen_profile/ProfileBloc/profile_bloc.dart';
+import 'package:shiftwheels/presentation/screen_profile/profile_image_bloc/profile_image_bloc.dart';
 import 'package:shiftwheels/presentation/search_screen/search_bloc/search_bloc.dart';
 
 final sl = GetIt.instance;
@@ -66,6 +68,7 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<FirebasePostService>(PostFirebaseServiceImpl());
   sl.registerSingleton<CloudinaryService>(CloudinaryServiceImpl());
   sl.registerSingleton<RazorpayService>(RazorpayService());
+  sl.registerSingleton<PdfService>(PdfService());
 
   // Repositories
   sl.registerSingleton<AuthRepository>(AuthRepositoryImpl());
@@ -205,4 +208,5 @@ Future<void> initializeDependencies() async {
   sl.registerFactory<InterestBloc>(() => InterestBloc(sl<PostRepository>()));
   sl.registerFactory<ProfileImageBloc>(() => ProfileImageBloc());
   sl.registerFactory<CompareBloc>(() => CompareBloc());
+  sl.registerFactory<CallBloc>(() => CallBloc());
 }

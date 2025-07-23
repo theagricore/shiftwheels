@@ -9,6 +9,11 @@ class ShimmerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDarkMode ? AppColors.zDarkGrey : Colors.grey[300]!;
+    final highlightColor = isDarkMode ? AppColors.zLightGrey : Colors.grey[100]!;
+    final shimmerColor = isDarkMode ? AppColors.zDarkGrey.withOpacity(0.5) : Colors.white;
+
     return ListView.builder(
       itemCount: 10,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -16,15 +21,15 @@ class ShimmerCard extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Shimmer.fromColors(
-            baseColor: AppColors.zSecondBackground,
-            highlightColor: AppColors.zBackGround,
+            baseColor: baseColor,
+            highlightColor: highlightColor,
             child: Row(
               children: [
                 Container(
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: shimmerColor,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -36,12 +41,20 @@ class ShimmerCard extends StatelessWidget {
                       Container(
                         height: 16,
                         width: double.infinity,
-                        color: Colors.white,
+                        color: shimmerColor,
                       ),
-                      const SizedBox(height: 6),
-                      Container(height: 14, width: 120, color: Colors.white),
-                      const SizedBox(height: 6),
-                      Container(height: 12, width: 80, color: Colors.white),
+                      const SizedBox(height: 8),
+                      Container(
+                        height: 14, 
+                        width: 120, 
+                        color: shimmerColor,
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        height: 12, 
+                        width: 80, 
+                        color: shimmerColor,
+                      ),
                     ],
                   ),
                 ),
@@ -53,4 +66,3 @@ class ShimmerCard extends StatelessWidget {
     );
   }
 }
-

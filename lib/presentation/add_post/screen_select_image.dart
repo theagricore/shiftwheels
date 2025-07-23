@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftwheels/core/common_widget/basic_app_bar.dart';
+import 'package:shiftwheels/core/common_widget/widget/basic_elevated_app_button.dart';
 import 'package:shiftwheels/core/config/helper/navigator/app_navigator.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/data/add_post/models/location_model.dart';
@@ -44,16 +45,18 @@ class ScreenSelectImage extends StatelessWidget {
         appBar: BasicAppbar(
           title: Text(
             "Select Images",
-            style: Theme.of(context).textTheme.displayLarge,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontSize: 25,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: BlocBuilder<GetImagesBloc, GetImagesState>(
             builder: (context, state) {
-              final imagePaths = state is ImagesSelectedState 
-                  ? state.imagePaths 
-                  : <String>[];
+              final imagePaths =
+                  state is ImagesSelectedState ? state.imagePaths : <String>[];
               final hasImages = imagePaths.isNotEmpty;
               final totalItems = imagePaths.length + 1;
               final isScrollable = totalItems > gridSlots;
@@ -63,16 +66,17 @@ class ScreenSelectImage extends StatelessWidget {
                   Expanded(
                     child: GridView.builder(
                       shrinkWrap: true,
-                      physics: isScrollable
-                          ? const AlwaysScrollableScrollPhysics()
-                          : const NeverScrollableScrollPhysics(),
+                      physics:
+                          isScrollable
+                              ? const AlwaysScrollableScrollPhysics()
+                              : const NeverScrollableScrollPhysics(),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 1,
-                      ),
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 1,
+                          ),
                       itemCount: isScrollable ? totalItems : gridSlots,
                       itemBuilder: (context, index) {
                         final addButtonIndex = imagePaths.length;
@@ -85,7 +89,8 @@ class ScreenSelectImage extends StatelessWidget {
                           );
                         }
 
-                        if (index == addButtonIndex && imagePaths.length < 100) {
+                        if (index == addButtonIndex &&
+                            imagePaths.length < 100) {
                           return _buildAddButton(context);
                         }
 
@@ -98,14 +103,7 @@ class ScreenSelectImage extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 20, bottom: 20),
                       child: SizedBox(
                         width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.zPrimaryColor,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
+                        child: BasicElevatedAppButton(
                           onPressed: () {
                             AppNavigator.push(
                               context,
@@ -124,10 +122,7 @@ class ScreenSelectImage extends StatelessWidget {
                               ),
                             );
                           },
-                          child: Text(
-                            'Continue',
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
+                          title: "Continue",
                         ),
                       ),
                     ),
@@ -187,8 +182,9 @@ class ScreenSelectImage extends StatelessWidget {
           top: 6,
           right: 6,
           child: GestureDetector(
-            onTap: () =>
-                context.read<GetImagesBloc>().add(RemoveImageEvent(index)),
+            onTap:
+                () =>
+                    context.read<GetImagesBloc>().add(RemoveImageEvent(index)),
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: const BoxDecoration(

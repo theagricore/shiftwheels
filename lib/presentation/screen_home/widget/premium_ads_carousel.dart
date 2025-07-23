@@ -7,10 +7,7 @@ import 'package:shiftwheels/presentation/screen_home/screen_ad_details.dart';
 class PremiumAdsCarousel extends StatelessWidget {
   final List<AdWithUserModel> premiumAds;
 
-  const PremiumAdsCarousel({
-    super.key,
-    required this.premiumAds,
-  });
+  const PremiumAdsCarousel({super.key, required this.premiumAds});
 
   @override
   Widget build(BuildContext context) {
@@ -23,41 +20,44 @@ class PremiumAdsCarousel extends StatelessWidget {
             children: [
               Text(
                 'Featured Listings',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Colors.amber.shade300, Colors.amber.shade700],
+                    colors: [Colors.amber.shade400, Colors.orange.shade700],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(15),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.amber.withOpacity(0.3),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+                      color: Colors.amber.withOpacity(0.4),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
                 child: Text(
                   'Premium',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
+                  ),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         CarouselSlider.builder(
           itemCount: premiumAds.length,
           itemBuilder: (context, index, realIndex) {
@@ -77,10 +77,12 @@ class PremiumAdsCarousel extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                      spreadRadius: 1,
+                      color: Colors.black.withOpacity(
+                        0.2,
+                      ), 
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                      spreadRadius: 2,
                     ),
                   ],
                 ),
@@ -101,16 +103,17 @@ class PremiumAdsCarousel extends StatelessWidget {
                               child: Container(color: Colors.white),
                             );
                           },
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(
-                            color: Colors.grey.shade300,
-                            child: const Center(
-                              child: Icon(
-                                Icons.image_not_supported,
-                                color: Colors.grey,
+                          errorBuilder:
+                              (context, error, stackTrace) => Container(
+                                color: Colors.grey.shade300,
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.image_not_supported,
+                                    color: Colors.grey,
+                                    size: 50,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
                         )
                       else
                         Container(
@@ -119,6 +122,7 @@ class PremiumAdsCarousel extends StatelessWidget {
                             child: Icon(
                               Icons.image_not_supported,
                               color: Colors.grey,
+                              size: 50,
                             ),
                           ),
                         ),
@@ -131,7 +135,7 @@ class PremiumAdsCarousel extends StatelessWidget {
                             colors: [
                               Colors.transparent,
                               Colors.transparent,
-                              Colors.black.withOpacity(0.8),
+                              Colors.black.withOpacity(0.85),
                             ],
                           ),
                         ),
@@ -141,19 +145,19 @@ class PremiumAdsCarousel extends StatelessWidget {
                         right: 16,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
+                            horizontal: 6,
+                            vertical: 4,
                           ),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                Colors.amber.shade300,
-                                Colors.amber.shade700,
+                                Colors.amber.shade400,
+                                Colors.orange.shade700,
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.2),
@@ -168,19 +172,18 @@ class PremiumAdsCarousel extends StatelessWidget {
                               const Icon(
                                 Icons.star,
                                 size: 16,
-                                color: Colors.black,
+                                color: Colors.white,
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 3),
                               Text(
-                                'Premium',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelSmall
-                                    ?.copyWith(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.5,
-                                    ),
+                                'PREMIUM',
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.labelSmall?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.0,
+                                ),
                               ),
                             ],
                           ),
@@ -205,77 +208,61 @@ class PremiumAdsCarousel extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                '${ad.ad.brand} ${ad.ad.model}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                  shadows: [
-                                    Shadow(
-                                      blurRadius: 6,
-                                      color: Colors.black,
-                                      offset: Offset(0, 1),
-                                    ),
-                                  ],
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 6),
                               Row(
                                 children: [
-                                  Icon(
-                                    Icons.calendar_today,
-                                    size: 14,
-                                    color: Colors.white.withOpacity(0.8),
+                                  Text(
+                                    '${ad.ad.brand} ${ad.ad.model}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      shadows: [
+                                        Shadow(
+                                          blurRadius: 8,
+                                          color: Colors.black,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(width: 5),
                                   Text(
                                     ad.ad.year.toString(),
                                     style: TextStyle(
-                                      color: Colors.white.withOpacity(0.8),
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Icon(
-                                    Icons.speed,
-                                    size: 14,
-                                    color: Colors.white.withOpacity(0.8),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${ad.ad.kmDriven} km',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.8),
-                                      fontSize: 14,
+                                      color: Colors.white.withOpacity(0.9),
+                                      fontSize: 18,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              const SizedBox(height: 8),
+                              Row(
                                 children: [
+                                  Icon(
+                                    Icons.speed,
+                                    size: 16,
+                                    color: Colors.white.withOpacity(0.9),
+                                  ),
+                                  const SizedBox(width: 6),
                                   Text(
-                                    'Price',
+                                    '${ad.ad.kmDriven} km',
                                     style: TextStyle(
-                                      color: Colors.white.withOpacity(0.8),
-                                      fontSize: 12,
+                                      color: Colors.white.withOpacity(0.9),
+                                      fontSize: 15,
                                     ),
                                   ),
+                                  const SizedBox(width: 14),
                                   Text(
                                     '₹${ad.ad.price.toStringAsFixed(0)}',
                                     style: const TextStyle(
-                                      color: Colors.amber,
+                                      color: Colors.amberAccent,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 20,
+                                      fontSize: 15,
                                       shadows: [
                                         Shadow(
-                                          blurRadius: 6,
+                                          blurRadius: 8,
                                           color: Colors.black,
-                                          offset: Offset(0, 1),
+                                          offset: Offset(0, 2),
                                         ),
                                       ],
                                     ),
@@ -293,13 +280,13 @@ class PremiumAdsCarousel extends StatelessWidget {
             );
           },
           options: CarouselOptions(
-            height: 165,
+            height: 170,
             autoPlay: true,
             autoPlayInterval: const Duration(seconds: 5),
             autoPlayAnimationDuration: const Duration(milliseconds: 800),
             enlargeCenterPage: false,
-            viewportFraction: 0.85,
-            aspectRatio: 15 / 9,
+            viewportFraction: 0.88,
+            aspectRatio: 16 / 9,
             enableInfiniteScroll: premiumAds.length > 1,
             pauseAutoPlayOnTouch: true,
             pageSnapping: true,

@@ -15,6 +15,7 @@ import 'package:shiftwheels/presentation/screen_profile/widget/full_image_dialog
 import 'package:shiftwheels/presentation/screen_profile/widget/image_source_bottom_sheet.dart';
 import 'package:shiftwheels/presentation/screen_profile/widget/premium_card.dart';
 import 'package:shiftwheels/presentation/screen_profile/widget/profile_avathar.dart';
+import 'package:shiftwheels/presentation/screen_profile/widget/profile_item.dart';
 
 class ScreenProfile extends StatelessWidget {
   const ScreenProfile({super.key});
@@ -32,15 +33,18 @@ class ScreenProfile extends StatelessWidget {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthInitial) {
+          Future.delayed(const Duration(milliseconds: 500), () {
+            AppNavigator.pushAndRemoveUntil(context, SigninScreen());
+          });
           BasicSnackbar(
             message: 'Logged out successfully',
             backgroundColor: AppColors.zGreen,
           ).show(context);
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => SigninScreen()),
-            (route) => false,
-          );
+        } else if (state is AuthFailure) {
+          BasicSnackbar(
+            message: state.errorMessage,
+            backgroundColor: AppColors.zred,
+          ).show(context);
         }
       },
       child: Scaffold(
@@ -142,7 +146,9 @@ class ScreenProfile extends StatelessWidget {
                                 profileState is Profileloaded
                                     ? profileState.user.fullName
                                     : 'Loading...',
-                                style: Theme.of(context).textTheme.headlineMedium
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineMedium
                                     ?.copyWith(color: AppColors.zWhite),
                               ),
                               const SizedBox(height: 5),
@@ -190,14 +196,13 @@ class ScreenProfile extends StatelessWidget {
                       },
                     ),
                     _buildSectionTitle(context, 'My Listings'),
-                    _buildProfileListItem(
-                      context: context,
+
+                    ProfileListItem(
                       icon: Icons.favorite_outline,
                       title: 'Saved Cars',
                       onTap: () {},
                     ),
-                    _buildProfileListItem(
-                      context: context,
+                    ProfileListItem(
                       icon: Icons.compare,
                       title: 'Compare',
                       onTap: () {
@@ -206,38 +211,29 @@ class ScreenProfile extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     _buildSectionTitle(context, 'App Settings'),
-                    _buildProfileListItem(
-                      context: context,
-                      icon: Icons.notifications_none,
+
+                    NotificationListItem(
                       title: 'Notifications',
-                      onTap: () {
-                      },
+                      value: true,
+                      onChanged: (val) {},
                     ),
-                    _buildProfileListItem(
-                      context: context,
+                    ProfileListItem(
                       icon: Icons.settings_outlined,
                       title: 'App Preferences',
-                      onTap: () {
-                      },
+                      onTap: () {},
                     ),
-                    _buildProfileListItem(
-                      context: context,
+                    ProfileListItem(
                       icon: Icons.help_outline,
                       title: 'Help & Support',
-                      onTap: () {
-                      },
+                      onTap: () {},
                     ),
-                    _buildProfileListItem(
-                      context: context,
+                    ProfileListItem(
                       icon: Icons.info_outline,
                       title: 'About App',
-                      onTap: () {
-                      },
+                      onTap: () {},
                     ),
-                    _buildProfileListItem(
-                      context: context,
+                    ProfileListItem(
                       icon: Icons.logout,
-
                       title: 'Logout',
                       isDestructive: true,
                       onTap: () {
@@ -268,59 +264,6 @@ class ScreenProfile extends StatelessWidget {
         style: Theme.of(
           context,
         ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  Widget _buildProfileListItem({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-    bool isDestructive = false,
-  }) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color:
-              isDestructive
-                  ? AppColors.zred.withOpacity(0.5)
-                  : AppColors.zGrey.withOpacity(0.3),
-          width: 0.8,
-        ),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                color: isDestructive ? AppColors.zred : AppColors.zPrimaryColor,
-                size: 24,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 18,
-                color: Theme.of(context).iconTheme.color?.withOpacity(0.6),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

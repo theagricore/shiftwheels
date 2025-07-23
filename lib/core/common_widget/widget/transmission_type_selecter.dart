@@ -7,7 +7,7 @@ class TransmissionTypeSelector extends StatefulWidget {
 
   const TransmissionTypeSelector({
     Key? key,
-    this.initialType = 'Manual', 
+    this.initialType = '',
     required this.onTransmissionSelected,
   }) : super(key: key);
 
@@ -42,22 +42,37 @@ class _TransmissionTypeSelectorState extends State<TransmissionTypeSelector> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildOption(
-          label: 'Manual',
-          isSelected: selectedType == 'Manual',
-          onTap: () => select('Manual'),
-          size: size,
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Text(
+            'Transmission Type*',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
         ),
-        const SizedBox(width: 10),
-        _buildOption(
-          label: 'Automatic',
-          isSelected: selectedType == 'Automatic',
-          onTap: () => select('Automatic'),
-          size: size,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildOption(
+              label: 'Manual',
+              isSelected: selectedType == 'Manual',
+              onTap: () => select('Manual'),
+              size: size,
+              isDarkMode: isDarkMode,
+            ),
+            const SizedBox(width: 10),
+            _buildOption(
+              label: 'Automatic',
+              isSelected: selectedType == 'Automatic',
+              onTap: () => select('Automatic'),
+              size: size,
+              isDarkMode: isDarkMode,
+            ),
+          ],
         ),
       ],
     );
@@ -68,27 +83,45 @@ class _TransmissionTypeSelectorState extends State<TransmissionTypeSelector> {
     required bool isSelected,
     required VoidCallback onTap,
     required Size size,
+    required bool isDarkMode,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: size.width * 0.40,
-        height: size.height * 0.06,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: AppColors.zBackGround,
-          borderRadius: BorderRadius.circular(5),
-          border: Border.all(
-            color: isSelected ? AppColors.zPrimaryColor : AppColors.zfontColor,
-            width: 1.5,
+    final Color backgroundColor = isDarkMode 
+        ? AppColors.zfontColor 
+        : AppColors.zWhite;
+    
+    final Color borderColor = isSelected
+        ? AppColors.zPrimaryColor
+        : (isDarkMode 
+            ? AppColors.zWhite.withOpacity(0.2) 
+            : AppColors.zfontColor);
+    
+    final Color textColor = isSelected
+        ? AppColors.zPrimaryColor
+        : (isDarkMode 
+            ? AppColors.zWhite.withOpacity(0.7) 
+            : AppColors.zfontColor);
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: size.height * 0.06,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: borderColor,
+              width: 1.5,
+            ),
           ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? AppColors.zPrimaryColor : AppColors.zWhite,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
           ),
         ),
       ),

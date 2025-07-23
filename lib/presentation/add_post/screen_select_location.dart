@@ -61,7 +61,10 @@ class ScreenSelectLocation extends StatelessWidget {
           appBar: BasicAppbar(
             title: Text(
               "Select Location",
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontSize: 25,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           body: Padding(
@@ -88,7 +91,6 @@ class ScreenSelectLocation extends StatelessWidget {
                           noOfOwners: noOfOwners,
                           description: description,
                           location: _selectedLocation!,
-                        
                         ),
                       );
                     },

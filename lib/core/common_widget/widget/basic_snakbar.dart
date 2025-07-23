@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftwheels/core/config/theme/app_colors.dart';
 
 class BasicSnackbar extends StatelessWidget {
   final String message;
@@ -15,7 +16,10 @@ class BasicSnackbar extends StatelessWidget {
   });
 
   void show(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final background =  isDarkMode ? AppColors.zblack : AppColors.zWhite;
     ScaffoldMessenger.of(context).showSnackBar(
+       
       SnackBar(
         content: Row(
           children: [
@@ -26,14 +30,14 @@ class BasicSnackbar extends StatelessWidget {
                 message,
                 style: textStyle ??
                     TextStyle(
-                      color: Colors.white,
+                      color: backgroundColor,
                       fontWeight: FontWeight.bold,
                     ),
               ),
             ),
           ],
         ),
-        backgroundColor: backgroundColor,
+        backgroundColor: background,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12), 

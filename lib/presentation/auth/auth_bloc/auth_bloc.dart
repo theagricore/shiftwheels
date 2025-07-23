@@ -65,29 +65,26 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onLogout(LogoutEvent event, Emitter<AuthState> emit) async {
-    if (state is! AuthLoading) {
-      emit(AuthLoading());
-    }
-
+    emit(AuthLoading());
+    
     try {
       final usecase = sl<LogoutUsecase>();
       Either result = await usecase.call();
 
       result.fold(
         (failure) {
-          if (state is! AuthFailure) emit(AuthFailure(failure));
+          emit(AuthFailure(failure));
         },
         (message) {
-          if (state is! AuthSuccess) emit(AuthSuccess(message));
+          emit(AuthInitial()); // Emit AuthInitial after successful logout
         },
       );
     } catch (e) {
-      if (state is! AuthFailure) emit(AuthFailure("Logout failed: $e"));
+      emit(AuthFailure("Logout failed: $e"));
     }
   }
 
-
-    Future<void> _onForgotPassword(ForgotPasswordEvent event, Emitter<AuthState> emit) async {
+  Future<void> _onForgotPassword(ForgotPasswordEvent event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
     
     try {
@@ -107,8 +104,3 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 }
-
-
-
-
-

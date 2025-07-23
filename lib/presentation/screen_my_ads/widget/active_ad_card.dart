@@ -3,11 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_alert_box.dart';
+import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
 import 'package:shiftwheels/core/common_widget/widget/swipe_botton.dart'; 
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/data/add_post/models/ad_with_user_model.dart';
 import 'package:shiftwheels/data/add_post/models/ads_model.dart';
+import 'package:shiftwheels/data/auth/models/user_model.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_interested_users_usecase.dart';
+import 'package:shiftwheels/presentation/screen_chat/chat_bloc/chat_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/active_ads_bloc/active_ads_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/screen_edit_ad.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/update_ad_bloc/update_ad_bloc.dart';
@@ -73,7 +76,7 @@ class _ActiveAdCardState extends State<ActiveAdCard>
 
     return Card(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24), // Even more rounded!
+        borderRadius: BorderRadius.circular(24),
         side: BorderSide(
           color: isDarkMode
               ? AppColors.zDarkCardBorder.withOpacity(0.5)
@@ -82,16 +85,13 @@ class _ActiveAdCardState extends State<ActiveAdCard>
         ),
       ),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      elevation: 10, // Max elevation for a floating effect
+      elevation: 10, 
       color: isDarkMode ? AppColors.zDarkCardBackground : AppColors.zWhite,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24), // Clip content to card shape
+        borderRadius: BorderRadius.circular(24), 
         child: Column(
           children: [
-            // Image and Layered Header Section
             _buildHeroImageSection(context, adData, isDarkMode),
-
-            // Main Details and Actions Section
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -100,18 +100,17 @@ class _ActiveAdCardState extends State<ActiveAdCard>
                   Text(
                     '${adData.brand} ${adData.model}',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.w900, // Extra bold
+                          fontWeight: FontWeight.w900,
                           color: isDarkMode
                               ? AppColors.zDarkPrimaryText
                               : AppColors.zLightPrimaryText,
-                          letterSpacing: -0.5, // Tighten up for impact
+                          letterSpacing: -0.5, 
                         ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 10),
 
-                  // Detail Chips
                   Wrap(
                     spacing: 8.0,
                     runSpacing: 8.0,
@@ -144,7 +143,6 @@ class _ActiveAdCardState extends State<ActiveAdCard>
                   ),
                   const SizedBox(height: 20),
 
-                  // Engagement Counts
                   Row(
                     children: [
                       _buildCountBubble(
@@ -487,30 +485,33 @@ class _ActiveAdCardState extends State<ActiveAdCard>
     });
   }
 
-  void _showInterestedUsersBottomSheet(
-    BuildContext context,
-    String adId,
-  ) async {
-    final getInterestedUsersUsecase = sl<GetInterestedUsersUsecase>();
-    final result = await getInterestedUsersUsecase(param: adId);
+ void _showInterestedUsersBottomSheet(BuildContext context, String adId) async {
+  final getInterestedUsersUsecase = sl<GetInterestedUsersUsecase>();
+  final result = await getInterestedUsersUsecase(param: adId);
 
-    result.fold(
-      (error) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error)));
-      },
-      (users) {
-        showModalBottomSheet(
-          context: context,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          builder: (context) => InterestedUsersBottomSheet(users: users),
-        );
-      },
-    );
-  }
+  result.fold(
+    (error) {
+      BasicSnackbar(
+        message: error,
+        backgroundColor: AppColors.zred,
+      ).show(context);
+    },
+    (users) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (context) => InterestedUsersBottomSheet(
+          users: users,
+          
+        ),
+      );
+    },
+  );
+}
+
 
   String _formatDate(DateTime? date) {
     if (date == null) return '';

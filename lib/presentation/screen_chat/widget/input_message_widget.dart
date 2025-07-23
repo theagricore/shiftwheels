@@ -34,15 +34,18 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Column(
       children: [
         if (widget.replyingToMessage != null)
-          _buildReplyBanner(context, widget.replyingToMessage!),
+          _buildReplyBanner(context, widget.replyingToMessage!, isDarkMode),
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
-              Expanded(child: _buildInputField()),
+              Expanded(child: _buildInputField(isDarkMode)),
               const SizedBox(width: 8),
               _buildSendButton(),
             ],
@@ -52,7 +55,11 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
     );
   }
 
-  Widget _buildReplyBanner(BuildContext context, MessageModel replyMessage) {
+  Widget _buildReplyBanner(
+    BuildContext context,
+    MessageModel replyMessage,
+    bool isDarkMode,
+  ) {
     final replyingTo =
         replyMessage.senderId == currentUserId
             ? "yourself"
@@ -60,7 +67,10 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.zPrimaryColor.withOpacity(0.1),
+        color:
+            isDarkMode
+                ? AppColors.zDarkGrey.withOpacity(0.3)
+                : AppColors.zPrimaryColor.withOpacity(0.1),
         border: Border(
           top: BorderSide(color: AppColors.zPrimaryColor, width: 1.5),
           left: BorderSide(color: AppColors.zPrimaryColor, width: 10),
@@ -78,22 +88,28 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
               children: [
                 Text(
                   'Replying to $replyingTo',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
+                    color: isDarkMode ? Colors.white70 : Colors.black87,
                   ),
                 ),
                 Text(
                   replyMessage.displayContent,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppColors.zGrey),
+                  style: TextStyle(
+                    color: isDarkMode ? AppColors.zGrey : AppColors.zGrey,
+                  ),
                 ),
               ],
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.close),
+            icon: Icon(
+              Icons.close,
+              color: isDarkMode ? Colors.white70 : Colors.black87,
+            ),
             onPressed:
                 () => context.read<ChatBloc>().add(ClearReplyMessageEvent()),
           ),
@@ -102,22 +118,37 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
     );
   }
 
-  Widget _buildInputField() {
+  Widget _buildInputField(bool isDarkMode) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 13),
       decoration: BoxDecoration(
-        color: AppColors.zBackGround,
+        color: isDarkMode ? AppColors.zDarkGrey : Colors.white,
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: AppColors.zPrimaryColor, width: 2),
+        border: Border.all(
+          color: isDarkMode ? AppColors.zDarkGrey : Colors.grey.shade300,
+          width: 2,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(4.0),
         child: TextField(
           controller: messageController,
-          decoration: const InputDecoration(
+          style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
+          decoration: InputDecoration(
             hintText: 'Type your message...',
+            hintStyle: TextStyle(
+              color: isDarkMode ? AppColors.zGrey : AppColors.zGrey,
+            ),
             border: InputBorder.none,
-            fillColor: AppColors.zBackGround,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            errorBorder: InputBorder.none,
+            focusedErrorBorder: InputBorder.none,
+            disabledBorder: InputBorder.none,
+
+            fillColor: isDarkMode ? AppColors.zDarkGrey : Colors.white,
+            filled: true,
+            contentPadding: EdgeInsets.zero,
           ),
           maxLines: null,
         ),

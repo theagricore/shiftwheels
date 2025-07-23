@@ -2,13 +2,17 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/data/add_post/models/ad_with_user_model.dart';
 import 'package:shiftwheels/domain/add_post/repository/post_repository.dart';
 import 'package:shiftwheels/presentation/screen_chat/chat_bloc/chat_bloc.dart';
 import 'package:shiftwheels/presentation/screen_chat/screen_ad_chat.dart';
+import 'package:shiftwheels/presentation/screen_home/call_bloc/call_bloc.dart';
 import 'package:shiftwheels/presentation/screen_home/widget/auto_scroll_image_carousel.dart';
+import 'package:shiftwheels/presentation/screen_home/widget/bottom_contact_bar_widget.dart';
 import 'package:shiftwheels/presentation/screen_home/widget/deatils_app_bar_widget.dart';
+import 'package:shiftwheels/presentation/screen_home/widget/favoirate_interst_button.dart';
 import 'package:shiftwheels/presentation/screen_home/widget/over_view_grid.dart';
 import 'package:shiftwheels/presentation/screen_home/widget/user_info_widget.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/add_favourite_bloc/add_favourite_bloc.dart';
@@ -33,6 +37,7 @@ class ScreenAdDetails extends StatelessWidget {
         ),
         BlocProvider(create: (context) => InterestBloc(sl<PostRepository>())),
         BlocProvider.value(value: sl<ChatBloc>()),
+        BlocProvider(create: (context) => CallBloc()),
       ],
       child: _AdDetailsContent(adWithUser: adWithUser),
     );
@@ -61,8 +66,6 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
     super.dispose();
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return MultiBlocListener(
@@ -70,30 +73,36 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
         BlocListener<AddFavouriteBloc, AddFavouriteState>(
           listener: (context, state) {
             if (state is AddFavouriteError) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(state.message)));
+              BasicSnackbar(
+                message: state.message,
+                backgroundColor: AppColors.zred,
+              ).show(context);
             }
           },
         ),
         BlocListener<InterestBloc, InterestState>(
           listener: (context, state) {
             if (state is InterestError) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(state.message)));
+              BasicSnackbar(
+                message: state.message,
+                backgroundColor: AppColors.zred,
+              ).show(context);
             }
           },
         ),
       ],
       child: Scaffold(
         backgroundColor: AppColors.zWhite,
-        appBar: const DeatilsAppBarWidget(),
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(64),
+          child: DeatilsAppBarWidget(),
+        ),
         body: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildImageSection(context),
+              _buildActionButtons(context),
               _buildBasicInfoSection(),
               _buildDetailsSection(),
             ],
@@ -115,52 +124,64 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
     );
   }
 
+  Widget _buildActionButtons(BuildContext context) {
+    final adId = widget.adWithUser.ad.id!;
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+    return FavoirateInterstButton(adId: adId, currentUserId: currentUserId);
+  }
+
   Widget _buildBasicInfoSection() {
     final ad = widget.adWithUser.ad;
     final textTheme = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Text(
                   "${ad.brand} ${ad.model} (${ad.year})",
                   style: textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
                     color: AppColors.zblack,
+                    fontSize: 18,
+                    letterSpacing: 0.2,
                   ),
                 ),
               ),
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.access_time,
-                    size: 16,
-                    color: AppColors.zblack,
+                    size: 20,
+                    color: AppColors.zblack.withOpacity(0.7),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 8),
                   Text(
                     timeago.format(ad.postedDate),
-                    style: textTheme.labelMedium?.copyWith(
+                    style: textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w500,
-                      color: AppColors.zblack,
+                      color: AppColors.zblack.withOpacity(0.7),
+                      fontSize: 15,
                     ),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 5),
           Text(
             "₹${ad.price}",
             style: textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w900,
               color: AppColors.zPrimaryColor,
+              fontSize: 20,
             ),
           ),
         ],
@@ -172,91 +193,63 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
     final ad = widget.adWithUser.ad;
     final userData = widget.adWithUser.userData;
 
-    return Material(
-      elevation: 8,
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(25),
-        topRight: Radius.circular(25),
-      ),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.zblack,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(25),
-            topRight: Radius.circular(25),
-          ),
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Overview",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.zWhite,
-              ),
-            ),
-            const SizedBox(height: 12),
-            OverviewGrid(
-              transmission: ad.transmissionType,
-              kmDriven: ad.kmDriven,
-              noOfOwners: ad.noOfOwners,
-              fuelType: ad.fuelType,
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 20),
-              child: UserInfoWidget(userData: userData, ad: ad),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              "Description",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.zWhite,
-              ),
-            ),
-            Text(
-              ad.description,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w400,
-                color: AppColors.zWhite,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomButtons(BuildContext context) {
     return Container(
-      color: AppColors.zblack,
-      padding: const EdgeInsets.all(16),
-      child: Row(
+      decoration: BoxDecoration(
+        color: AppColors.zblack,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(32),
+          topRight: Radius.circular(32),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => _handleChatPressed(context),
-              icon: const Icon(Icons.chat, color: Colors.white, size: 25),
-              label: const Text(
-                "Chat",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.zPrimaryColor,
-                minimumSize: const Size(double.infinity, 58),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
+          Text(
+            "Overview",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: AppColors.zWhite,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 20),
+          OverviewGrid(
+            transmission: ad.transmissionType,
+            kmDriven: ad.kmDriven,
+            noOfOwners: ad.noOfOwners,
+            fuelType: ad.fuelType,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 28, bottom: 20),
+            child: UserInfoWidget(userData: userData, ad: ad),
+          ),
+          Text(
+            "Description",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: AppColors.zWhite,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            ad.description,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              color: AppColors.zWhite.withOpacity(0.9),
+              height: 1.6,
+              letterSpacing: 0.3,
             ),
           ),
         ],
@@ -264,33 +257,74 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
     );
   }
 
+  Widget _buildBottomButtons(BuildContext context) {
+    return BlocListener<CallBloc, CallState>(
+      listener: (context, state) {
+        if (state is CallFailure) {
+          BasicSnackbar(
+            message: state.message,
+            backgroundColor: AppColors.zred,
+          ).show(context);
+        }
+      },
+      child: BottomContactBarWidget(
+        onChatPressed: () => _handleChatPressed(context),
+        onCallPressed: () => _handleCallPressed(context),
+      ),
+    );
+  }
+
+  void _handleCallPressed(BuildContext context) {
+    final phoneNumber = widget.adWithUser.userData?.phoneNo;
+
+    if (phoneNumber == null || phoneNumber.isEmpty) {
+      BasicSnackbar(
+        message: 'Phone number not available',
+        backgroundColor: AppColors.zred,
+      ).show(context);
+      return;
+    }
+
+    context.read<CallBloc>().add(MakePhoneCall(phoneNumber));
+  }
+
   void _handleChatPressed(BuildContext context) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     final ad = widget.adWithUser.ad;
 
     if (currentUserId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in to start a chat')),
-      );
+      BasicSnackbar(
+        message: 'Please log in to start a chat',
+        backgroundColor: AppColors.zred,
+      ).show(context);
       return;
     }
     if (currentUserId == ad.userId) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You cannot chat with yourself')),
-      );
+      BasicSnackbar(
+        message: 'You cannot chat with yourself',
+        backgroundColor: AppColors.zred,
+      ).show(context);
       return;
     }
     if (ad.id == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Invalid ad ID')));
+      BasicSnackbar(
+        message: 'Invalid ad ID',
+        backgroundColor: AppColors.zred,
+      ).show(context);
       return;
     }
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+      builder:
+          (context) => const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(
+                AppColors.zPrimaryColor,
+              ),
+            ),
+          ),
     );
 
     final chatBloc = context.read<ChatBloc>();
@@ -321,9 +355,11 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
         );
       } else if (state is ChatError) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(state.message)));
+
+        BasicSnackbar(
+          message: state.message,
+          backgroundColor: AppColors.zred,
+        ).show(context);
       }
     });
   }

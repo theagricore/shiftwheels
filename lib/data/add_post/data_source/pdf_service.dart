@@ -9,6 +9,8 @@ import 'package:shiftwheels/data/add_post/models/ad_with_user_model.dart';
 class PdfService {
   Future<String> generateComparisonPdf(List<AdWithUserModel> cars) async {
     final pdf = pw.Document();
+
+    // Load images for the cars
     final List<pw.ImageProvider?> carImages = [];
     for (var car in cars) {
       if (car.ad.imageUrls.isNotEmpty) {
@@ -17,14 +19,14 @@ class PdfService {
           if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
             carImages.add(pw.MemoryImage(response.bodyBytes));
           } else {
-            carImages.add(null); 
+            carImages.add(null); // Placeholder for failed image
           }
         } catch (e) {
-          carImages.add(null); 
+          carImages.add(null); // Placeholder for failed image
           print('Error loading image for ${car.ad.brand} ${car.ad.model}: $e');
         }
       } else {
-        carImages.add(null);
+        carImages.add(null); // Placeholder for no image
       }
     }
 
@@ -41,6 +43,7 @@ class PdfService {
               ),
             ),
             pw.SizedBox(height: 20),
+            // Car Images and Names
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.start,
               children: cars.asMap().entries.map((entry) {
@@ -96,6 +99,7 @@ class PdfService {
               }).toList(),
             ),
             pw.SizedBox(height: 20),
+            // Specs Comparison
             pw.Table(
               border: pw.TableBorder.all(),
               columnWidths: {
@@ -104,6 +108,7 @@ class PdfService {
                 2: pw.FixedColumnWidth(150),
               },
               children: [
+                // Header
                 pw.TableRow(
                   children: [
                     pw.Text(
@@ -123,6 +128,7 @@ class PdfService {
                     ),
                   ],
                 ),
+                // Rows for specs
                 ...[
                   {'key': 'Brand', 'value1': cars[0].ad.brand, 'value2': cars[1].ad.brand},
                   {'key': 'Model', 'value1': cars[0].ad.model, 'value2': cars[1].ad.model},

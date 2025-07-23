@@ -8,12 +8,14 @@ import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
 import 'package:shiftwheels/core/common_widget/widget/bottom_sheet_list/bottom_sheet_selector.dart';
 import 'package:shiftwheels/core/common_widget/widget/transmission_type_selecter.dart';
 import 'package:shiftwheels/core/config/helper/navigator/app_navigator.dart';
+import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/data/add_post/models/brand_model.dart';
 import 'package:shiftwheels/data/add_post/models/fuels_model.dart';
 import 'package:shiftwheels/presentation/add_post/add_post_bloc/add_post_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/get_fuels_bloc/get_fuels_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/screen_select_location.dart';
 import 'package:shiftwheels/presentation/add_post/seat_type_bloc/seat_type_bloc.dart';
+import 'package:shiftwheels/presentation/add_post/seat_type_bloc/seat_type_state.dart';
 
 class ScreenAddPost extends StatefulWidget {
   const ScreenAddPost({super.key});
@@ -26,7 +28,6 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
   BrandModel? selectedBrand;
   String? selectedModel;
   FuelsModel? selectedFuel;
-  String? transmissionType;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController yearController = TextEditingController();
   final TextEditingController kmController = TextEditingController();
@@ -41,7 +42,10 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
         appBar: BasicAppbar(
           title: Text(
             "Include Some Details",
-            style: Theme.of(context).textTheme.displayLarge,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontSize: 25,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
         body: SingleChildScrollView(
@@ -76,12 +80,14 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
   }
 
   Widget _buildToggleButton() {
-    return TransmissionTypeSelector(
-      initialType: transmissionType ?? 'Manual',
-      onTransmissionSelected: (type) {
-        setState(() {
-          transmissionType = type;
-        });
+    return BlocBuilder<SeatTypeBloc, SeatTypeState>(
+      builder: (context, state) {
+        return TransmissionTypeSelector(
+          initialType: state.transmissionType,
+          onTransmissionSelected: (type) {
+            context.read<SeatTypeBloc>().add(ChangeTransmissionTypeEvent(type));
+          },
+        );
       },
     );
   }
@@ -176,29 +182,33 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
     return TextFormFieldWidget(
       label: "Describe what you are selling*",
       controller: discribeController,
-
       multiline: true,
       keyboardType: TextInputType.multiline,
     );
   }
 
   Widget _buildContinueWidget(BuildContext context) {
-    return BasicElevatedAppButton(
-      onPressed: () => _validateAndContinue(context),
-      title: "Continue",
+    return BlocBuilder<SeatTypeBloc, SeatTypeState>(
+      builder: (context, state) {
+        return BasicElevatedAppButton(
+          onPressed:
+              () => _validateAndContinue(context, state.transmissionType),
+          title: "Continue",
+        );
+      },
     );
   }
 
-  void _validateAndContinue(BuildContext context) {
+  void _validateAndContinue(BuildContext context, String transmissionType) {
     if (_formKey.currentState!.validate()) {
       if (selectedBrand == null ||
           selectedModel == null ||
-          selectedFuel == Null ||
-          transmissionType == null) {
+          selectedFuel == null ||
+          transmissionType.isEmpty) {
         BasicSnackbar(
           message: 'Please fill all required fields',
-          backgroundColor: Colors.red,
-        );
+          backgroundColor: AppColors.zred,
+        ).show(context);
         return;
       }
       final year = int.tryParse(yearController.text);
@@ -207,25 +217,29 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
 
       if (year == null || kmDriven == null || noofOwners == null) {
         BasicSnackbar(
-          message: 'Please fill all required fields',
-          backgroundColor: Colors.red,
-        );
+          message: 'Please enter valid numbers',
+          backgroundColor: AppColors.zred,
+        ).show(context);
         return;
       }
 
       final currentUser = FirebaseAuth.instance.currentUser;
-      BasicSnackbar(
-        message: 'Please login to post an ad',
-        backgroundColor: Colors.red,
-      );
+      if (currentUser == null) {
+        BasicSnackbar(
+          message: 'Please login to post an ad',
+          backgroundColor: AppColors.zred,
+        ).show(context);
+        return;
+      }
+
       AppNavigator.push(
         context,
         ScreenSelectLocation(
-          userId: currentUser!.uid,
+          userId: currentUser.uid,
           brand: selectedBrand!.brandName!,
           model: selectedModel!,
           fuelType: selectedFuel!.fuels!,
-          transmissionType: transmissionType!,
+          transmissionType: transmissionType,
           year: year,
           kmDriven: kmDriven,
           noOfOwners: noofOwners,

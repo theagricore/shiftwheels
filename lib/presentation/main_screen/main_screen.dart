@@ -4,10 +4,10 @@ import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/presentation/add_post/screen_add_post.dart';
 import 'package:shiftwheels/presentation/screen_home/screen_home.dart';
 import 'package:shiftwheels/presentation/screen_chat/screen_ad_chat_list.dart';
-import 'package:shiftwheels/presentation/main_screen/screen_profile/screen_profile.dart';
 
 import 'package:flutter/material.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/screen_my_ads.dart';
+import 'package:shiftwheels/presentation/screen_profile/screen_profile.dart';
 
 class MainScreens extends StatefulWidget {
   const MainScreens({super.key});

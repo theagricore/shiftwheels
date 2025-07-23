@@ -77,7 +77,10 @@ class ScreenPrice extends StatelessWidget {
         appBar: BasicAppbar(
           title: Text(
             "Set a price",
-            style: Theme.of(context).textTheme.displayLarge,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontSize: 25,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
         body: Padding(

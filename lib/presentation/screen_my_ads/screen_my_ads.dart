@@ -11,7 +11,7 @@ class ScreenMyAds extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         child: BasicTabBarWidget(
-          tabTitles: const ['FAVOURITE', ' ADD'],
+          tabTitles: const ['FAVOURITE', ' ADS'],
           tabViews: const [FavouriteWidget(), ActiveAdWidget()],
         ),
       ),

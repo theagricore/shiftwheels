@@ -6,11 +6,11 @@ class SearchFilter {
   final String? query;
   final String? brand;
   final String? model;
-  final String? fuelType;
-  final String? transmissionType;
+  final List<String>? fuelTypes;
+  final List<String>? transmissionTypes;
   final int? minYear;
   final int? maxYear;
-  final int? maxOwners;
+  final List<int>? ownerCounts;
   final double? minPrice;
   final double? maxPrice;
   final double? maxDistanceInKm;
@@ -21,11 +21,11 @@ class SearchFilter {
     this.query,
     this.brand,
     this.model,
-    this.fuelType,
-    this.transmissionType,
+    this.fuelTypes,
+    this.transmissionTypes,
     this.minYear,
     this.maxYear,
-    this.maxOwners,
+    this.ownerCounts,
     this.minPrice,
     this.maxPrice,
     this.maxDistanceInKm,
@@ -37,11 +37,11 @@ class SearchFilter {
     String? query,
     String? brand,
     String? model,
-    String? fuelType,
-    String? transmissionType,
+    List<String>? fuelTypes,
+    List<String>? transmissionTypes,
     int? minYear,
     int? maxYear,
-    int? maxOwners,
+    List<int>? ownerCounts,
     double? minPrice,
     double? maxPrice,
     double? maxDistanceInKm,
@@ -52,11 +52,11 @@ class SearchFilter {
       query: query ?? this.query,
       brand: brand ?? this.brand,
       model: model ?? this.model,
-      fuelType: fuelType ?? this.fuelType,
-      transmissionType: transmissionType ?? this.transmissionType,
+      fuelTypes: fuelTypes ?? this.fuelTypes,
+      transmissionTypes: transmissionTypes ?? this.transmissionTypes,
       minYear: minYear ?? this.minYear,
       maxYear: maxYear ?? this.maxYear,
-      maxOwners: maxOwners ?? this.maxOwners,
+      ownerCounts: ownerCounts ?? this.ownerCounts,
       minPrice: minPrice ?? this.minPrice,
       maxPrice: maxPrice ?? this.maxPrice,
       maxDistanceInKm: maxDistanceInKm ?? this.maxDistanceInKm,
@@ -69,11 +69,11 @@ class SearchFilter {
     return query == null &&
         brand == null &&
         model == null &&
-        fuelType == null &&
-        transmissionType == null &&
+        (fuelTypes == null || fuelTypes!.isEmpty) &&
+        (transmissionTypes == null || transmissionTypes!.isEmpty) &&
         minYear == null &&
         maxYear == null &&
-        maxOwners == null &&
+        (ownerCounts == null || ownerCounts!.isEmpty) &&
         minPrice == null &&
         maxPrice == null &&
         maxDistanceInKm == null &&
@@ -139,14 +139,15 @@ class SearchUtils {
         return false;
       }
 
-      if (filter.fuelType != null &&
-          ad.fuelType.toLowerCase() != filter.fuelType!.toLowerCase()) {
+      if (filter.fuelTypes != null &&
+          filter.fuelTypes!.isNotEmpty &&
+          !filter.fuelTypes!.any((type) => type.toLowerCase() == ad.fuelType.toLowerCase())) {
         return false;
       }
 
-      if (filter.transmissionType != null &&
-          ad.transmissionType.toLowerCase() !=
-              filter.transmissionType!.toLowerCase()) {
+      if (filter.transmissionTypes != null &&
+          filter.transmissionTypes!.isNotEmpty &&
+          !filter.transmissionTypes!.any((type) => type.toLowerCase() == ad.transmissionType.toLowerCase())) {
         return false;
       }
 
@@ -158,7 +159,9 @@ class SearchUtils {
         return false;
       }
 
-      if (filter.maxOwners != null && ad.noOfOwners > filter.maxOwners!) {
+      if (filter.ownerCounts != null &&
+          filter.ownerCounts!.isNotEmpty &&
+          !filter.ownerCounts!.contains(ad.noOfOwners)) {
         return false;
       }
 
@@ -172,14 +175,19 @@ class SearchUtils {
 
       // Distance calculation
       if (filter.maxDistanceInKm != null && filter.userLocation != null) {
-        final double distance = calculateDistance(
-          filter.userLocation!.latitude,
-          filter.userLocation!.longitude,
-          ad.location.latitude,
-          ad.location.longitude,
-        );
+        try {
+          final double distance = calculateDistance(
+            filter.userLocation!.latitude,
+            filter.userLocation!.longitude,
+            ad.location.latitude,
+            ad.location.longitude,
+          );
 
-        if (distance > filter.maxDistanceInKm!) {
+          if (distance > filter.maxDistanceInKm!) {
+            return false;
+          }
+        } catch (e) {
+          print('Error calculating distance: $e');
           return false;
         }
       }
@@ -201,19 +209,23 @@ class SearchUtils {
             return b.ad.year.compareTo(a.ad.year);
           case 'distance_asc':
             if (filter.userLocation == null) return 0;
-            final distanceA = calculateDistance(
-              filter.userLocation!.latitude,
-              filter.userLocation!.longitude,
-              a.ad.location.latitude,
-              a.ad.location.longitude,
-            );
-            final distanceB = calculateDistance(
-              filter.userLocation!.latitude,
-              filter.userLocation!.longitude,
-              b.ad.location.latitude,
-              b.ad.location.longitude,
-            );
-            return distanceA.compareTo(distanceB);
+            try {
+              final distanceA = calculateDistance(
+                filter.userLocation!.latitude,
+                filter.userLocation!.longitude,
+                a.ad.location.latitude,
+                a.ad.location.longitude,
+              );
+              final distanceB = calculateDistance(
+                filter.userLocation!.latitude,
+                filter.userLocation!.longitude,
+                b.ad.location.latitude,
+                b.ad.location.longitude,
+              );
+              return distanceA.compareTo(distanceB);
+            } catch (e) {
+              return 0;
+            }
           default:
             return 0;
         }

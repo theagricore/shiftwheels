@@ -56,96 +56,203 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('No of Owner'),
-                DropdownButtonFormField<int>(
-                  value: _tempFilter.maxOwners,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: null, child: Text('Any')),
-                    DropdownMenuItem(value: 1, child: Text('1st')),
-                    DropdownMenuItem(value: 2, child: Text('2nd')),
-                    DropdownMenuItem(value: 3, child: Text('3rd')),
-                    DropdownMenuItem(value: 4, child: Text('4th')),
-                    DropdownMenuItem(value: 5, child: Text('5+')),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    FilterChip(
+                      label: const Text('1st'),
+                      selected: _tempFilter.ownerCounts?.contains(1) ?? false,
+                      onSelected: (selected) {
+                        setState(() {
+                          _tempFilter = _tempFilter.copyWith(
+                            ownerCounts: _updateList(
+                              _tempFilter.ownerCounts ?? [],
+                              1,
+                              selected,
+                            ),
+                          );
+                        });
+                      },
+                    ),
+                    FilterChip(
+                      label: const Text('2nd'),
+                      selected: _tempFilter.ownerCounts?.contains(2) ?? false,
+                      onSelected: (selected) {
+                        setState(() {
+                          _tempFilter = _tempFilter.copyWith(
+                            ownerCounts: _updateList(
+                              _tempFilter.ownerCounts ?? [],
+                              2,
+                              selected,
+                            ),
+                          );
+                        });
+                      },
+                    ),
+                    FilterChip(
+                      label: const Text('3rd'),
+                      selected: _tempFilter.ownerCounts?.contains(3) ?? false,
+                      onSelected: (selected) {
+                        setState(() {
+                          _tempFilter = _tempFilter.copyWith(
+                            ownerCounts: _updateList(
+                              _tempFilter.ownerCounts ?? [],
+                              3,
+                              selected,
+                            ),
+                          );
+                        });
+                      },
+                    ),
+                    FilterChip(
+                      label: const Text('4th'),
+                      selected: _tempFilter.ownerCounts?.contains(4) ?? false,
+                      onSelected: (selected) {
+                        setState(() {
+                          _tempFilter = _tempFilter.copyWith(
+                            ownerCounts: _updateList(
+                              _tempFilter.ownerCounts ?? [],
+                              4,
+                              selected,
+                            ),
+                          );
+                        });
+                      },
+                    ),
+                    FilterChip(
+                      label: const Text('5+'),
+                      selected: _tempFilter.ownerCounts?.contains(5) ?? false,
+                      onSelected: (selected) {
+                        setState(() {
+                          _tempFilter = _tempFilter.copyWith(
+                            ownerCounts: _updateList(
+                              _tempFilter.ownerCounts ?? [],
+                              5,
+                              selected,
+                            ),
+                          );
+                        });
+                      },
+                    ),
                   ],
-                  onChanged: (value) {
-                    setState(() {
-                      _tempFilter = _tempFilter.copyWith(maxOwners: value);
-                    });
-                  },
                 ),
               ],
             ),
             const SizedBox(height: 16),
 
-            // Fuel Type and Transmission
-            Row(
+            // Fuel Type
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Fuel Type'),
-                      DropdownButtonFormField<String>(
-                        value: _tempFilter.fuelType,
-                        items: const [
-                          DropdownMenuItem(value: null, child: Text('Any')),
-                          DropdownMenuItem(
-                            value: 'Petrol',
-                            child: Text('Petrol'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Diesel',
-                            child: Text('Diesel'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Electric',
-                            child: Text('Electric'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Hybrid',
-                            child: Text('Hybrid'),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            _tempFilter = _tempFilter.copyWith(fuelType: value);
-                          });
-                        },
-                      ),
-                    ],
-                  ),
+                const Text('Fuel Type'),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    FilterChip(
+                      label: const Text('Petrol'),
+                      selected: _tempFilter.fuelTypes?.contains('Petrol') ?? false,
+                      onSelected: (selected) {
+                        setState(() {
+                          _tempFilter = _tempFilter.copyWith(
+                            fuelTypes: _updateList(
+                              _tempFilter.fuelTypes ?? [],
+                              'Petrol',
+                              selected,
+                            ),
+                          );
+                        });
+                      },
+                    ),
+                    FilterChip(
+                      label: const Text('Diesel'),
+                      selected: _tempFilter.fuelTypes?.contains('Diesel') ?? false,
+                      onSelected: (selected) {
+                        setState(() {
+                          _tempFilter = _tempFilter.copyWith(
+                            fuelTypes: _updateList(
+                              _tempFilter.fuelTypes ?? [],
+                              'Diesel',
+                              selected,
+                            ),
+                          );
+                        });
+                      },
+                    ),
+                    FilterChip(
+                      label: const Text('Electric'),
+                      selected: _tempFilter.fuelTypes?.contains('Electric') ?? false,
+                      onSelected: (selected) {
+                        setState(() {
+                          _tempFilter = _tempFilter.copyWith(
+                            fuelTypes: _updateList(
+                              _tempFilter.fuelTypes ?? [],
+                              'Electric',
+                              selected,
+                            ),
+                          );
+                        });
+                      },
+                    ),
+                    FilterChip(
+                      label: const Text('Hybrid'),
+                      selected: _tempFilter.fuelTypes?.contains('Hybrid') ?? false,
+                      onSelected: (selected) {
+                        setState(() {
+                          _tempFilter = _tempFilter.copyWith(
+                            fuelTypes: _updateList(
+                              _tempFilter.fuelTypes ?? [],
+                              'Hybrid',
+                              selected,
+                            ),
+                          );
+                        });
+                      },
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Transmission'),
-                      DropdownButtonFormField<String>(
-                        value: _tempFilter.transmissionType,
-                        items: const [
-                          DropdownMenuItem(value: null, child: Text('Any')),
-                          DropdownMenuItem(
-                            value: 'Manual',
-                            child: Text('Manual'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Automatic',
-                            child: Text('Automatic'),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            _tempFilter = _tempFilter.copyWith(
-                              transmissionType: value,
-                            );
-                          });
-                        },
-                      ),
-                    ],
-                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Transmission
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Transmission'),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    FilterChip(
+                      label: const Text('Manual'),
+                      selected: _tempFilter.transmissionTypes?.contains('Manual') ?? false,
+                      onSelected: (selected) {
+                        setState(() {
+                          _tempFilter = _tempFilter.copyWith(
+                            transmissionTypes: _updateList(
+                              _tempFilter.transmissionTypes ?? [],
+                              'Manual',
+                              selected,
+                            ),
+                          );
+                        });
+                      },
+                    ),
+                    FilterChip(
+                      label: const Text('Automatic'),
+                      selected: _tempFilter.transmissionTypes?.contains('Automatic') ?? false,
+                      onSelected: (selected) {
+                        setState(() {
+                          _tempFilter = _tempFilter.copyWith(
+                            transmissionTypes: _updateList(
+                              _tempFilter.transmissionTypes ?? [],
+                              'Automatic',
+                              selected,
+                            ),
+                          );
+                        });
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -331,5 +438,17 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         ),
       ),
     );
+  }
+
+  List<T> _updateList<T>(List<T> currentList, T value, bool selected) {
+    final newList = List<T>.from(currentList);
+    if (selected) {
+      if (!newList.contains(value)) {
+        newList.add(value);
+      }
+    } else {
+      newList.remove(value);
+    }
+    return newList;
   }
 }

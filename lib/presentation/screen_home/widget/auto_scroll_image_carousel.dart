@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
@@ -9,17 +8,18 @@ class AutoScrollImageCarousel extends StatefulWidget {
   final List<String> imageUrls;
   final String adId;
   final String currentUserId;
+  final bool isSold;
 
   const AutoScrollImageCarousel({
     super.key,
     required this.imageUrls,
     required this.adId,
     required this.currentUserId,
+    required this.isSold,
   });
 
   @override
-  State<AutoScrollImageCarousel> createState() =>
-      _AutoScrollImageCarouselState();
+  State<AutoScrollImageCarousel> createState() => _AutoScrollImageCarouselState();
 }
 
 class _AutoScrollImageCarouselState extends State<AutoScrollImageCarousel> {
@@ -33,10 +33,9 @@ class _AutoScrollImageCarouselState extends State<AutoScrollImageCarousel> {
     _pageController = PageController();
     _startAutoScroll();
 
-    // Load initial interest state
     context.read<InterestBloc>().add(
-      LoadInitialInterestEvent(widget.adId, widget.currentUserId),
-    );
+          LoadInitialInterestEvent(widget.adId, widget.currentUserId),
+        );
   }
 
   @override
@@ -74,7 +73,6 @@ class _AutoScrollImageCarouselState extends State<AutoScrollImageCarousel> {
       height: 300,
       child: Stack(
         children: [
-          // Image carousel
           PageView.builder(
             controller: _pageController,
             itemCount: widget.imageUrls.length,
@@ -87,11 +85,10 @@ class _AutoScrollImageCarouselState extends State<AutoScrollImageCarousel> {
                   if (loadingProgress == null) return child;
                   return Center(
                     child: CircularProgressIndicator(
-                      value:
-                          loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
-                              : null,
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                          : null,
                     ),
                   );
                 },
@@ -106,7 +103,33 @@ class _AutoScrollImageCarouselState extends State<AutoScrollImageCarousel> {
               );
             },
           ),
-
+          if (widget.isSold)
+            Center(
+              child: Container(
+                width: 200,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: AppColors.zred.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.zred, width: 1.5),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle, color: AppColors.zred, size: 60),
+                    SizedBox(width: 8),
+                    Text(
+                      'SOLD',
+                      style: TextStyle(
+                        color: AppColors.zred,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 40,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           Positioned(
             bottom: 16,
             left: 0,
@@ -120,10 +143,9 @@ class _AutoScrollImageCarouselState extends State<AutoScrollImageCarousel> {
                   width: _currentPage == index ? 20 : 8,
                   height: 6,
                   decoration: BoxDecoration(
-                    color:
-                        _currentPage == index
-                            ? AppColors.zPrimaryColor
-                            : Colors.white.withOpacity(0.5),
+                    color: _currentPage == index
+                        ? AppColors.zPrimaryColor
+                        : Colors.white.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(3),
                   ),
                 );

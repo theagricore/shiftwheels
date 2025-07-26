@@ -1,3 +1,4 @@
+// chat_bloc.dart
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:shiftwheels/data/add_post/models/chat_model.dart';
@@ -81,10 +82,16 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     LoadMessagesEvent event,
     Emitter<ChatState> emit,
   ) async {
-    emit(MessagesLoading());
+    emit(MessagesLoading(isInitialLoad: event.isInitialLoad));
     try {
       final stream = _getMessagesUseCase(param: event.chatId);
-      emit(ChatScreenState(messages: stream));
+      emit(
+        ChatScreenState(
+          messages: stream,
+          replyingToMessage: null,
+          highlightedMessageId: null,
+        ),
+      );
     } catch (e) {
       emit(ChatError('Failed to load messages: ${e.toString()}'));
     }
@@ -104,18 +111,17 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       ),
     );
 
-    result.fold(
-      (failure) => emit(ChatError(failure)),
-      (_) {
-        if (state is ChatScreenState) {
-          emit((state as ChatScreenState).copyWith(
+    result.fold((failure) => emit(ChatError(failure)), (_) {
+      if (state is ChatScreenState) {
+        emit(
+          (state as ChatScreenState).copyWith(
             messages: _getMessagesUseCase(param: event.chatId),
             replyingToMessage: null,
             highlightedMessageId: null,
-          ));
-        }
-      },
-    );
+          ),
+        );
+      }
+    });
   }
 
   Future<void> _onMarkMessagesRead(
@@ -126,10 +132,15 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       param: MarkMessagesReadParams(chatId: event.chatId, userId: event.userId),
     );
 
-    result.fold(
-      (failure) => emit(ChatError(failure)),
-      (_) => null, // Stream will handle updates
-    );
+    result.fold((failure) => emit(ChatError(failure)), (_) {
+      if (state is ChatScreenState) {
+        emit(
+          (state as ChatScreenState).copyWith(
+            messages: _getMessagesUseCase(param: event.chatId),
+          ),
+        );
+      }
+    });
   }
 
   Future<void> _onDeleteMessage(
@@ -143,23 +154,33 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       ),
     );
 
-    result.fold(
-      (failure) => emit(ChatError(failure)),
-      (_) => null, // Stream will handle updates
-    );
+    result.fold((failure) => emit(ChatError(failure)), (_) {
+      if (state is ChatScreenState) {
+        emit(
+          (state as ChatScreenState).copyWith(
+            messages: _getMessagesUseCase(param: event.chatId),
+          ),
+        );
+      }
+    });
   }
 
-  void _onSetReplyMessage(
-    SetReplyMessageEvent event,
-    Emitter<ChatState> emit,
-  ) {
+  void _onSetReplyMessage(SetReplyMessageEvent event, Emitter<ChatState> emit) {
     if (state is ChatScreenState) {
-      emit((state as ChatScreenState).copyWith(replyingToMessage: event.message));
+      emit(
+        (state as ChatScreenState).copyWith(
+          replyingToMessage: event.message,
+          highlightedMessageId: event.message.id,
+        ),
+      );
     } else {
-      emit(ChatScreenState(
-        messages: _getMessagesUseCase(param: event.chatId),
-        replyingToMessage: event.message,
-      ));
+      emit(
+        ChatScreenState(
+          messages: _getMessagesUseCase(param: event.chatId),
+          replyingToMessage: event.message,
+          highlightedMessageId: event.message.id,
+        ),
+      );
     }
   }
 
@@ -168,7 +189,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     Emitter<ChatState> emit,
   ) {
     if (state is ChatScreenState) {
-      emit((state as ChatScreenState).copyWith(replyingToMessage: null));
+      emit(
+        (state as ChatScreenState).copyWith(
+          replyingToMessage: null,
+          highlightedMessageId: null,
+        ),
+      );
     }
   }
 
@@ -177,9 +203,17 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     Emitter<ChatState> emit,
   ) {
     if (state is ChatScreenState) {
-      emit((state as ChatScreenState).copyWith(highlightedMessageId: event.messageId));
+      emit(
+        (state as ChatScreenState).copyWith(
+          highlightedMessageId: event.messageId,
+        ),
+      );
+
+      // Remove highlight after 2 seconds
       Future.delayed(const Duration(seconds: 2), () {
-        if (state is ChatScreenState) {
+        if (state is ChatScreenState &&
+            (state as ChatScreenState).highlightedMessageId ==
+                event.messageId) {
           emit((state as ChatScreenState).copyWith(highlightedMessageId: null));
         }
       });

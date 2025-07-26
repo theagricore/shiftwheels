@@ -1,3 +1,4 @@
+// replay_and_delete_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftwheels/data/add_post/models/message_model.dart';
@@ -26,7 +27,10 @@ class ReplyAndDeleteWidget extends StatelessWidget {
             title: const Text('Reply'),
             onTap: () {
               context.read<ChatBloc>().add(
-                SetReplyMessageEvent(message: message, chatId: chatId),
+                SetReplyMessageEvent(
+                  message: message,
+                  chatId: chatId,
+                ),
               );
               Navigator.pop(context);
             },

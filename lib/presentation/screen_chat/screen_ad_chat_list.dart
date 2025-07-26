@@ -1,10 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shiftwheels/presentation/screen_chat/widget/chat_card_widget.dart';
-import 'package:shiftwheels/presentation/screen_chat/widget/shimmer_card.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/data/add_post/models/chat_model.dart';
+import 'package:shiftwheels/presentation/screen_chat/widget/chat_card_widget.dart';
+import 'package:shiftwheels/presentation/screen_chat/widget/shimmer_card.dart';
 import 'package:shiftwheels/presentation/screen_chat/chat_bloc/chat_bloc.dart';
 
 class ScreenAdChatList extends StatefulWidget {

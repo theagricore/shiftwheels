@@ -61,6 +61,7 @@ abstract class FirebasePostService {
   });
   Future<Either<String, void>> incrementPostCount(String userId);
   Future<Either<String, List<AdWithUserModel>>> getPremiumUserAds();
+  Future<Either<String, void>> markAdAsSold(String adId);
 }
 
 class PostFirebaseServiceImpl extends FirebasePostService {
@@ -289,6 +290,7 @@ class PostFirebaseServiceImpl extends FirebasePostService {
           await _firestore
               .collection('car_ads')
               .where('isActive', isEqualTo: true)
+              .where('isSold', isEqualTo: false) // Add this line
               .get();
 
       final ads =
@@ -312,7 +314,6 @@ class PostFirebaseServiceImpl extends FirebasePostService {
               createdAt: userData['createdAt']?.toString(),
               image: userData['image'] as String?,
             );
-
             result.add(AdWithUserModel(ad: ad, userData: userModel));
           } else {
             result.add(
@@ -415,6 +416,7 @@ class PostFirebaseServiceImpl extends FirebasePostService {
               .collection('car_ads')
               .where('favoritedByUsers', arrayContains: userId)
               .where('isActive', isEqualTo: true)
+              .where('isSold', isEqualTo: false) // Add this line
               .get();
 
       final ads =
@@ -750,6 +752,7 @@ class PostFirebaseServiceImpl extends FirebasePostService {
               .collection('car_ads')
               .where('interestedUsers', arrayContains: userId)
               .where('isActive', isEqualTo: true)
+              .where('isSold', isEqualTo: false) // Add this line
               .get();
 
       final ads =
@@ -952,6 +955,7 @@ class PostFirebaseServiceImpl extends FirebasePostService {
               .collection('car_ads')
               .where('userId', whereIn: premiumUserIds)
               .where('isActive', isEqualTo: true)
+              .where('isSold', isEqualTo: false) // Add this line
               .get();
 
       final ads =
@@ -978,11 +982,7 @@ class PostFirebaseServiceImpl extends FirebasePostService {
                   : UserModel(uid: ad.userId);
 
           result.add(
-            AdWithUserModel(
-              ad: ad,
-              userData: userModel,
-              isPremium: true, 
-            ),
+            AdWithUserModel(ad: ad, userData: userModel, isPremium: true),
           );
         } catch (e) {
           result.add(
@@ -1000,6 +1000,38 @@ class PostFirebaseServiceImpl extends FirebasePostService {
       return Left('Firebase error: ${e.message}');
     } catch (e) {
       return Left('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Either<String, void>> markAdAsSold(String adId) async {
+    try {
+      await _firestore.collection('car_ads').doc(adId).update({
+        'isSold': true,
+        'soldDate': FieldValue.serverTimestamp(),
+      });
+
+      final chatsSnapshot =
+          await _firestore
+              .collection('chats')
+              .where('adId', isEqualTo: adId)
+              .get();
+
+      final batch = _firestore.batch();
+      for (final doc in chatsSnapshot.docs) {
+        final messages = await doc.reference.collection('messages').get();
+        for (final message in messages.docs) {
+          batch.delete(message.reference);
+        }
+        batch.delete(doc.reference);
+      }
+
+      await batch.commit();
+      return const Right(null);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Failed to mark ad as sold: ${e.toString()}');
     }
   }
 }

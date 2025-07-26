@@ -26,6 +26,7 @@ import 'package:shiftwheels/domain/add_post/usecase/get_location_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_models_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_premium_ads_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_user_active_ads_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/mark_as_sold_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/post_ad_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/search_location_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/toggleIntrestUsecase.dart';
@@ -55,6 +56,7 @@ import 'package:shiftwheels/presentation/screen_home/get_post_ad_bloc/get_post_a
 import 'package:shiftwheels/presentation/screen_my_ads/active_ads_bloc/active_ads_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/add_favourite_bloc/add_favourite_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/interest_bloc/interest_bloc.dart';
+import 'package:shiftwheels/presentation/screen_my_ads/mark_as_sold_bloc/mark_as_sold_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/update_ad_bloc/update_ad_bloc.dart';
 import 'package:shiftwheels/presentation/screen_profile/ProfileBloc/profile_bloc.dart';
 import 'package:shiftwheels/presentation/screen_profile/profile_image_bloc/profile_image_bloc.dart';
@@ -144,6 +146,9 @@ Future<void> initializeDependencies() async {
     sl.registerSingleton<CompareCarsUseCase>(
     CompareCarsUseCase(sl<PostRepository>()),
   );
+  sl.registerSingleton<MarkAsSoldUsecase>(
+  MarkAsSoldUsecase(sl<PostRepository>()),
+);
 
   // Blocs
   sl.registerFactory<GoogleAuthBloc>(() => GoogleAuthBloc());
@@ -209,4 +214,5 @@ Future<void> initializeDependencies() async {
   sl.registerFactory<ProfileImageBloc>(() => ProfileImageBloc());
   sl.registerFactory<CompareBloc>(() => CompareBloc());
   sl.registerFactory<CallBloc>(() => CallBloc());
+  sl.registerFactory<MarkAsSoldBloc>(() => MarkAsSoldBloc(sl<MarkAsSoldUsecase>()));
 }

@@ -13,6 +13,7 @@ import 'package:shiftwheels/presentation/screen_chat/chat_bloc/chat_bloc.dart';
 import 'package:shiftwheels/presentation/screen_home/get_post_ad_bloc/get_post_ad_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/active_ads_bloc/active_ads_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/add_favourite_bloc/add_favourite_bloc.dart';
+import 'package:shiftwheels/presentation/screen_my_ads/mark_as_sold_bloc/mark_as_sold_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/update_ad_bloc/update_ad_bloc.dart';
 import 'package:shiftwheels/presentation/screen_profile/ProfileBloc/profile_bloc.dart';
 import 'package:shiftwheels/presentation/screen_profile/profile_image_bloc/profile_image_bloc.dart';
@@ -98,6 +99,9 @@ class MyApp extends StatelessWidget {
             ),
              BlocProvider<CompareBloc>(
               create: (context) => sl<CompareBloc>(),
+            ),
+            BlocProvider<MarkAsSoldBloc>(
+              create: (context) => sl<MarkAsSoldBloc>(),
             ),
           ],
           child: MaterialApp(

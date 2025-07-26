@@ -109,10 +109,6 @@ class ScreenAdChat extends StatelessWidget {
                 return Container(
                   key: key,
                   decoration: BoxDecoration(
-                    color:
-                        item.id == state.highlightedMessageId
-                            ? Colors.yellow.shade100
-                            : null,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: _buildMessageWidget(context, item, isMe, state),
@@ -192,28 +188,42 @@ class ScreenAdChat extends StatelessWidget {
   }
 
   String getDateTag(DateTime messageDate) {
-  final now = DateTime.now();
-  final today = DateTime(now.year, now.month, now.day);
-  final yesterday = today.subtract(const Duration(days: 1));
-  final msgDate = DateTime(messageDate.year, messageDate.month, messageDate.day);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final msgDate = DateTime(
+      messageDate.year,
+      messageDate.month,
+      messageDate.day,
+    );
 
-  if (msgDate == today) {
-    return 'Today';
-  } else if (msgDate == yesterday) {
-    return 'Yesterday';
-  } else {
-    return '${messageDate.day.toString().padLeft(2, '0')} '
-           '${_getMonthName(messageDate.month)} '
-           '${messageDate.year}';
+    if (msgDate == today) {
+      return 'Today';
+    } else if (msgDate == yesterday) {
+      return 'Yesterday';
+    } else {
+      return '${messageDate.day.toString().padLeft(2, '0')} '
+          '${_getMonthName(messageDate.month)} '
+          '${messageDate.year}';
+    }
   }
-}
 
-String _getMonthName(int month) {
-  const months = [
-    '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  ];
-  return months[month];
-}
-
+  String _getMonthName(int month) {
+    const months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[month];
+  }
 }

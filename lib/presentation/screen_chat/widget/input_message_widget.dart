@@ -27,6 +27,12 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
   final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
   @override
+  void initState() {
+    super.initState();
+    print('InputMessageWidget initState: replyingToMessage = ${widget.replyingToMessage?.id}'); // Debug print
+  }
+
+  @override
   void dispose() {
     messageController.dispose();
     super.dispose();
@@ -60,17 +66,17 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
     MessageModel replyMessage,
     bool isDarkMode,
   ) {
-    final replyingTo =
-        replyMessage.senderId == currentUserId
-            ? "yourself"
-            : widget.otherUser?.fullName ?? "Unknown";
+    final replyingTo = replyMessage.senderId == currentUserId
+        ? "yourself"
+        : widget.otherUser?.fullName ?? "Unknown";
+
+    print('Building reply banner for message: ${replyMessage.id}'); // Debug print
 
     return Container(
       decoration: BoxDecoration(
-        color:
-            isDarkMode
-                ? AppColors.zDarkGrey.withOpacity(0.3)
-                : AppColors.zPrimaryColor.withOpacity(0.1),
+        color: isDarkMode
+            ? AppColors.zDarkGrey.withOpacity(0.3)
+            : AppColors.zPrimaryColor.withOpacity(0.1),
         border: Border(
           top: BorderSide(color: AppColors.zPrimaryColor, width: 1.5),
           left: BorderSide(color: AppColors.zPrimaryColor, width: 10),
@@ -110,8 +116,10 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
               Icons.close,
               color: isDarkMode ? Colors.white70 : Colors.black87,
             ),
-            onPressed:
-                () => context.read<ChatBloc>().add(ClearReplyMessageEvent()),
+            onPressed: () {
+              print('Clear reply tapped'); // Debug print
+              context.read<ChatBloc>().add(ClearReplyMessageEvent());
+            },
           ),
         ],
       ),
@@ -145,7 +153,6 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
             errorBorder: InputBorder.none,
             focusedErrorBorder: InputBorder.none,
             disabledBorder: InputBorder.none,
-
             fillColor: isDarkMode ? AppColors.zDarkGrey : Colors.white,
             filled: true,
             contentPadding: EdgeInsets.zero,
@@ -171,6 +178,8 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
     final text = messageController.text.trim();
     if (text.isEmpty) return;
 
+    print('Sending message with replyTo: ${widget.replyingToMessage?.id}'); // Debug print
+
     context.read<ChatBloc>().add(
       SendMessageEvent(
         chatId: widget.chatId,
@@ -182,5 +191,6 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
     );
 
     messageController.clear();
+    context.read<ChatBloc>().add(ClearReplyMessageEvent()); // Clear reply after sending
   }
 }

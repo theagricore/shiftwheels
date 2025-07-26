@@ -16,6 +16,8 @@ class AdsModel {
   final double price;
   final DateTime postedDate;
   final bool isActive;
+  final bool isSold;
+  final DateTime? soldDate;
   final List<String> favoritedByUsers;
   final List<String> interestedUsers;
   final List<String> chatIds;
@@ -36,6 +38,8 @@ class AdsModel {
     required this.price,
     required this.postedDate,
     this.isActive = true,
+    this.isSold = false,
+    this.soldDate,
     this.favoritedByUsers = const [],
     this.interestedUsers = const [],
     this.chatIds = const [],
@@ -57,6 +61,8 @@ class AdsModel {
     double? price,
     DateTime? postedDate,
     bool? isActive,
+    bool? isSold,
+    DateTime? soldDate,
     List<String>? favoritedByUsers,
     List<String>? interestedUsers,
     List<String>? chatIds,
@@ -77,6 +83,8 @@ class AdsModel {
       price: price ?? this.price,
       postedDate: postedDate ?? this.postedDate,
       isActive: isActive ?? this.isActive,
+      isSold: isSold ?? this.isSold,
+      soldDate: soldDate ?? this.soldDate,
       favoritedByUsers: favoritedByUsers ?? this.favoritedByUsers,
       interestedUsers: interestedUsers ?? this.interestedUsers,
       chatIds: chatIds ?? this.chatIds,
@@ -100,6 +108,8 @@ class AdsModel {
       price: (map['price'] as num).toDouble(),
       postedDate: DateTime.parse(map['postedDate'] as String),
       isActive: map['isActive'] as bool? ?? true,
+      isSold: map['isSold'] as bool? ?? false,
+      soldDate: map['soldDate']?.toDate(),
       favoritedByUsers: List<String>.from(map['favoritedByUsers'] as List? ?? []),
       interestedUsers: List<String>.from(map['interestedUsers'] as List? ?? []),
       chatIds: List<String>.from(map['chatIds'] as List? ?? []),
@@ -122,6 +132,8 @@ class AdsModel {
       'price': price,
       'postedDate': postedDate.toIso8601String(),
       'isActive': isActive,
+      'isSold': isSold,
+      'soldDate': soldDate,
       'favoritedByUsers': favoritedByUsers,
       'interestedUsers': interestedUsers,
       'chatIds': chatIds,

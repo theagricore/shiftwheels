@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/data/add_post/models/ad_with_user_model.dart';
@@ -121,6 +122,7 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
       imageUrls: widget.adWithUser.ad.imageUrls,
       adId: adId,
       currentUserId: currentUserId,
+      isSold: widget.adWithUser.ad.isSold,
     );
   }
 
@@ -128,7 +130,9 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
     final adId = widget.adWithUser.ad.id!;
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-    return FavoirateInterstButton(adId: adId, currentUserId: currentUserId);
+    return widget.adWithUser.ad.isSold
+        ? const SizedBox.shrink()
+        : FavoirateInterstButton(adId: adId, currentUserId: currentUserId);
   }
 
   Widget _buildBasicInfoSection() {
@@ -177,7 +181,7 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
           ),
           const SizedBox(height: 5),
           Text(
-            "₹${ad.price}",
+            "₹${NumberFormat.currency(locale: 'en_IN', symbol: '₹').format(ad.price)}",
             style: textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.w900,
               color: AppColors.zPrimaryColor,
@@ -270,6 +274,7 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
       child: BottomContactBarWidget(
         onChatPressed: () => _handleChatPressed(context),
         onCallPressed: () => _handleCallPressed(context),
+        isAdSold: widget.adWithUser.ad.isSold,
       ),
     );
   }
@@ -355,7 +360,6 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
         );
       } else if (state is ChatError) {
         Navigator.of(context).pop();
-
         BasicSnackbar(
           message: state.message,
           backgroundColor: AppColors.zred,

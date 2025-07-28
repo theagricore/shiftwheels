@@ -13,6 +13,7 @@ import 'package:shiftwheels/data/add_post/models/message_model.dart';
 import 'package:shiftwheels/data/add_post/models/payment_model.dart';
 import 'package:shiftwheels/data/add_post/models/user_post_limit.dart';
 import 'package:shiftwheels/data/auth/models/user_model.dart';
+import 'package:shiftwheels/data/add_post/models/comparison_model.dart';
 
 abstract class FirebasePostService {
   Future<Either<String, List<BrandModel>>> getBrands();
@@ -62,6 +63,17 @@ abstract class FirebasePostService {
   Future<Either<String, void>> incrementPostCount(String userId);
   Future<Either<String, List<AdWithUserModel>>> getPremiumUserAds();
   Future<Either<String, void>> markAdAsSold(String adId);
+  Future<Either<String, String>> saveComparison({
+    required String userId,
+    required List<String> carIds,
+  });
+  Future<Either<String, List<ComparisonModel>>> getSavedComparisons(
+    String userId,
+  );
+  Future<Either<String, List<AdWithUserModel>>> getComparisonCars(
+    List<String> carIds,
+  );
+  Future<Either<String, void>> deleteComparison(String comparisonId);
 }
 
 class PostFirebaseServiceImpl extends FirebasePostService {
@@ -1032,6 +1044,106 @@ class PostFirebaseServiceImpl extends FirebasePostService {
       return Left('Firebase error: ${e.message}');
     } catch (e) {
       return Left('Failed to mark ad as sold: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Either<String, List<AdWithUserModel>>> getComparisonCars(
+    List<String> carIds,
+  ) async {
+    try {
+      if (carIds.length != 2) {
+        return Left('Exactly two car IDs are required for comparison');
+      }
+
+      final adsSnapshot =
+          await _firestore
+              .collection('car_ads')
+              .where(FieldPath.documentId, whereIn: carIds)
+              .get();
+
+      final ads =
+          adsSnapshot.docs
+              .map((doc) => AdsModel.fromMap(doc.data(), doc.id))
+              .toList();
+      if (ads.length != 2) {
+        return Left('Could not find both cars for comparison');
+      }
+      final result = <AdWithUserModel>[];
+
+      for (final ad in ads) {
+        try {
+          final userDoc =
+              await _firestore.collection('Users').doc(ad.userId).get();
+          UserModel? userModel;
+          if (userDoc.exists) {
+            userModel = UserModel.fromMap(userDoc.data()!);
+          }
+          result.add(AdWithUserModel(ad: ad, userData: userModel));
+        } catch (e) {
+          result.add(AdWithUserModel(ad: ad));
+        }
+      }
+      return Right(result);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Either<String, List<ComparisonModel>>> getSavedComparisons(
+    String userId,
+  ) async {
+    try {
+      final snapshot =
+          await _firestore
+              .collection('comparisons')
+              .where('userId', isEqualTo: userId)
+              .orderBy('createdAt', descending: true)
+              .get();
+
+      final comparisons =
+          snapshot.docs
+              .map((doc) => ComparisonModel.fromMap(doc.data(), doc.id))
+              .toList();
+      return Right(comparisons);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Either<String, String>> saveComparison({
+    required String userId,
+    required List<String> carIds,
+  }) async {
+    try {
+      final docRef = await _firestore.collection("comparisons").add({
+        'userId': userId,
+        'carIds': carIds,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      return Right(docRef.id);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Either<String, void>> deleteComparison(String comparisonId) async {
+    try {
+      await _firestore.collection('comparisons').doc(comparisonId).delete();
+      return const Right(null);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Failed to delete comparison: ${e.toString()}');
     }
   }
 }

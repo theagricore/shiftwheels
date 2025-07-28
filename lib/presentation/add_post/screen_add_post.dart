@@ -7,6 +7,7 @@ import 'package:shiftwheels/core/common_widget/widget/basic_elevated_app_button.
 import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
 import 'package:shiftwheels/core/common_widget/widget/bottom_sheet_list/bottom_sheet_selector.dart';
 import 'package:shiftwheels/core/common_widget/widget/transmission_type_selecter.dart';
+import 'package:shiftwheels/core/common_widget/widget/year_picker_widget.dart';
 import 'package:shiftwheels/core/config/helper/navigator/app_navigator.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/data/add_post/models/brand_model.dart';
@@ -155,11 +156,7 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
   }
 
   Widget _buildYearWidget() {
-    return TextFormFieldWidget(
-      label: "Year*",
-      controller: yearController,
-      keyboardType: TextInputType.number,
-    );
+    return YearPickerWidget(label: "Year*", controller: yearController);
   }
 
   Widget _buildKmDrivenWidget() {

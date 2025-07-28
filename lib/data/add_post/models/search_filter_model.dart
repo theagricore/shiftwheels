@@ -1,6 +1,5 @@
 import 'package:shiftwheels/data/add_post/models/ad_with_user_model.dart';
 import 'package:shiftwheels/data/add_post/models/location_model.dart';
-import 'dart:math';
 
 class SearchFilter {
   final String? query;
@@ -80,122 +79,119 @@ class SearchFilter {
         userLocation == null &&
         sortBy == null;
   }
+
+  bool get shouldFilterByDistance {
+    return maxDistanceInKm != null && 
+           maxDistanceInKm! > 0 && 
+           userLocation != null;
+  }
+
+  @override
+  String toString() {
+    return 'SearchFilter('
+        'query: $query, '
+        'brand: $brand, '
+        'model: $model, '
+        'fuelTypes: $fuelTypes, '
+        'transmissionTypes: $transmissionTypes, '
+        'minYear: $minYear, '
+        'maxYear: $maxYear, '
+        'ownerCounts: $ownerCounts, '
+        'minPrice: $minPrice, '
+        'maxPrice: $maxPrice, '
+        'maxDistanceInKm: $maxDistanceInKm, '
+        'userLocation: $userLocation, '
+        'sortBy: $sortBy)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+  
+    return other is SearchFilter &&
+      other.query == query &&
+      other.brand == brand &&
+      other.model == model &&
+      other.fuelTypes == fuelTypes &&
+      other.transmissionTypes == transmissionTypes &&
+      other.minYear == minYear &&
+      other.maxYear == maxYear &&
+      other.ownerCounts == ownerCounts &&
+      other.minPrice == minPrice &&
+      other.maxPrice == maxPrice &&
+      other.maxDistanceInKm == maxDistanceInKm &&
+      other.userLocation == userLocation &&
+      other.sortBy == sortBy;
+  }
+
+  @override
+  int get hashCode {
+    return query.hashCode ^
+      brand.hashCode ^
+      model.hashCode ^
+      fuelTypes.hashCode ^
+      transmissionTypes.hashCode ^
+      minYear.hashCode ^
+      maxYear.hashCode ^
+      ownerCounts.hashCode ^
+      minPrice.hashCode ^
+      maxPrice.hashCode ^
+      maxDistanceInKm.hashCode ^
+      userLocation.hashCode ^
+      sortBy.hashCode;
+  }
 }
 
 class SearchUtils {
-  static double calculateDistance(
-    double lat1,
-    double lon1,
-    double lat2,
-    double lon2,
-  ) {
-    const earthRadius = 6371.0; // in kilometers
-
-    final dLat = _degreesToRadians(lat2 - lat1);
-    final dLon = _degreesToRadians(lon2 - lon1);
-
-    final a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(_degreesToRadians(lat1)) *
-            cos(_degreesToRadians(lat2)) *
-            sin(dLon / 2) *
-            sin(dLon / 2);
-
-    final c = 2 * atan2(sqrt(a), sqrt(1 - a));
-
-    return earthRadius * c;
-  }
-
-  static double _degreesToRadians(double degrees) {
-    return degrees * pi / 180;
-  }
-
   static List<AdWithUserModel> filterAndSortAds({
     required List<AdWithUserModel> ads,
     required SearchFilter filter,
   }) {
-    var filteredAds = ads.where((adWithUser) {
-      final ad = adWithUser.ad;
-
-      // Handle query search (brand, model, year combined)
+    // Apply non-location filters
+    List<AdWithUserModel> filteredAds = ads.where((ad) {
+      // Query filter
       if (filter.query != null && filter.query!.isNotEmpty) {
         final query = filter.query!.toLowerCase();
-        final brandMatch = ad.brand.toLowerCase().contains(query);
-        final modelMatch = ad.model.toLowerCase().contains(query);
-        final yearMatch = ad.year.toString().contains(query);
-
-        if (!brandMatch && !modelMatch && !yearMatch) {
+        if (!ad.ad.brand.toLowerCase().contains(query) &&
+            !ad.ad.model.toLowerCase().contains(query) &&
+            !ad.ad.year.toString().contains(query)) {
           return false;
         }
       }
 
-      // Individual filters
-      if (filter.brand != null &&
-          ad.brand.toLowerCase() != filter.brand!.toLowerCase()) {
-        return false;
-      }
-
-      if (filter.model != null &&
-          ad.model.toLowerCase() != filter.model!.toLowerCase()) {
-        return false;
-      }
-
-      if (filter.fuelTypes != null &&
+      // Basic filters
+      if (filter.brand != null && ad.ad.brand != filter.brand) return false;
+      if (filter.model != null && ad.ad.model != filter.model) return false;
+      
+      // Multi-select filters
+      if (filter.fuelTypes != null && 
           filter.fuelTypes!.isNotEmpty &&
-          !filter.fuelTypes!.any((type) => type.toLowerCase() == ad.fuelType.toLowerCase())) {
+          !filter.fuelTypes!.contains(ad.ad.fuelType)) {
         return false;
       }
-
-      if (filter.transmissionTypes != null &&
+      
+      if (filter.transmissionTypes != null && 
           filter.transmissionTypes!.isNotEmpty &&
-          !filter.transmissionTypes!.any((type) => type.toLowerCase() == ad.transmissionType.toLowerCase())) {
+          !filter.transmissionTypes!.contains(ad.ad.transmissionType)) {
         return false;
       }
-
-      if (filter.minYear != null && ad.year < filter.minYear!) {
-        return false;
-      }
-
-      if (filter.maxYear != null && ad.year > filter.maxYear!) {
-        return false;
-      }
-
-      if (filter.ownerCounts != null &&
+      
+      if (filter.ownerCounts != null && 
           filter.ownerCounts!.isNotEmpty &&
-          !filter.ownerCounts!.contains(ad.noOfOwners)) {
+          !filter.ownerCounts!.contains(ad.ad.noOfOwners)) {
         return false;
       }
 
-      if (filter.minPrice != null && ad.price < filter.minPrice!) {
-        return false;
-      }
-
-      if (filter.maxPrice != null && ad.price > filter.maxPrice!) {
-        return false;
-      }
-
-      // Distance calculation
-      if (filter.maxDistanceInKm != null && filter.userLocation != null) {
-        try {
-          final double distance = calculateDistance(
-            filter.userLocation!.latitude,
-            filter.userLocation!.longitude,
-            ad.location.latitude,
-            ad.location.longitude,
-          );
-
-          if (distance > filter.maxDistanceInKm!) {
-            return false;
-          }
-        } catch (e) {
-          print('Error calculating distance: $e');
-          return false;
-        }
-      }
+      // Range filters
+      if (filter.minYear != null && ad.ad.year < filter.minYear!) return false;
+      if (filter.maxYear != null && ad.ad.year > filter.maxYear!) return false;
+      if (filter.minPrice != null && ad.ad.price < filter.minPrice!) return false;
+      if (filter.maxPrice != null && ad.ad.price > filter.maxPrice!) return false;
 
       return true;
     }).toList();
 
-    // Then sort if needed
+    // Apply sorting
     if (filter.sortBy != null) {
       filteredAds.sort((a, b) {
         switch (filter.sortBy) {
@@ -208,33 +204,28 @@ class SearchUtils {
           case 'year_desc':
             return b.ad.year.compareTo(a.ad.year);
           case 'distance_asc':
-            if (filter.userLocation == null) return 0;
-            try {
-              final distanceA = calculateDistance(
-                filter.userLocation!.latitude,
-                filter.userLocation!.longitude,
-                a.ad.location.latitude,
-                a.ad.location.longitude,
-              );
-              final distanceB = calculateDistance(
-                filter.userLocation!.latitude,
-                filter.userLocation!.longitude,
-                b.ad.location.latitude,
-                b.ad.location.longitude,
-              );
-              return distanceA.compareTo(distanceB);
-            } catch (e) {
-              return 0;
-            }
+            return (a.distanceKm ?? 0).compareTo(b.distanceKm ?? 0);
           default:
             return 0;
         }
       });
     } else {
-      // Default sort order: newest posted first
+      // Default sort by newest first
       filteredAds.sort((a, b) => b.ad.postedDate.compareTo(a.ad.postedDate));
     }
 
     return filteredAds;
+  }
+
+  static String getOrdinalSuffix(int number) {
+    if (number >= 11 && number <= 13) {
+      return 'th';
+    }
+    switch (number % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
   }
 }

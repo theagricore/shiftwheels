@@ -9,6 +9,10 @@ class ComparisonTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (selectedCars.length != 2) {
+      return Container(); 
+    }
+
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final tableBackgroundColor = isDarkMode ? AppColors.zDarkCardBackground : AppColors.zWhite;
     final headerColor = isDarkMode ? AppColors.zDarkBackground : AppColors.zGrey.shade100;
@@ -80,14 +84,28 @@ class ComparisonTable extends StatelessWidget {
             ],
           ),
           ...[
-            {'key': 'Brand', 'value1': selectedCars[0].ad.brand, 'value2': selectedCars[1].ad.brand},
-            {'key': 'Model', 'value1': selectedCars[0].ad.model, 'value2': selectedCars[1].ad.model},
+            {
+              'key': 'Brand',
+              'value1': selectedCars[0].ad.brand.isNotEmpty ? selectedCars[0].ad.brand : 'N/A',
+              'value2': selectedCars[1].ad.brand.isNotEmpty ? selectedCars[1].ad.brand : 'N/A',
+            },
+            {
+              'key': 'Model',
+              'value1': selectedCars[0].ad.model.isNotEmpty ? selectedCars[0].ad.model : 'N/A',
+              'value2': selectedCars[1].ad.model.isNotEmpty ? selectedCars[1].ad.model : 'N/A',
+            },
             {'key': 'Year', 'value1': selectedCars[0].ad.year.toString(), 'value2': selectedCars[1].ad.year.toString()},
-            {'key': 'Fuel Type', 'value1': selectedCars[0].ad.fuelType, 'value2': selectedCars[1].ad.fuelType},
+            {
+              'key': 'Fuel Type',
+              'value1': selectedCars[0].ad.fuelType.isNotEmpty ? selectedCars[0].ad.fuelType : 'N/A',
+              'value2': selectedCars[1].ad.fuelType.isNotEmpty ? selectedCars[1].ad.fuelType : 'N/A',
+            },
             {
               'key': 'Transmission',
-              'value1': selectedCars[0].ad.transmissionType,
-              'value2': selectedCars[1].ad.transmissionType,
+              'value1':
+                  selectedCars[0].ad.transmissionType.isNotEmpty ? selectedCars[0].ad.transmissionType : 'N/A',
+              'value2':
+                  selectedCars[1].ad.transmissionType.isNotEmpty ? selectedCars[1].ad.transmissionType : 'N/A',
             },
             {
               'key': 'KM Driven',
@@ -104,11 +122,7 @@ class ComparisonTable extends StatelessWidget {
               'value1': '\$${selectedCars[0].ad.price.toStringAsFixed(2)}',
               'value2': '\$${selectedCars[1].ad.price.toStringAsFixed(2)}',
             },
-            {
-              'key': 'Location',
-              'value1': selectedCars[0].ad.location.address,
-              'value2': selectedCars[1].ad.location.address,
-            },
+
             {
               'key': 'Posted Date',
               'value1': selectedCars[0].ad.postedDate.toLocal().toString().split(' ')[0],
@@ -130,7 +144,7 @@ class ComparisonTable extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.all(10),
                   child: Text(
-                    row['value1']!,
+                    row['value1'] ?? 'N/A', 
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: valueColor),
                     textAlign: TextAlign.center,
                   ),
@@ -138,7 +152,7 @@ class ComparisonTable extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.all(10),
                   child: Text(
-                    row['value2']!,
+                    row['value2'] ?? 'N/A', 
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: valueColor),
                     textAlign: TextAlign.center,
                   ),

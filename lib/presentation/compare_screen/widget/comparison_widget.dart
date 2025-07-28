@@ -34,9 +34,9 @@ class ComparisonViewWidget extends StatelessWidget {
               child: Text(
                 'Select two cars to compare',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -70,29 +70,27 @@ class ComparisonViewWidget extends StatelessWidget {
   Widget _buildGeneratePdfButton(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: SizedBox(
-        width: double.infinity, 
-        child: ElevatedButton.icon(
-          onPressed: () {
-            context.read<CompareBloc>().add(
-              GenerateAndSharePdf(state.selectedCars),
-            );
-          },
-          icon: const Icon(
-            Icons.picture_as_pdf,
-            color: AppColors.zDarkPrimaryText,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          context.read<CompareBloc>().add(
+                GenerateAndSharePdf(state.selectedCars),
+              );
+        },
+        icon: const Icon(
+          Icons.picture_as_pdf,
+          color: AppColors.zDarkPrimaryText,
+        ),
+        label:  Text(
+          'Share Comparison PDF',
+          style: Theme.of(context).textTheme.labelMedium,
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.zPrimaryColor,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
-          label: const Text(
-            'Generate and Share Comparison PDF',
-            style: TextStyle(color: AppColors.zDarkPrimaryText),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.zPrimaryColor,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
+          minimumSize: const Size(double.infinity, 50),
         ),
       ),
     );
@@ -102,26 +100,27 @@ class ComparisonViewWidget extends StatelessWidget {
     final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: () {
-            context.read<CompareBloc>().add(
-              SaveComparison(userId, state.selectedCars),
-            );
-          },
-          icon: const Icon(Icons.save, color: AppColors.zDarkPrimaryText),
-          label: const Text(
-            'Save Comparison',
-            style: TextStyle(color: AppColors.zDarkPrimaryText),
+      child: ElevatedButton.icon(
+        onPressed: () {
+          context.read<CompareBloc>().add(
+                SaveComparison(userId, state.selectedCars),
+              );
+        },
+        icon: const Icon(
+          Icons.save,
+          color: AppColors.zDarkPrimaryText,
+        ),
+        label:  Text(
+          'Save Comparison',
+          style:  Theme.of(context).textTheme.labelMedium,
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.zPrimaryColor,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.zPrimaryColor,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
+          minimumSize: const Size(double.infinity, 50),
         ),
       ),
     );
@@ -193,11 +192,11 @@ class ComparisonViewWidget extends StatelessWidget {
         child:
             isSlotFilled
                 ? FilledCarSlot(
-                  car: car!,
-                  textColor: textColor,
-                  subtitleColor: subtitleColor,
-                  placeholderColor: placeholderColor,
-                )
+                    car: car!,
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
+                    placeholderColor: placeholderColor,
+                  )
                 : _buildEmptyCarSlot(context, subtitleColor),
       ),
     );

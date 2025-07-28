@@ -7,6 +7,7 @@ class AdWithUserModel {
   final bool isFavorite;
   final bool isInterested;
   final bool isPremium;
+  final double? distanceKm;
 
   AdWithUserModel({
     required this.ad,
@@ -14,5 +15,24 @@ class AdWithUserModel {
     this.isFavorite = false,
     this.isInterested = false,
     this.isPremium = false,
+    this.distanceKm,
   });
+
+  AdWithUserModel copyWith({
+    AdsModel? ad,
+    UserModel? userData,
+    bool? isFavorite,
+    bool? isInterested,
+    bool? isPremium,
+    double? distanceKm,
+  }) {
+    return AdWithUserModel(
+      ad: ad ?? this.ad,
+      userData: userData ?? this.userData,
+      isFavorite: isFavorite ?? this.isFavorite,
+      isInterested: isInterested ?? this.isInterested,
+      isPremium: isPremium ?? this.isPremium,
+      distanceKm: distanceKm ?? this.distanceKm,
+    );
+  }
 }

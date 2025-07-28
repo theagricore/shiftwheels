@@ -64,22 +64,22 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     await _performSearch(emit);
   }
 
-  Future<void> _performSearch(Emitter<SearchState> emit) async {
-    emit(SearchLoading());
-    try {
-      final result = await _postRepository.getActiveAdsWithUsers();
-      result.fold(
-        (error) => emit(SearchError(error)),
-        (ads) {
-          final filteredAds = SearchUtils.filterAndSortAds(
-            ads: ads,
-            filter: _currentFilter,
-          );
-          emit(SearchLoaded(filteredAds, _currentFilter));
-        },
-      );
-    } catch (e) {
-      emit(SearchError(e.toString()));
-    }
+Future<void> _performSearch(Emitter<SearchState> emit) async {
+  emit(SearchLoading());
+  try {
+    final result = await _postRepository.getActiveAdsWithUsers();
+    result.fold(
+      (error) => emit(SearchError(error)),
+      (ads) {
+        final filteredAds = SearchUtils.filterAndSortAds(
+          ads: ads,
+          filter: _currentFilter,
+        );
+        emit(SearchLoaded(filteredAds, _currentFilter));
+      },
+    );
+  } catch (e) {
+    emit(SearchError('Failed to perform search: ${e.toString()}'));
   }
+}
 }

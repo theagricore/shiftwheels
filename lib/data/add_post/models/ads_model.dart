@@ -21,6 +21,7 @@ class AdsModel {
   final List<String> favoritedByUsers;
   final List<String> interestedUsers;
   final List<String> chatIds;
+  final String? geohash;
 
   AdsModel({
     this.id,
@@ -43,6 +44,7 @@ class AdsModel {
     this.favoritedByUsers = const [],
     this.interestedUsers = const [],
     this.chatIds = const [],
+    this.geohash,
   });
 
   AdsModel copyWith({
@@ -66,6 +68,7 @@ class AdsModel {
     List<String>? favoritedByUsers,
     List<String>? interestedUsers,
     List<String>? chatIds,
+    String? geohash,
   }) {
     return AdsModel(
       id: id ?? this.id,
@@ -88,6 +91,7 @@ class AdsModel {
       favoritedByUsers: favoritedByUsers ?? this.favoritedByUsers,
       interestedUsers: interestedUsers ?? this.interestedUsers,
       chatIds: chatIds ?? this.chatIds,
+      geohash: geohash ?? this.geohash,
     );
   }
 
@@ -113,6 +117,7 @@ class AdsModel {
       favoritedByUsers: List<String>.from(map['favoritedByUsers'] as List? ?? []),
       interestedUsers: List<String>.from(map['interestedUsers'] as List? ?? []),
       chatIds: List<String>.from(map['chatIds'] as List? ?? []),
+      geohash: map['geohash'] as String?,
     );
   }
 
@@ -137,6 +142,71 @@ class AdsModel {
       'favoritedByUsers': favoritedByUsers,
       'interestedUsers': interestedUsers,
       'chatIds': chatIds,
+      'geohash': geohash,
     };
+  }
+
+  @override
+  String toString() {
+    return 'AdsModel(id: $id, userId: $userId, brand: $brand, model: $model, fuelType: $fuelType, '
+        'transmissionType: $transmissionType, year: $year, kmDriven: $kmDriven, '
+        'noOfOwners: $noOfOwners, description: $description, location: $location, '
+        'imageUrls: $imageUrls, price: $price, postedDate: $postedDate, '
+        'isActive: $isActive, isSold: $isSold, soldDate: $soldDate, '
+        'favoritedByUsers: $favoritedByUsers, interestedUsers: $interestedUsers, '
+        'chatIds: $chatIds, geohash: $geohash)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+  
+    return other is AdsModel &&
+      other.id == id &&
+      other.userId == userId &&
+      other.brand == brand &&
+      other.model == model &&
+      other.fuelType == fuelType &&
+      other.transmissionType == transmissionType &&
+      other.year == year &&
+      other.kmDriven == kmDriven &&
+      other.noOfOwners == noOfOwners &&
+      other.description == description &&
+      other.location == location &&
+      other.imageUrls == imageUrls &&
+      other.price == price &&
+      other.postedDate == postedDate &&
+      other.isActive == isActive &&
+      other.isSold == isSold &&
+      other.soldDate == soldDate &&
+      other.favoritedByUsers == favoritedByUsers &&
+      other.interestedUsers == interestedUsers &&
+      other.chatIds == chatIds &&
+      other.geohash == geohash;
+  }
+
+  @override
+  int get hashCode {
+    return id.hashCode ^
+      userId.hashCode ^
+      brand.hashCode ^
+      model.hashCode ^
+      fuelType.hashCode ^
+      transmissionType.hashCode ^
+      year.hashCode ^
+      kmDriven.hashCode ^
+      noOfOwners.hashCode ^
+      description.hashCode ^
+      location.hashCode ^
+      imageUrls.hashCode ^
+      price.hashCode ^
+      postedDate.hashCode ^
+      isActive.hashCode ^
+      isSold.hashCode ^
+      soldDate.hashCode ^
+      favoritedByUsers.hashCode ^
+      interestedUsers.hashCode ^
+      chatIds.hashCode ^
+      geohash.hashCode;
   }
 }

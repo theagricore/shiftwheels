@@ -8,7 +8,7 @@ import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/presentation/add_post/post_limit_bloc/post_limit_bloc.dart';
 import 'package:shiftwheels/presentation/auth/auth_bloc/auth_bloc.dart';
 import 'package:shiftwheels/presentation/auth/screens/signin_screen.dart';
-import 'package:shiftwheels/presentation/compare_screen/compare_screen.dart';
+import 'package:shiftwheels/presentation/compare_screen/widget/comparison_tab_bar.dart';
 import 'package:shiftwheels/presentation/screen_profile/ProfileBloc/profile_bloc.dart';
 import 'package:shiftwheels/presentation/screen_profile/profile_image_bloc/profile_image_bloc.dart';
 import 'package:shiftwheels/presentation/screen_profile/widget/full_image_dialog.dart';
@@ -206,7 +206,7 @@ class ScreenProfile extends StatelessWidget {
                       icon: Icons.compare,
                       title: 'Compare',
                       onTap: () {
-                        AppNavigator.push(context, CompareScreen());
+                        AppNavigator.push(context, ComparisonTabBar());
                       },
                     ),
                     const SizedBox(height: 10),

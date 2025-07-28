@@ -11,6 +11,7 @@ import 'package:shiftwheels/data/add_post/models/payment_model.dart';
 import 'package:shiftwheels/data/add_post/models/user_post_limit.dart';
 import 'package:shiftwheels/data/auth/models/user_model.dart';
 import 'package:shiftwheels/domain/add_post/repository/post_repository.dart';
+import 'package:shiftwheels/data/add_post/models/comparison_model.dart';
 import 'package:shiftwheels/service_locater/service_locater.dart';
 
 class PostRepositoryImpl extends PostRepository {
@@ -178,6 +179,7 @@ class PostRepositoryImpl extends PostRepository {
   ) async {
     return await sl<FirebasePostService>().getUserInterests(userId);
   }
+
   @override
   Future<Either<String, UserPostLimit>> getUserPostLimit(String userId) async {
     return await sl<FirebasePostService>().getUserPostLimit(userId);
@@ -207,14 +209,44 @@ class PostRepositoryImpl extends PostRepository {
   Future<Either<String, void>> incrementPostCount(String userId) async {
     return await sl<FirebasePostService>().incrementPostCount(userId);
   }
-  
+
   @override
   Future<Either<String, List<AdWithUserModel>>> getPremiumUserAds() async {
     return await sl<FirebasePostService>().getPremiumUserAds();
   }
-  
+
   @override
   Future<Either<String, void>> markAdAsSold(String adId) async {
     return await sl<FirebasePostService>().markAdAsSold(adId);
+  }
+
+  @override
+  Future<Either<String, String>> saveComparison({
+    required String userId,
+    required List<String> carIds,
+  }) async {
+    return await sl<FirebasePostService>().saveComparison(
+      userId: userId,
+      carIds: carIds,
+    );
+  }
+
+  @override
+  Future<Either<String, List<ComparisonModel>>> getSavedComparisons(
+    String userId,
+  ) async {
+    return await sl<FirebasePostService>().getSavedComparisons(userId);
+  }
+
+  @override
+  Future<Either<String, List<AdWithUserModel>>> getComparisonCars(
+    List<String> carIds,
+  ) async {
+    return await sl<FirebasePostService>().getComparisonCars(carIds);
+  }
+
+  @override
+  Future<Either<String, void>> deleteComparison(String comparisonId) async {
+    return await sl<FirebasePostService>().deleteComparison(comparisonId);
   }
 }

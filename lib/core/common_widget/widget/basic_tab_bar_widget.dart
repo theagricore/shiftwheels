@@ -47,6 +47,7 @@ class _BasicTabBarWidgetState extends State<BasicTabBarWidget>
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           margin: widget.margin ?? const EdgeInsets.all(16),
@@ -57,10 +58,15 @@ class _BasicTabBarWidgetState extends State<BasicTabBarWidget>
             ],
           ),
         ),
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: widget.tabViews,
+        // Use Flexible instead of Expanded with loose fit
+        Flexible(
+          fit: FlexFit.loose,
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.8, // Set a reasonable height
+            child: TabBarView(
+              controller: _tabController,
+              children: widget.tabViews,
+            ),
           ),
         ),
       ],
@@ -69,7 +75,8 @@ class _BasicTabBarWidgetState extends State<BasicTabBarWidget>
 
   Widget _buildTabButton(int index) {
     final isSelected = _tabController.index == index;
-    return Expanded(
+    return Flexible( // Changed from Expanded to Flexible with loose fit
+      fit: FlexFit.loose,
       child: Container(
         margin: EdgeInsets.only(
           right: index < widget.tabTitles.length - 1 ? widget.tabGap! : 0,

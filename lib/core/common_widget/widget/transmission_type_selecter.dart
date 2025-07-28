@@ -86,19 +86,19 @@ class _TransmissionTypeSelectorState extends State<TransmissionTypeSelector> {
     required bool isDarkMode,
   }) {
     final Color backgroundColor = isDarkMode 
-        ? AppColors.zfontColor 
+        ? AppColors.zBackGround 
         : AppColors.zWhite;
     
     final Color borderColor = isSelected
         ? AppColors.zPrimaryColor
         : (isDarkMode 
-            ? AppColors.zWhite.withOpacity(0.2) 
+            ? AppColors.zWhite.withOpacity(0.4) 
             : AppColors.zfontColor);
     
     final Color textColor = isSelected
         ? AppColors.zPrimaryColor
         : (isDarkMode 
-            ? AppColors.zWhite.withOpacity(0.7) 
+            ? AppColors.zWhite 
             : AppColors.zfontColor);
 
     return Expanded(

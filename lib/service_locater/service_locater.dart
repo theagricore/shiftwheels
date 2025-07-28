@@ -17,17 +17,21 @@ import 'package:shiftwheels/domain/add_post/usecase/check_post_limit_usecase.dar
 import 'package:shiftwheels/domain/add_post/usecase/compare_cars_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/create_payment_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/deactive-ad_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/delete_comparisons_usecase';
 import 'package:shiftwheels/domain/add_post/usecase/get_active_ads_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_brand_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/get_comparison_cars_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_favorites_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_fuels_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_interested_users_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_location_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_models_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_premium_ads_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/get_saved_comparisons_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_user_active_ads_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/mark_as_sold_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/post_ad_usecase.dart';
+import 'package:shiftwheels/domain/add_post/usecase/save_comparison_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/search_location_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/toggleIntrestUsecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/toggle_favoriteUsecase.dart';
@@ -148,6 +152,18 @@ Future<void> initializeDependencies() async {
   );
   sl.registerSingleton<MarkAsSoldUsecase>(
   MarkAsSoldUsecase(sl<PostRepository>()),
+);
+  sl.registerSingleton<SaveComparisonUseCase>(
+    SaveComparisonUseCase(sl<PostRepository>()),
+  );
+  sl.registerSingleton<GetSavedComparisonsUseCase>(
+    GetSavedComparisonsUseCase(sl<PostRepository>()),
+  );
+  sl.registerSingleton<GetComparisonCarsUseCase>(
+    GetComparisonCarsUseCase(sl<PostRepository>()),
+  );
+  sl.registerSingleton<DeleteComparisonUseCase>(
+  DeleteComparisonUseCase(sl<PostRepository>()),
 );
 
   // Blocs

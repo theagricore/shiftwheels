@@ -9,12 +9,14 @@ class SelectLocationWidget extends StatelessWidget {
     required this.searchLocation,
     this.selectedLocation,
     this.isLoading = false,
+    this.isWeb = false,
   });
 
   final VoidCallback getCurrentLocation;
   final VoidCallback searchLocation;
   final LocationModel? selectedLocation;
   final bool isLoading;
+  final bool isWeb;
 
   @override
   Widget build(BuildContext context) {
@@ -24,62 +26,80 @@ class SelectLocationWidget extends StatelessWidget {
           onTap: isLoading ? null : getCurrentLocation,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: AppColors.zfontColor, width: 2.0),
+              borderRadius: BorderRadius.circular(isWeb ? 12 : 15),
+              border: Border.all(
+                color: AppColors.zfontColor, 
+                width: isWeb ? 1.5 : 2.0,
+              ),
             ),
             width: double.infinity,
-            height: 60,
-            padding: const EdgeInsets.all(12),
-            child:
-                isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : Center(
-                      child: Text(
-                        "Current location",
-                        style: Theme.of(context).textTheme.displayMedium,
+            height: isWeb ? 50 : 60,
+            padding: EdgeInsets.all(isWeb ? 10 : 12),
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Center(
+                    child: Text(
+                      "Current location",
+                      style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                        fontSize: isWeb ? 15 : null,
                       ),
                     ),
+                  ),
           ),
         ),
-        const SizedBox(height: 30),
+        SizedBox(height: isWeb ? 20 : 30),
         InkWell(
           onTap: isLoading ? null : searchLocation,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: AppColors.zfontColor, width: 2.0),
+              borderRadius: BorderRadius.circular(isWeb ? 12 : 15),
+              border: Border.all(
+                color: AppColors.zfontColor, 
+                width: isWeb ? 1.5 : 2.0,
+              ),
             ),
             width: double.infinity,
-            height: 60,
-            padding: const EdgeInsets.all(12),
+            height: isWeb ? 50 : 60,
+            padding: EdgeInsets.all(isWeb ? 10 : 12),
             child: Center(
               child: Text(
                 "Search for a location",
-                style: Theme.of(context).textTheme.displayMedium,
+                style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                  fontSize: isWeb ? 15 : null,
+                ),
               ),
             ),
           ),
         ),
-        const SizedBox(height: 10),
-        if (selectedLocation != null) _showLocationWidget(context),
+        SizedBox(height: isWeb ? 8 : 10),
+        if (selectedLocation != null) _showLocationWidget(context, isWeb),
       ],
     );
   }
 
-  Widget _showLocationWidget(BuildContext context) {
+  Widget _showLocationWidget(BuildContext context, bool isWeb) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.location_on_outlined,color: AppColors.zfontColor,),
+        Icon(
+          Icons.location_on_outlined,
+          color: AppColors.zfontColor,
+          size: isWeb ? 18 : null,
+        ),
+        const SizedBox(width: 4),
         Text(
           selectedLocation?.address ?? 'No address',
-          style: Theme.of(context).textTheme.bodySmall,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            fontSize: isWeb ? 12 : null,
+          ),
         ),
-        SizedBox(width: 5),
+        const SizedBox(width: 4),
         Text(
           "Lat: ${selectedLocation?.latitude.toStringAsFixed(4) ?? 'N/A'}, "
           "Lng: ${selectedLocation?.longitude.toStringAsFixed(4) ?? 'N/A'}",
-          style: Theme.of(context).textTheme.bodySmall,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            fontSize: isWeb ? 12 : null,
+          ),
         ),
       ],
     );

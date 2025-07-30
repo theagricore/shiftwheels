@@ -29,7 +29,7 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
   @override
   void initState() {
     super.initState();
-    print('InputMessageWidget initState: replyingToMessage = ${widget.replyingToMessage?.id}'); // Debug print
+    print('InputMessageWidget initState: replyingToMessage = ${widget.replyingToMessage?.id}');
   }
 
   @override
@@ -42,18 +42,19 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
+    final isWeb = MediaQuery.of(context).size.width > 600;
 
     return Column(
       children: [
         if (widget.replyingToMessage != null)
-          _buildReplyBanner(context, widget.replyingToMessage!, isDarkMode),
+          _buildReplyBanner(context, widget.replyingToMessage!, isDarkMode, isWeb),
         Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: EdgeInsets.all(isWeb ? 12.0 : 8.0),
           child: Row(
             children: [
-              Expanded(child: _buildInputField(isDarkMode)),
-              const SizedBox(width: 8),
-              _buildSendButton(),
+              Expanded(child: _buildInputField(isDarkMode, isWeb)),
+              SizedBox(width: isWeb ? 12 : 8),
+              _buildSendButton(isWeb),
             ],
           ),
         ),
@@ -65,12 +66,13 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
     BuildContext context,
     MessageModel replyMessage,
     bool isDarkMode,
+    bool isWeb,
   ) {
     final replyingTo = replyMessage.senderId == currentUserId
         ? "yourself"
         : widget.otherUser?.fullName ?? "Unknown";
 
-    print('Building reply banner for message: ${replyMessage.id}'); // Debug print
+    print('Building reply banner for message: ${replyMessage.id}');
 
     return Container(
       decoration: BoxDecoration(
@@ -84,7 +86,10 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
         ),
         borderRadius: BorderRadius.circular(5),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: EdgeInsets.symmetric(
+        horizontal: isWeb ? 16 : 12,
+        vertical: isWeb ? 12 : 10,
+      ),
       margin: const EdgeInsets.only(bottom: 4),
       child: Row(
         children: [
@@ -96,7 +101,7 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
                   'Replying to $replyingTo',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    fontSize: 13,
+                    fontSize: isWeb ? 12 : 13,
                     color: isDarkMode ? Colors.white70 : Colors.black87,
                   ),
                 ),
@@ -105,6 +110,7 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
+                    fontSize: isWeb ? 12 : null,
                     color: isDarkMode ? AppColors.zGrey : AppColors.zGrey,
                   ),
                 ),
@@ -114,10 +120,11 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
           IconButton(
             icon: Icon(
               Icons.close,
+              size: isWeb ? 20 : 24,
               color: isDarkMode ? Colors.white70 : Colors.black87,
             ),
             onPressed: () {
-              print('Clear reply tapped'); // Debug print
+              print('Clear reply tapped');
               context.read<ChatBloc>().add(ClearReplyMessageEvent());
             },
           ),
@@ -126,9 +133,12 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
     );
   }
 
-  Widget _buildInputField(bool isDarkMode) {
+  Widget _buildInputField(bool isDarkMode, bool isWeb) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 13),
+      padding: EdgeInsets.symmetric(
+        horizontal: isWeb ? 16 : 13,
+        vertical: isWeb ? 4 : 0,
+      ),
       decoration: BoxDecoration(
         color: isDarkMode ? AppColors.zDarkGrey : Colors.white,
         borderRadius: BorderRadius.circular(30),
@@ -141,11 +151,15 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
         padding: const EdgeInsets.all(4.0),
         child: TextField(
           controller: messageController,
-          style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
+          style: TextStyle(
+            color: isDarkMode ? Colors.white : Colors.black87,
+            fontSize: isWeb ? 14 : null,
+          ),
           decoration: InputDecoration(
             hintText: 'Type your message...',
             hintStyle: TextStyle(
               color: isDarkMode ? AppColors.zGrey : AppColors.zGrey,
+              fontSize: isWeb ? 14 : null,
             ),
             border: InputBorder.none,
             enabledBorder: InputBorder.none,
@@ -163,12 +177,16 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
     );
   }
 
-  Widget _buildSendButton() {
+  Widget _buildSendButton(bool isWeb) {
     return CircleAvatar(
-      radius: 26,
+      radius: isWeb ? 24 : 26,
       backgroundColor: AppColors.zPrimaryColor,
       child: IconButton(
-        icon: const Icon(Icons.send, color: Colors.white),
+        icon: Icon(
+          Icons.send,
+          color: Colors.white,
+          size: isWeb ? 20 : 24,
+        ),
         onPressed: _sendMessage,
       ),
     );
@@ -178,7 +196,7 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
     final text = messageController.text.trim();
     if (text.isEmpty) return;
 
-    print('Sending message with replyTo: ${widget.replyingToMessage?.id}'); // Debug print
+    print('Sending message with replyTo: ${widget.replyingToMessage?.id}');
 
     context.read<ChatBloc>().add(
       SendMessageEvent(
@@ -191,6 +209,6 @@ class _InputMessageWidgetState extends State<InputMessageWidget> {
     );
 
     messageController.clear();
-    context.read<ChatBloc>().add(ClearReplyMessageEvent()); // Clear reply after sending
+    context.read<ChatBloc>().add(ClearReplyMessageEvent());
   }
 }

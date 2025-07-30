@@ -6,6 +6,7 @@ class OverviewGrid extends StatelessWidget {
   final int kmDriven;
   final int noOfOwners;
   final String fuelType;
+  final bool isWeb;
 
   const OverviewGrid({
     super.key,
@@ -13,6 +14,7 @@ class OverviewGrid extends StatelessWidget {
     required this.kmDriven,
     required this.noOfOwners,
     required this.fuelType,
+    this.isWeb = false,
   });
 
   Widget _buildDetailItem(String value, IconData icon) {
@@ -22,20 +24,24 @@ class OverviewGrid extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.zWhite.withOpacity(0.2), width: 1),
       ),
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(isWeb ? 16 : 12),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 20, color: AppColors.zWhite.withOpacity(0.9)),
-              const SizedBox(width: 8),
+              Icon(
+                icon, 
+                size: isWeb ? 24 : 20, 
+                color: AppColors.zWhite.withOpacity(0.9)
+              ),
+              SizedBox(width: isWeb ? 10 : 8),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: 16,
+                  fontSize: isWeb ? 18 : 16,
                   color: AppColors.zWhite,
                 ),
               ),
@@ -50,9 +56,9 @@ class OverviewGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return GridView.count(
       crossAxisCount: 2,
-      childAspectRatio: 2.5,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
+      childAspectRatio: isWeb ? 3.0 : 2.5,
+      crossAxisSpacing: isWeb ? 20 : 16,
+      mainAxisSpacing: isWeb ? 20 : 16,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       children: [

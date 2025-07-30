@@ -47,6 +47,7 @@ dependencies:
   flutter_screenutil: ^5.9.3
   fluttertoast: ^8.2.12
   geocoding: ^2.0.0
+  geolocator: ^14.0.2
   get_it: ^8.0.3
   glassmorphism_ui: ^0.3.0
   google_fonts: ^6.2.1

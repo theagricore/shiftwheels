@@ -34,42 +34,55 @@ class ScreenAdChat extends StatelessWidget {
       MarkMessagesReadEvent(chatId: chatId, userId: currentUserId),
     );
 
-    return Scaffold(
-      appBar: MessageScreenAppBar(otherUser: otherUser, ad: ad),
-      body: BlocConsumer<ChatBloc, ChatState>(
-        listener: (context, state) {
-          if (state is ChatScreenState) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (scrollController.hasClients) {
-                scrollController.jumpTo(
-                  scrollController.position.maxScrollExtent,
-                );
-              }
-            });
-          }
-        },
-        builder: (context, state) {
-          return Column(
-            children: [
-              Expanded(
-                child: _buildMessageList(
-                  context,
-                  state,
-                  scrollController,
-                  messageKeys,
-                  currentUserId,
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWeb = constraints.maxWidth > 600;
+
+        return Scaffold(
+          appBar: MessageScreenAppBar(otherUser: otherUser, ad: ad),
+          body: Center(
+            child: ConstrainedBox(
+              constraints: isWeb
+                  ? const BoxConstraints(maxWidth: 900)
+                  : const BoxConstraints(),
+              child: BlocConsumer<ChatBloc, ChatState>(
+                listener: (context, state) {
+                  if (state is ChatScreenState) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (scrollController.hasClients) {
+                        scrollController.jumpTo(
+                          scrollController.position.maxScrollExtent,
+                        );
+                      }
+                    });
+                  }
+                },
+                builder: (context, state) {
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: _buildMessageList(
+                          context,
+                          state,
+                          scrollController,
+                          messageKeys,
+                          currentUserId,
+                        ),
+                      ),
+                      _buildMessageInput(
+                        context,
+                        state,
+                        messageController,
+                        currentUserId,
+                      ),
+                    ],
+                  );
+                },
               ),
-              _buildMessageInput(
-                context,
-                state,
-                messageController,
-                currentUserId,
-              ),
-            ],
-          );
-        },
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 

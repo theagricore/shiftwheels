@@ -1,4 +1,3 @@
-// replay_and_delete_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftwheels/data/add_post/models/message_model.dart';
@@ -18,42 +17,64 @@ class ReplyAndDeleteWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.reply),
-            title: const Text('Reply'),
-            onTap: () {
-              context.read<ChatBloc>().add(
-                SetReplyMessageEvent(
-                  message: message,
-                  chatId: chatId,
-                ),
-              );
-              Navigator.pop(context);
-            },
-          ),
-          if (isMe && !message.isDeleted)
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text(
-                'Delete',
-                style: TextStyle(color: Colors.red),
-              ),
-              onTap: () {
-                context.read<ChatBloc>().add(
-                  DeleteMessageEvent(
-                    chatId: chatId,
-                    messageId: message.id,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWeb = constraints.maxWidth > 600;
+        final double iconSize = isWeb ? 20 : 24;
+        final double textSize = isWeb ? 14 : 16;
+        final EdgeInsets padding = isWeb
+            ? const EdgeInsets.symmetric(horizontal: 12, vertical: 6)
+            : const EdgeInsets.symmetric(horizontal: 16, vertical: 10);
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  contentPadding: padding,
+                  leading: Icon(Icons.reply, size: iconSize),
+                  title: Text(
+                    'Reply',
+                    style: TextStyle(fontSize: textSize),
                   ),
-                );
-                Navigator.pop(context);
-              },
+                  onTap: () {
+                    context.read<ChatBloc>().add(
+                          SetReplyMessageEvent(
+                            message: message,
+                            chatId: chatId,
+                          ),
+                        );
+                    Navigator.pop(context);
+                  },
+                ),
+                if (isMe && !message.isDeleted)
+                  ListTile(
+                    contentPadding: padding,
+                    leading: Icon(Icons.delete, color: Colors.red, size: iconSize),
+                    title: Text(
+                      'Delete',
+                      style: TextStyle(
+                        fontSize: textSize,
+                        color: Colors.red,
+                      ),
+                    ),
+                    onTap: () {
+                      context.read<ChatBloc>().add(
+                            DeleteMessageEvent(
+                              chatId: chatId,
+                              messageId: message.id,
+                            ),
+                          );
+                      Navigator.pop(context);
+                    },
+                  ),
+              ],
             ),
-        ],
-      ),
+          ),
+        );
+      },
     );
   }
 }

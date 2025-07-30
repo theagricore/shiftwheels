@@ -27,9 +27,8 @@ class SigninScreen extends StatelessWidget {
 
     return Scaffold(
       body: BlocListener<AuthBloc, AuthState>(
-        listenWhen:
-            (previous, current) =>
-                current is AuthSuccess || current is AuthFailure,
+        listenWhen: (previous, current) =>
+            current is AuthSuccess || current is AuthFailure,
         listener: (context, state) {
           if (state is AuthSuccess) {
             BasicSnackbar(
@@ -46,53 +45,66 @@ class SigninScreen extends StatelessWidget {
             ).show(context);
           }
         },
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                SizedBox(height: size.height * 0.08),
-                Center(
-                  child: Image(
-                    image: const AssetImage(zLogo),
-                    height: size.height * 0.2,
-                    width: size.height * 0.2,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // For wider screens, center content in a narrower box
+            bool isWideScreen = constraints.maxWidth > 600;
+
+            return SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: isWideScreen ? 500 : double.infinity,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SizedBox(height: size.height * 0.08),
+                        Center(
+                          child: Image(
+                            image: const AssetImage(zLogo),
+                            height: size.height * 0.2,
+                            width: size.height * 0.2,
+                          ),
+                        ),
+                        SizedBox(height: size.height * 0.05),
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              _buildEmailWidget(),
+                              SizedBox(height: size.height * 0.03),
+                              _buildPasswordWidget(),
+                              SizedBox(height: size.height * 0.02),
+                              _forgotPassword(context),
+                              SizedBox(height: size.height * 0.05),
+                              Column(
+                                children: [
+                                  _buildEmailPasswordSigninWidget(size),
+                                  SizedBox(height: size.height * 0.02),
+                                  _buildGoogleSigninWidget(size),
+                                  SizedBox(height: size.height * 0.04),
+                                  _createAccount(context),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                SizedBox(height: size.height * 0.05),
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      _buildEmailWidget(),
-                      SizedBox(height: size.height * 0.03),
-                      _buildPasswordWidget(),
-                      SizedBox(height: size.height * 0.02),
-                      _forgotPassword(context),
-                      SizedBox(height: size.height * 0.05),
-                      Column(
-                        children: [
-                          _buildEmailPasswordSigninWidget(size),
-                          SizedBox(height: size.height * 0.02),
-                          _buildGoogleSigininWidget(size),
-                          SizedBox(height: size.height * 0.04),
-                          _createAccount(context),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildGoogleSigininWidget(Size size) {
+  Widget _buildGoogleSigninWidget(Size size) {
     return BlocListener<GoogleAuthBloc, GoogleAuthState>(
       listener: (context, state) {
         if (state is GoogleAuthSuccess) {
@@ -163,51 +175,59 @@ class SigninScreen extends StatelessWidget {
     );
   }
 
-  Widget _createAccount(BuildContext context) {
-    return Align(
-      alignment: Alignment.center,
-      child: RichText(
-        text: TextSpan(
-          children: [
-            TextSpan(
-              text: zDontHaveAnAccount,
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
-            TextSpan(
-              recognizer:
-                  TapGestureRecognizer()
-                    ..onTap = () {
-                      AppNavigator.pushReplacement(context, SiginupScreen());
-                    },
-              text: zCreateOne,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.blue,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+Widget _createAccount(BuildContext context) {
+  final isWeb = MediaQuery.of(context).size.width > 600;
 
-  Widget _forgotPassword(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: RichText(
-        text: TextSpan(
-          recognizer:
-              TapGestureRecognizer()
-                ..onTap = () {
-                  AppNavigator.push(context, ForgotPasswordPage());
-                },
-          text: zForgetPassord,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.blue,
+  return Align(
+    alignment: Alignment.center,
+    child: RichText(
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: zDontHaveAnAccount,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  fontSize: isWeb ? 13 : null,
+                ),
           ),
+          TextSpan(
+            recognizer: TapGestureRecognizer()
+              ..onTap = () {
+                AppNavigator.pushReplacement(context, SiginupScreen());
+              },
+            text: zCreateOne,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: isWeb ? 13 : 15,
+              color: Colors.blue,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+
+Widget _forgotPassword(BuildContext context) {
+  final isWeb = MediaQuery.of(context).size.width > 600;
+
+  return Align(
+    alignment: Alignment.centerRight,
+    child: RichText(
+      text: TextSpan(
+        recognizer: TapGestureRecognizer()
+          ..onTap = () {
+            AppNavigator.push(context, ForgotPasswordPage());
+          },
+        text: zForgetPassord,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: isWeb ? 13 : 15,
+          color: Colors.blue,
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 }

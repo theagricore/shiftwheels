@@ -20,6 +20,7 @@ class BottomSheetSelector<T> extends StatelessWidget {
   final void Function(T) onItemSelected;
   final LoadingSelector loadingSelector;
   final ErrorSelector errorSelector;
+  final bool isWeb;
 
   const BottomSheetSelector({
     super.key,
@@ -33,6 +34,7 @@ class BottomSheetSelector<T> extends StatelessWidget {
     required this.loadingSelector,
     required this.errorSelector,
     this.isDisabled = false,
+    this.isWeb = false,
   });
 
   @override
@@ -67,22 +69,24 @@ class BottomSheetSelector<T> extends StatelessWidget {
                         },
                         isLoading: loadingSelector(state),
                         error: errorSelector(state),
+                        isWeb: isWeb,
                       );
                     },
                   ),
                 ),
+                isWeb: isWeb,
               );
             },
       child: Container(
-        height: 65,
+        height: isWeb ? 50 : 60,
         decoration: BoxDecoration(
           color: containerColor, 
-          borderRadius: BorderRadius.circular(5),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isDisabled
-                ? (isDarkMode ? AppColors.zSecondBackground : AppColors.zfontColor) 
+                ? (isDarkMode ? AppColors.zSecondBackground.withOpacity(0.4) : AppColors.zfontColor.withOpacity(0.4)) 
                 : (isDarkMode ? AppColors.zSecondBackground : AppColors.zfontColor), 
-            width: 1.0,
+            width: 1.5,
           ),
         ),
         child: Center(
@@ -90,14 +94,16 @@ class BottomSheetSelector<T> extends StatelessWidget {
             title: Text(
               displayText,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: isDisabled ? disabledTextColor : textColor,
+                    color: isDisabled ? disabledTextColor.withOpacity(0.6) : textColor,
+                    fontSize: isWeb ? 14 : 16,
                   ),
             ),
             trailing: Icon(
               Icons.keyboard_arrow_down,
-              color: isDisabled ? disabledTextColor : textColor, 
+              color: isDisabled ? disabledTextColor.withOpacity(0.6) : textColor, 
+              size: isWeb ? 20 : 24,
             ),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+            contentPadding: EdgeInsets.symmetric(horizontal: isWeb ? 12 : 16),
           ),
         ),
       ),

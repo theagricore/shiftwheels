@@ -37,6 +37,10 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bool isWeb = screenWidth > 600;
+    final maxWidth = isWeb ? 500.0 : double.infinity;
+
     return BlocProvider(
       create: (_) => SeatTypeBloc(),
       child: Scaffold(
@@ -44,35 +48,43 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
           title: Text(
             "Include Some Details",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontSize: 25,
-              fontWeight: FontWeight.w500,
-            ),
+                  fontSize: isWeb ? 22 : 25,
+                  fontWeight: FontWeight.w500,
+                ),
           ),
         ),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.symmetric(
+            horizontal: isWeb ? (screenWidth * 0.5 - maxWidth * 0.5) : 16,
+            vertical: 16,
+          ),
           child: Form(
             key: _formKey,
-            child: Column(
-              children: [
-                _buildBrandBottomSheet(),
-                const SizedBox(height: 20),
-                _buildModelBottomSheet(),
-                const SizedBox(height: 20),
-                _buildFuelsBottomSheet(),
-                const SizedBox(height: 20),
-                _buildToggleButton(),
-                const SizedBox(height: 20),
-                _buildYearWidget(),
-                const SizedBox(height: 20),
-                _buildKmDrivenWidget(),
-                const SizedBox(height: 20),
-                _buildNoOfOwnersWidget(),
-                const SizedBox(height: 20),
-                _buildDiscribtionWidget(),
-                const SizedBox(height: 20),
-                _buildContinueWidget(context),
-              ],
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxWidth),
+                child: Column(
+                  children: [
+                    _buildBrandBottomSheet(isWeb),
+                    const SizedBox(height: 20),
+                    _buildModelBottomSheet(isWeb),
+                    const SizedBox(height: 20),
+                    _buildFuelsBottomSheet(isWeb),
+                    const SizedBox(height: 20),
+                    _buildToggleButton(isWeb),
+                    const SizedBox(height: 20),
+                    _buildYearWidget(isWeb),
+                    const SizedBox(height: 20),
+                    _buildKmDrivenWidget(isWeb),
+                    const SizedBox(height: 20),
+                    _buildNoOfOwnersWidget(isWeb),
+                    const SizedBox(height: 20),
+                    _buildDiscribtionWidget(isWeb),
+                    const SizedBox(height: 20),
+                    _buildContinueWidget(context, isWeb),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -80,7 +92,7 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
     );
   }
 
-  Widget _buildToggleButton() {
+  Widget _buildToggleButton(bool isWeb) {
     return BlocBuilder<SeatTypeBloc, SeatTypeState>(
       builder: (context, state) {
         return TransmissionTypeSelector(
@@ -88,78 +100,98 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
           onTransmissionSelected: (type) {
             context.read<SeatTypeBloc>().add(ChangeTransmissionTypeEvent(type));
           },
+          isWeb: isWeb,
         );
       },
     );
   }
 
-  Widget _buildBrandBottomSheet() {
-    return BottomSheetSelector<BrandModel>(
-      title: 'Select Brand',
-      displayText: selectedBrand?.brandName ?? 'Select Brand*',
-      onTapFetchEvent:
-          (context) => context.read<AddPostBloc>().add(FetchBrandsEvent()),
-      selectorBloc: context.read<AddPostBloc>(),
-      itemsSelector: (state) => state is BrandsLoaded ? state.brands : [],
-      itemText: (brand) => brand.brandName ?? 'Unknown',
-      onItemSelected: (brand) {
-        setState(() {
-          selectedBrand = brand;
-          selectedModel = null;
-        });
-        context.read<AddPostBloc>().add(FetchModelsEvent(brand.id!));
-      },
-      loadingSelector: (state) => state is BrandsLoading,
-      errorSelector: (state) => state is BrandsError ? state.message : null,
+  Widget _buildBrandBottomSheet(bool isWeb) {
+    return SizedBox(
+      width: double.infinity,
+      child: BottomSheetSelector<BrandModel>(
+        title: 'Select Brand',
+        displayText: selectedBrand?.brandName ?? 'Select Brand*',
+        onTapFetchEvent:
+            (context) => context.read<AddPostBloc>().add(FetchBrandsEvent()),
+        selectorBloc: context.read<AddPostBloc>(),
+        itemsSelector: (state) => state is BrandsLoaded ? state.brands : [],
+        itemText: (brand) => brand.brandName ?? 'Unknown',
+        onItemSelected: (brand) {
+          setState(() {
+            selectedBrand = brand;
+            selectedModel = null;
+          });
+          context.read<AddPostBloc>().add(FetchModelsEvent(brand.id!));
+        },
+        loadingSelector: (state) => state is BrandsLoading,
+        errorSelector: (state) => state is BrandsError ? state.message : null,
+        isWeb: isWeb,
+      ),
     );
   }
 
-  Widget _buildModelBottomSheet() {
-    return BottomSheetSelector<String>(
-      title: 'Select Model',
-      displayText: selectedModel ?? 'Select Model*',
-      isDisabled: selectedBrand == null,
-      onTapFetchEvent:
-          (context) => context.read<AddPostBloc>().add(
-            FetchModelsEvent(selectedBrand!.id!),
-          ),
-      selectorBloc: context.read<AddPostBloc>(),
-      itemsSelector: (state) => state is ModelsLoaded ? state.models : [],
-      itemText: (model) => model,
-      onItemSelected: (model) {
-        setState(() {
-          selectedModel = model;
-        });
-      },
-      loadingSelector: (state) => state is ModelsLoading,
-      errorSelector: (state) => state is ModelsError ? state.message : null,
+  Widget _buildModelBottomSheet(bool isWeb) {
+    return SizedBox(
+      width: double.infinity,
+      child: BottomSheetSelector<String>(
+        title: 'Select Model',
+        displayText: selectedModel ?? 'Select Model*',
+        isDisabled: selectedBrand == null,
+        onTapFetchEvent:
+            (context) => context.read<AddPostBloc>().add(
+                  FetchModelsEvent(selectedBrand!.id!),
+                ),
+        selectorBloc: context.read<AddPostBloc>(),
+        itemsSelector: (state) => state is ModelsLoaded ? state.models : [],
+        itemText: (model) => model,
+        onItemSelected: (model) {
+          setState(() {
+            selectedModel = model;
+          });
+        },
+        loadingSelector: (state) => state is ModelsLoading,
+        errorSelector: (state) => state is ModelsError ? state.message : null,
+        isWeb: isWeb,
+      ),
     );
   }
 
-  Widget _buildFuelsBottomSheet() {
-    return BottomSheetSelector<FuelsModel>(
-      title: 'Select Fuel Type',
-      displayText: selectedFuel?.fuels ?? 'Select Fuel Type*',
-      onTapFetchEvent:
-          (context) => context.read<GetFuelsBloc>().add(FetchFuels()),
-      selectorBloc: context.read<GetFuelsBloc>(),
-      itemsSelector: (state) => state is GetFuelsLoaded ? state.fuels : [],
-      itemText: (fuel) => fuel.fuels ?? 'Unknown',
-      onItemSelected: (fuel) {
-        setState(() {
-          selectedFuel = fuel;
-        });
-      },
-      loadingSelector: (state) => state is GetFuelsLoading,
-      errorSelector: (state) => state is GetFuelsError ? state.message : null,
+  Widget _buildFuelsBottomSheet(bool isWeb) {
+    return SizedBox(
+      width: double.infinity,
+      child: BottomSheetSelector<FuelsModel>(
+        title: 'Select Fuel Type',
+        displayText: selectedFuel?.fuels ?? 'Select Fuel Type*',
+        onTapFetchEvent:
+            (context) => context.read<GetFuelsBloc>().add(FetchFuels()),
+        selectorBloc: context.read<GetFuelsBloc>(),
+        itemsSelector: (state) => state is GetFuelsLoaded ? state.fuels : [],
+        itemText: (fuel) => fuel.fuels ?? 'Unknown',
+        onItemSelected: (fuel) {
+          setState(() {
+            selectedFuel = fuel;
+          });
+        },
+        loadingSelector: (state) => state is GetFuelsLoading,
+        errorSelector: (state) => state is GetFuelsError ? state.message : null,
+        isWeb: isWeb,
+      ),
     );
   }
 
-  Widget _buildYearWidget() {
-    return YearPickerWidget(label: "Year*", controller: yearController);
+  Widget _buildYearWidget(bool isWeb) {
+    return SizedBox(
+      width: double.infinity,
+      child: YearPickerWidget(
+        label: "Year*", 
+        controller: yearController,
+        isWeb: isWeb,
+      ),
+    );
   }
 
-  Widget _buildKmDrivenWidget() {
+  Widget _buildKmDrivenWidget(bool isWeb) {
     return TextFormFieldWidget(
       label: "KM driven*",
       controller: kmController,
@@ -167,7 +199,7 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
     );
   }
 
-  Widget _buildNoOfOwnersWidget() {
+  Widget _buildNoOfOwnersWidget(bool isWeb) {
     return TextFormFieldWidget(
       label: "No.of Owners*",
       controller: noOfOwnersController,
@@ -175,7 +207,7 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
     );
   }
 
-  Widget _buildDiscribtionWidget() {
+  Widget _buildDiscribtionWidget(bool isWeb) {
     return TextFormFieldWidget(
       label: "Describe what you are selling*",
       controller: discribeController,
@@ -184,13 +216,15 @@ class _ScreenAddPostState extends State<ScreenAddPost> {
     );
   }
 
-  Widget _buildContinueWidget(BuildContext context) {
+  Widget _buildContinueWidget(BuildContext context, bool isWeb) {
     return BlocBuilder<SeatTypeBloc, SeatTypeState>(
       builder: (context, state) {
-        return BasicElevatedAppButton(
-          onPressed:
-              () => _validateAndContinue(context, state.transmissionType),
-          title: "Continue",
+        return SizedBox(
+          width: double.infinity,
+          child: BasicElevatedAppButton(
+            onPressed: () => _validateAndContinue(context, state.transmissionType),
+            title: "Continue",
+          ),
         );
       },
     );

@@ -11,6 +11,7 @@ class ZElevatedButtonTheme {
         textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
+          
         )),
   );
   static final darkElevatedButtonTheme = ElevatedButtonThemeData(

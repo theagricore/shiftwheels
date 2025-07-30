@@ -10,12 +10,14 @@ import 'package:shiftwheels/presentation/auth/auth_bloc/auth_bloc.dart';
 
 class ForgotPasswordPage extends StatelessWidget {
   ForgotPasswordPage({super.key});
+
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
+
     return Scaffold(
       appBar: const BasicAppbar(),
       body: BlocListener<AuthBloc, AuthState>(
@@ -36,29 +38,44 @@ class ForgotPasswordPage extends StatelessWidget {
         },
         child: BlocBuilder<AuthBloc, AuthState>(
           builder: (context, state) {
-            return SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          _buildLogo(size),
-                          _buildForgotPasswordText(context),
-                          SizedBox(height: size.height * 0.04),
-                          _buildEmailWidget(),
-                          SizedBox(height: size.height * 0.04),
-                          _buildContinueButton(context, size, state),
-                          SizedBox(height: size.height * 0.02),
-                        ],
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final isWideScreen = constraints.maxWidth > 600;
+
+                return SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: isWideScreen ? 500 : double.infinity,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Form(
+                              key: _formKey,
+                              child: Column(
+                                children: [
+                                  SizedBox(height: size.height * 0.04),
+                                  _buildLogo(size),
+                                  SizedBox(height: size.height * 0.03),
+                                  _buildForgotPasswordText(context),
+                                  SizedBox(height: size.height * 0.04),
+                                  _buildEmailWidget(),
+                                  SizedBox(height: size.height * 0.04),
+                                  _buildContinueButton(context, size, state),
+                                  SizedBox(height: size.height * 0.02),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             );
           },
         ),
@@ -67,9 +84,16 @@ class ForgotPasswordPage extends StatelessWidget {
   }
 
   Widget _buildForgotPasswordText(BuildContext context) {
-    return Text(
-      zForgetPassord,
-      style: Theme.of(context).textTheme.headlineLarge,
+    final isWeb = MediaQuery.of(context).size.width > 600;
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        zForgetPassord,
+        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+              fontSize: isWeb ? 22 : null,
+            ),
+      ),
     );
   }
 
@@ -82,17 +106,15 @@ class ForgotPasswordPage extends StatelessWidget {
       ),
     );
   }
-Widget _buildContinueButton(
-    BuildContext context,
-    Size size,
-    AuthState state,
-  ) {
+
+  Widget _buildContinueButton(
+      BuildContext context, Size size, AuthState state) {
     return BasicElevatedAppButton(
       onPressed: () {
         if (_formKey.currentState!.validate()) {
           context.read<AuthBloc>().add(
-            ForgotPasswordEvent(email: emailController.text.trim()),
-          );
+                ForgotPasswordEvent(email: emailController.text.trim()),
+              );
         }
       },
       title: zContinue,

@@ -18,41 +18,54 @@ class MessageScreenAppBar extends StatelessWidget implements PreferredSizeWidget
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: AppColors.zPrimaryColor,
-      elevation: 2,
-      leading: const BackButton(color: Colors.white),
-      title: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: Colors.white,
-            child: Text(
-              (otherUser?.fullName?.isNotEmpty ?? false)
-                  ? otherUser!.fullName![0].toUpperCase()
-                  : "?",
-              style: const TextStyle(color: AppColors.zPrimaryColor),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWeb = constraints.maxWidth > 600;
+        final titleSize = isWeb ? 14.0 : 16.0;
+        final subtitleSize = isWeb ? 11.0 : 12.0;
+
+        return AppBar(
+          backgroundColor: AppColors.zPrimaryColor,
+          elevation: 2,
+          leading: const BackButton(color: Colors.white),
+          title: Row(
             children: [
-              Text(
-                otherUser?.fullName ?? 'Unknown User',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+              CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Text(
+                  (otherUser?.fullName?.isNotEmpty ?? false)
+                      ? otherUser!.fullName![0].toUpperCase()
+                      : "?",
+                  style: const TextStyle(color: AppColors.zPrimaryColor),
                 ),
               ),
-              if (ad != null)
-                Text(
-                  '${ad!.brand} ${ad!.model}',
-                  style: const TextStyle(fontSize: 12, color: Colors.white70),
-                ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    otherUser?.fullName ?? 'Unknown User',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: titleSize,
+                      color: Colors.white,
+                    ),
+                  ),
+                  if (ad != null)
+                    Text(
+                      '${ad!.brand} ${ad!.model}',
+                      style: TextStyle(
+                        fontSize: subtitleSize,
+                        color: Colors.white70,
+                      ),
+                    ),
+                ],
+              ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

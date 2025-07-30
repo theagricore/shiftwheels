@@ -11,20 +11,30 @@ class DeatilsAppBarWidget extends StatelessWidget implements PreferredSizeWidget
 
   @override
   Widget build(BuildContext context) {
+    final isWeb = MediaQuery.of(context).size.width > 600;
+    
     return AppBar(
-      title: const Text(
+      title: Text(
         'Listing Details',
-        style: TextStyle(color: AppColors.zblack),
+        style: TextStyle(
+          color: AppColors.zblack,
+          fontSize: isWeb ? 22 : 18,
+        ),
       ),
       centerTitle: true,
       backgroundColor: AppColors.zWhite,
       leading: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: EdgeInsets.all(isWeb ? 12.0 : 8.0),
         child: GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: const CircleAvatar(
+          child: CircleAvatar(
             backgroundColor: Colors.grey,
-            child: Icon(Icons.arrow_back, color: Colors.white),
+            radius: isWeb ? 20 : 16,
+            child: Icon(
+              Icons.arrow_back, 
+              color: Colors.white,
+              size: isWeb ? 28 : 24,
+            ),
           ),
         ),
       ),

@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart' as geo;
 import 'package:location/location.dart' as loc;
 import 'package:shiftwheels/data/add_post/models/ad_with_user_model.dart';
 import 'package:shiftwheels/data/add_post/models/ads_model.dart';
@@ -150,43 +152,73 @@ class PostFirebaseServiceImpl extends FirebasePostService {
   @override
   Future<Either<String, LocationModel>> getCurrentLocation() async {
     try {
-      bool serviceEnabled = await _location.serviceEnabled();
-      if (!serviceEnabled) {
-        serviceEnabled = await _location.requestService();
+      if (kIsWeb) {
+        final geo.LocationPermission permission = 
+            await geo.Geolocator.checkPermission();
+        
+        if (permission == geo.LocationPermission.denied) {
+          final requestedPermission = await geo.Geolocator.requestPermission();
+          if (requestedPermission != geo.LocationPermission.whileInUse &&
+              requestedPermission != geo.LocationPermission.always) {
+            return Left('Location permissions are denied');
+          }
+        }
+
+        final position = await geo.Geolocator.getCurrentPosition();
+        final placeDetails = await _getPlaceDetails(
+          position.latitude,
+          position.longitude,
+        );
+
+        return Right(
+          LocationModel(
+            latitude: position.latitude,
+            longitude: position.longitude,
+            placeName: placeDetails['placeName'],
+            address: placeDetails['address'],
+            city: placeDetails['city'],
+            country: placeDetails['country'],
+          ),
+        );
+      } else {
+        bool serviceEnabled = await _location.serviceEnabled();
         if (!serviceEnabled) {
-          return Left('Location services are disabled');
+          serviceEnabled = await _location.requestService();
+          if (!serviceEnabled) {
+            return Left('Location services are disabled');
+          }
         }
-      }
 
-      loc.PermissionStatus permissionGranted = await _location.hasPermission();
-      if (permissionGranted == loc.PermissionStatus.denied) {
-        permissionGranted = await _location.requestPermission();
-        if (permissionGranted != loc.PermissionStatus.granted) {
-          return Left('Location permissions are denied');
+        loc.PermissionStatus permissionGranted = await _location.hasPermission();
+        if (permissionGranted == loc.PermissionStatus.denied) {
+          permissionGranted = await _location.requestPermission();
+          if (permissionGranted != loc.PermissionStatus.granted) {
+            return Left('Location permissions are denied');
+          }
         }
+
+        final locationData = await _location.getLocation();
+        if (locationData.latitude == null || locationData.longitude == null) {
+          return Left('Failed to get valid location coordinates');
+        }
+
+        final placeDetails = await _getPlaceDetails(
+          locationData.latitude!,
+          locationData.longitude!,
+        );
+
+        return Right(
+          LocationModel(
+            latitude: locationData.latitude!,
+            longitude: locationData.longitude!,
+            placeName: placeDetails['placeName'],
+            address: placeDetails['address'],
+            city: placeDetails['city'],
+            country: placeDetails['country'],
+          ),
+        );
       }
-
-      final locationData = await _location.getLocation();
-      if (locationData.latitude == null || locationData.longitude == null) {
-        return Left('Failed to get valid location coordinates');
-      }
-
-      final placeDetails = await _getPlaceDetails(
-        locationData.latitude!,
-        locationData.longitude!,
-      );
-
-      return Right(
-        LocationModel(
-          latitude: locationData.latitude!,
-          longitude: locationData.longitude!,
-          placeName: placeDetails['placeName'],
-          address: placeDetails['address'],
-          city: placeDetails['city'],
-          country: placeDetails['country'],
-        ),
-      );
-    } on PlatformException catch (e) {
+    } on PlatformException catch  (e) {
       if (e.code == 'SERVICE_STATUS_ERROR') {
         return Left('Location services are disabled');
       } else if (e.code == 'PERMISSION_DENIED') {
@@ -302,7 +334,7 @@ class PostFirebaseServiceImpl extends FirebasePostService {
           await _firestore
               .collection('car_ads')
               .where('isActive', isEqualTo: true)
-              .where('isSold', isEqualTo: false) // Add this line
+              .where('isSold', isEqualTo: false)
               .get();
 
       final ads =
@@ -428,7 +460,7 @@ class PostFirebaseServiceImpl extends FirebasePostService {
               .collection('car_ads')
               .where('favoritedByUsers', arrayContains: userId)
               .where('isActive', isEqualTo: true)
-              .where('isSold', isEqualTo: false) // Add this line
+              .where('isSold', isEqualTo: false)
               .get();
 
       final ads =
@@ -764,7 +796,7 @@ class PostFirebaseServiceImpl extends FirebasePostService {
               .collection('car_ads')
               .where('interestedUsers', arrayContains: userId)
               .where('isActive', isEqualTo: true)
-              .where('isSold', isEqualTo: false) // Add this line
+              .where('isSold', isEqualTo: false)
               .get();
 
       final ads =
@@ -967,7 +999,7 @@ class PostFirebaseServiceImpl extends FirebasePostService {
               .collection('car_ads')
               .where('userId', whereIn: premiumUserIds)
               .where('isActive', isEqualTo: true)
-              .where('isSold', isEqualTo: false) // Add this line
+              .where('isSold', isEqualTo: false)
               .get();
 
       final ads =

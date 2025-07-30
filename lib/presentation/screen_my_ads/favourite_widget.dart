@@ -50,27 +50,37 @@ class _FavouriteContent extends StatelessWidget {
     }
 
     if (state is FavoritesLoaded) {
-      return _buildFavoritesList(context, state);
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          return _buildFavoritesList(context, state, constraints);
+        },
+      );
     }
 
     return const SizedBox();
   }
 
   Widget _buildErrorWidget(BuildContext context) {
+    final isWeb = MediaQuery.of(context).size.width > 600;
+    
     return Center(
       child: Text(
         'Retry',
-        style: Theme.of(context).textTheme.displayLarge,
+        style: Theme.of(context).textTheme.displayLarge?.copyWith(
+          fontSize: isWeb ? 24 : Theme.of(context).textTheme.displayLarge?.fontSize,
+        ),
       ),
     );
   }
 
-  Widget _buildFavoritesList(BuildContext context, FavoritesLoaded state) {
+  Widget _buildFavoritesList(BuildContext context, FavoritesLoaded state, BoxConstraints constraints) {
+    final isWeb = constraints.maxWidth > 600;
+    
     return RefreshIndicator(
       onRefresh: () => _refreshFavorites(context),
       child: state.favorites.isEmpty
-          ? _buildEmptyState()
-          : _buildGridView(state),
+          ? _buildEmptyState(isWeb)
+          : _buildGridView(state, isWeb),
     );
   }
 
@@ -79,31 +89,37 @@ class _FavouriteContent extends StatelessWidget {
     context.read<AddFavouriteBloc>().add(LoadFavoritesEvent(userId));
   }
 
-  Widget _buildEmptyState() {
-    return const SizedBox(
+  Widget _buildEmptyState(bool isWeb) {
+    return SizedBox(
       width: double.infinity,
       height: double.infinity,
       child: Center(
-        child: Text('No favorites yet'),
+        child: Text(
+          'No favorites yet',
+          style: TextStyle(fontSize: isWeb ? 18 : null),
+        ),
       ),
     );
   }
 
-  Widget _buildGridView(FavoritesLoaded state) {
+  Widget _buildGridView(FavoritesLoaded state, bool isWeb) {
     return Padding(
       padding: const EdgeInsets.all(12),
       child: GridView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 0.75,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: isWeb ? 4 : 2,
+          childAspectRatio: isWeb ? 0.85 : 0.75,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
         ),
         itemCount: state.favorites.length,
         itemBuilder: (context, index) {
           final ad = state.favorites[index];
-          return AdCard(ad: ad, showFavoriteBadge: true);
+          return AdCard(
+            ad: ad, 
+            showFavoriteBadge: true,
+          );
         },
       ),
     );

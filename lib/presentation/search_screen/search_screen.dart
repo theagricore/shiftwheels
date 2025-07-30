@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lottie/lottie.dart';
 import 'package:shiftwheels/presentation/search_screen/search_bloc/search_bloc.dart';
 import 'package:shiftwheels/presentation/search_screen/widget/filter_bottom_sheet.dart';
 import 'package:shiftwheels/presentation/search_screen/widget/list_ad_card.dart';
@@ -40,7 +41,17 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildSearchResults(SearchState state) {
     if (state is SearchLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: Container(
+          child: Lottie.asset(
+            'assets/images/Animation - search-w1000-h1000.json',
+            height: 40,
+            width: 40,
+            fit: BoxFit.contain,
+            repeat: false,
+          ),
+        ),
+      );
     }
 
     if (state is SearchError) {
@@ -102,4 +113,3 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 }
-

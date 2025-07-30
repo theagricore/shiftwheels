@@ -5,12 +5,14 @@ class YearPickerWidget extends StatefulWidget {
   final String label;
   final TextEditingController controller;
   final String? Function(String?)? validator;
+  final bool isWeb;
 
   const YearPickerWidget({
     super.key,
     required this.label,
     required this.controller,
     this.validator,
+    this.isWeb = false,
   });
 
   @override
@@ -27,21 +29,22 @@ class _YearPickerWidgetState extends State<YearPickerWidget> {
           widget.label,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
+                fontSize: widget.isWeb ? 14 : null,
               ),
         ),
         const SizedBox(height: 8),
         GestureDetector(
           onTap: () => _showYearPickerDialog(context),
           child: SizedBox(
-            height: 60,
+            height: widget.isWeb ? 50 : 60,
             child: InputDecorator(
               decoration: InputDecoration(
-                contentPadding: const EdgeInsets.symmetric(
+                contentPadding: EdgeInsets.symmetric(
                   horizontal: 16,
-                  vertical: 22,
+                  vertical: widget.isWeb ? 16 : 22,
                 ),
                 border: InputBorder.none,
-                suffixIcon: const Icon(Icons.calendar_today, size: 25),
+                suffixIcon: Icon(Icons.calendar_today, size: widget.isWeb ? 20 : 25),
               ),
               child: Text(
                 widget.controller.text.isEmpty
@@ -50,7 +53,10 @@ class _YearPickerWidgetState extends State<YearPickerWidget> {
                 style: Theme.of(context)
                     .textTheme
                     .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w500),
+                    ?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      fontSize: widget.isWeb ? 14 : null,
+                    ),
               ),
             ),
           ),
@@ -86,6 +92,9 @@ class _YearPickerWidgetState extends State<YearPickerWidget> {
           ),
           child: Container(
             padding: const EdgeInsets.all(16),
+            constraints: BoxConstraints(
+              maxWidth: widget.isWeb ? 600 : double.infinity,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -94,6 +103,7 @@ class _YearPickerWidgetState extends State<YearPickerWidget> {
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w400,
                         color: AppColors.zPrimaryColor,
+                        fontSize: widget.isWeb ? 20 : null,
                       ),
                 ),
                 const SizedBox(height: 16),
@@ -109,6 +119,7 @@ class _YearPickerWidgetState extends State<YearPickerWidget> {
                       });
                       Navigator.pop(context);
                     },
+                    isWeb: widget.isWeb,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -125,6 +136,7 @@ class _YearPickerWidgetState extends State<YearPickerWidget> {
                             ?.copyWith(
                               color: AppColors.zred,
                               fontWeight: FontWeight.w600,
+                              fontSize: widget.isWeb ? 14 : null,
                             ),
                       ),
                     ),
@@ -143,12 +155,14 @@ class YearPickerGrid extends StatelessWidget {
   final int currentYear;
   final int? selectedYear;
   final Function(int) onYearSelected;
+  final bool isWeb;
 
   const YearPickerGrid({
     super.key,
     required this.currentYear,
     this.selectedYear,
     required this.onYearSelected,
+    this.isWeb = false,
   });
 
   @override
@@ -168,11 +182,11 @@ class YearPickerGrid extends StatelessWidget {
         : AppColors.zLightCardBorder;
 
     return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: isWeb ? 4 : 3,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 1.6,
+        childAspectRatio: isWeb ? 1.8 : 1.6,
       ),
       itemCount: 30,
       itemBuilder: (context, index) {
@@ -200,6 +214,7 @@ class YearPickerGrid extends StatelessWidget {
                   color: isSelected ? selectedTextColor : textColor,
                   fontWeight:
                       isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: isWeb ? 14 : null,
                 ),
               ),
             ),

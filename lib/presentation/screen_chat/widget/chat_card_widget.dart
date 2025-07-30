@@ -40,12 +40,13 @@ class ChatCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
+    final isWeb = MediaQuery.of(context).size.width > 600;
 
     return ListView.separated(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(isWeb ? 8 : 12),
       itemCount: chats.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      separatorBuilder: (_, __) => SizedBox(height: isWeb ? 4 : 8),
       itemBuilder: (context, index) {
         final chat = chats[index];
         final otherUser = chat.sellerId == currentUserId ? chat.buyer : chat.seller;
@@ -55,35 +56,56 @@ class ChatCardWidget extends StatelessWidget {
         final bool hasUnreadMessages = chat.unreadCount > 0;
 
         return Card(
-          elevation: 0,
+          elevation: isWeb ? 1 : 0,
           margin: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: AppColors.zGrey.withOpacity(0.3),width: 0.8)
+            borderRadius: BorderRadius.circular(isWeb ? 8 : 12),
+            side: BorderSide(
+              color: AppColors.zGrey.withOpacity(0.3),
+              width: isWeb ? 0.5 : 0.8,
+            ),
           ),
           child: InkWell(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(isWeb ? 8 : 12),
             onTap: () async {
               context.read<ChatBloc>().add(
                 MarkMessagesReadEvent(chatId: chat.id, userId: currentUserId),
               );
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => BlocProvider.value(
-                    value: context.read<ChatBloc>(),
-                    child: ScreenAdChat(
-                      chatId: chat.id,
-                      otherUser: otherUser,
-                      ad: ad,
+              
+              if (isWeb) {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BlocProvider.value(
+                      value: context.read<ChatBloc>(),
+                      child: ScreenAdChat(
+                        chatId: chat.id,
+                        otherUser: otherUser,
+                        ad: ad,
+                      ),
                     ),
                   ),
-                ),
-              );
+                );
+              } else {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BlocProvider.value(
+                      value: context.read<ChatBloc>(),
+                      child: ScreenAdChat(
+                        chatId: chat.id,
+                        otherUser: otherUser,
+                        ad: ad,
+                      ),
+                    ),
+                  ),
+                );
+              }
+              
               onRefresh();
             },
             child: Padding(
-              padding: const EdgeInsets.all(10),
+              padding: EdgeInsets.all(isWeb ? 8 : 10),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -101,7 +123,7 @@ class ChatCardWidget extends StatelessWidget {
                           ),
                         ),
                         child: CircleAvatar(
-                          radius: 28,
+                          radius: isWeb ? 24 : 28,
                           backgroundColor: isDarkMode
                               ? AppColors.zDarkGrey
                               : AppColors.zGrey.withOpacity(0.1),
@@ -116,7 +138,7 @@ class ChatCardWidget extends StatelessWidget {
                                       ? otherUser!.fullName![0].toUpperCase()
                                       : '?',
                                   style: TextStyle(
-                                    fontSize: 22,
+                                    fontSize: isWeb ? 18 : 22,
                                     fontWeight: FontWeight.bold,
                                     color: theme.primaryColor,
                                   ),
@@ -146,7 +168,7 @@ class ChatCardWidget extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(width: 16),
+                  SizedBox(width: isWeb ? 12 : 16),
 
                   // Chat content
                   Expanded(
@@ -165,6 +187,7 @@ class ChatCardWidget extends StatelessWidget {
                                   color: hasUnreadMessages
                                       ? theme.primaryColor
                                       : theme.textTheme.titleMedium?.color,
+                                  fontSize: isWeb ? 15 : null,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -180,11 +203,11 @@ class ChatCardWidget extends StatelessWidget {
                                   fontWeight: hasUnreadMessages
                                       ? FontWeight.w600
                                       : FontWeight.normal,
+                                  fontSize: isWeb ? 11 : null, // Reduced from bodySmall to 11 for web
                                 ),
                               ),
                           ],
                         ),
-
 
                         // Ad information
                         if (ad != null)
@@ -195,6 +218,7 @@ class ChatCardWidget extends StatelessWidget {
                                   ? AppColors.zGrey
                                   : AppColors.zGrey,
                               fontWeight: FontWeight.w500,
+                              fontSize: isWeb ? 13 : null,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -213,6 +237,7 @@ class ChatCardWidget extends StatelessWidget {
                                   fontWeight: hasUnreadMessages
                                       ? FontWeight.w600
                                       : FontWeight.normal,
+                                  fontSize: isWeb ? 13 : null,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
 class AppBottomSheet {
-  static Future<void> display(BuildContext context, Widget widget) {
+  static Future<void> display(BuildContext context, Widget widget, {bool isWeb = false}) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      constraints: isWeb 
+          ? BoxConstraints(maxWidth: 600) 
+          : null,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(25),

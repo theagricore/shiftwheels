@@ -4,11 +4,13 @@ import 'package:shiftwheels/core/config/theme/app_colors.dart';
 class TransmissionTypeSelector extends StatefulWidget {
   final Function(String) onTransmissionSelected;
   final String initialType;
+  final bool isWeb;
 
   const TransmissionTypeSelector({
     Key? key,
     this.initialType = '',
     required this.onTransmissionSelected,
+    this.isWeb = false,
   }) : super(key: key);
 
   @override
@@ -51,7 +53,9 @@ class _TransmissionTypeSelectorState extends State<TransmissionTypeSelector> {
           padding: const EdgeInsets.only(bottom: 8.0),
           child: Text(
             'Transmission Type*',
-            style: Theme.of(context).textTheme.titleSmall,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontSize: widget.isWeb ? 14 : null,
+            ),
           ),
         ),
         Row(
@@ -63,6 +67,7 @@ class _TransmissionTypeSelectorState extends State<TransmissionTypeSelector> {
               onTap: () => select('Manual'),
               size: size,
               isDarkMode: isDarkMode,
+              isWeb: widget.isWeb,
             ),
             const SizedBox(width: 10),
             _buildOption(
@@ -71,6 +76,7 @@ class _TransmissionTypeSelectorState extends State<TransmissionTypeSelector> {
               onTap: () => select('Automatic'),
               size: size,
               isDarkMode: isDarkMode,
+              isWeb: widget.isWeb,
             ),
           ],
         ),
@@ -84,6 +90,7 @@ class _TransmissionTypeSelectorState extends State<TransmissionTypeSelector> {
     required VoidCallback onTap,
     required Size size,
     required bool isDarkMode,
+    required bool isWeb,
   }) {
     final Color backgroundColor = isDarkMode 
         ? AppColors.zBackGround 
@@ -105,7 +112,7 @@ class _TransmissionTypeSelectorState extends State<TransmissionTypeSelector> {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          height: size.height * 0.06,
+          height: isWeb ? size.height * 0.05 : size.height * 0.06,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: backgroundColor,
@@ -118,7 +125,7 @@ class _TransmissionTypeSelectorState extends State<TransmissionTypeSelector> {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: isWeb ? 14 : 16,
               fontWeight: FontWeight.w600,
               color: textColor,
             ),

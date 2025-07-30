@@ -1,18 +1,18 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftwheels/core/common_widget/text_form_feald_widget.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_elevated_app_button.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_outlined_app_button.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
-import 'package:shiftwheels/core/common_widget/text_form_feald_widget.dart';
 import 'package:shiftwheels/core/config/helper/navigator/app_navigator.dart';
 import 'package:shiftwheels/core/config/theme/image_string.dart';
 import 'package:shiftwheels/core/config/theme/text_string.dart';
 import 'package:shiftwheels/data/auth/models/user_model.dart';
 import 'package:shiftwheels/presentation/auth/auth_bloc/auth_bloc.dart';
 import 'package:shiftwheels/presentation/auth/google_auth/google_auth_bloc.dart';
+import 'package:shiftwheels/presentation/auth/screens/signin_screen.dart';
 import 'package:shiftwheels/presentation/main_screen/main_screen.dart';
-import 'package:shiftwheels/presentation/auth/screens/signIn_screen.dart';
 
 class SiginupScreen extends StatelessWidget {
   SiginupScreen({super.key});
@@ -25,11 +25,11 @@ class SiginupScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
+
     return Scaffold(
       body: BlocConsumer<AuthBloc, AuthState>(
-        listenWhen:
-            (previous, current) =>
-                current is AuthSuccess || current is AuthFailure,
+        listenWhen: (previous, current) =>
+            current is AuthSuccess || current is AuthFailure,
         listener: (context, state) {
           if (state is AuthSuccess) {
             BasicSnackbar(
@@ -45,43 +45,56 @@ class SiginupScreen extends StatelessWidget {
           }
         },
         builder: (context, state) {
-          return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  SizedBox(height: size.height * 0.08),
-                  _buildLogoWidget(size),
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        SizedBox(height: size.height * 0.05),
-                        _buildTextFormName(),
-                        SizedBox(height: size.height * 0.02),
-                        _buildTextFormEmail(),
-                        SizedBox(height: size.height * 0.02),
-                        _buildTextFormPhoneNo(),
-                        SizedBox(height: size.height * 0.02),
-                        _buildTextFormPassword(),
-                        SizedBox(height: size.height * 0.07),
-                        Column(
-                          children: [
-                            _buildEmailPasswordButton(state, context, size),
-                            SizedBox(height: size.height * 0.02),
-                            _buildGoogleSiginButton(size),
-                            SizedBox(height: size.height * 0.04),
-                            _createAccount(context),
-                          ],
-                        ),
-                      ],
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final isWideScreen = constraints.maxWidth > 600;
+
+              return SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: isWideScreen ? 500 : double.infinity,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SizedBox(height: size.height * 0.08),
+                          _buildLogoWidget(size),
+                          Form(
+                            key: _formKey,
+                            child: Column(
+                              children: [
+                                SizedBox(height: size.height * 0.05),
+                                _buildTextFormName(),
+                                SizedBox(height: size.height * 0.02),
+                                _buildTextFormEmail(),
+                                SizedBox(height: size.height * 0.02),
+                                _buildTextFormPhoneNo(),
+                                SizedBox(height: size.height * 0.02),
+                                _buildTextFormPassword(),
+                                SizedBox(height: size.height * 0.07),
+                                Column(
+                                  children: [
+                                    _buildEmailPasswordButton(
+                                        state, context, size),
+                                    SizedBox(height: size.height * 0.02),
+                                    _buildGoogleSiginButton(size),
+                                    SizedBox(height: size.height * 0.04),
+                                    _createAccount(context),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           );
         },
       ),
@@ -189,25 +202,28 @@ class SiginupScreen extends StatelessWidget {
   }
 
   Widget _createAccount(BuildContext context) {
+    final isWeb = MediaQuery.of(context).size.width > 600;
+
     return Align(
       alignment: Alignment.center,
-
       child: RichText(
         text: TextSpan(
           children: [
             TextSpan(
               text: zDoYouHaveAccount,
-              style: Theme.of(context).textTheme.labelLarge,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontSize: isWeb ? 13 : null,
+                  ),
             ),
             TextSpan(
-              recognizer:
-                  TapGestureRecognizer()
-                    ..onTap = () {
-                      AppNavigator.push(context, SigninScreen());
-                    },
+              recognizer: TapGestureRecognizer()
+                ..onTap = () {
+                  AppNavigator.push(context, SigninScreen());
+                },
               text: zSignIn,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
+                fontSize: isWeb ? 13 : 15,
                 color: Colors.blue,
               ),
             ),

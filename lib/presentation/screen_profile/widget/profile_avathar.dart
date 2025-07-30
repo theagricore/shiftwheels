@@ -17,48 +17,58 @@ class ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String? imageUrl;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isWeb = constraints.maxWidth > 600;
+        final double avatarRadius = isWeb ? 50 : 60;
+        final double innerAvatarRadius = isWeb ? 47 : 57;
+        final double iconSize = isWeb ? 50 : 60;
+        final double progressIndicatorSize = isWeb ? 104 : 128;
 
-    if (imageState is ProfileImageConfirmed) {
-      imageUrl = (imageState as ProfileImageConfirmed).imageUrl;
-    } else if (profileState is Profileloaded &&
-        (profileState as Profileloaded).user.image != null) {
-      imageUrl = (profileState as Profileloaded).user.image!;
-    }
+        String? imageUrl;
 
-    final bool showDefaultIcon = imageUrl == null;
+        if (imageState is ProfileImageConfirmed) {
+          imageUrl = (imageState as ProfileImageConfirmed).imageUrl;
+        } else if (profileState is Profileloaded &&
+            (profileState as Profileloaded).user.image != null) {
+          imageUrl = (profileState as Profileloaded).user.image!;
+        }
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          CircleAvatar(
-            radius: 60,
-            backgroundColor: AppColors.zPrimaryColor,
-            child: CircleAvatar(
-              radius: 57,
-              backgroundColor: AppColors.zPrimaryColor,
-              backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
-              child: showDefaultIcon
-                  ? const Icon(Icons.person, size: 60, color: Colors.white)
-                  : null,
-            ),
-          ),
-          if (imageState is ProfileImageLoading)
-            SizedBox(
-              width: 128,
-              height: 128,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  AppColors.zPrimaryColor,
+        final bool showDefaultIcon = imageUrl == null;
+
+        return GestureDetector(
+          onTap: onTap,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              CircleAvatar(
+                radius: avatarRadius,
+                backgroundColor: AppColors.zPrimaryColor,
+                child: CircleAvatar(
+                  radius: innerAvatarRadius,
+                  backgroundColor: AppColors.zPrimaryColor,
+                  backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
+                  child: showDefaultIcon
+                      ? Icon(Icons.person, size: iconSize, color: Colors.white)
+                      : null,
                 ),
-                backgroundColor: Colors.white24,
               ),
-            ),
-        ],
-      ),
+              if (imageState is ProfileImageLoading)
+                SizedBox(
+                  width: progressIndicatorSize,
+                  height: progressIndicatorSize,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.zPrimaryColor,
+                    ),
+                    backgroundColor: Colors.white24,
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

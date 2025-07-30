@@ -29,10 +29,52 @@ class _ScreenAdChatListState extends State<ScreenAdChatList> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _buildAppBar(),
-      body: _buildChatBody(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWeb = constraints.maxWidth > 600;
+        return Scaffold(
+          appBar: isWeb ? null : _buildAppBar(),
+          body: isWeb ? _buildWebLayout() : _buildMobileLayout(),
+        );
+      },
     );
+  }
+
+  Widget _buildWebLayout() {
+    return Row(
+      children: [
+        Flexible(
+          flex: 3,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(right: BorderSide(color: Colors.grey.shade300)),
+            ),
+            child: Column(
+              children: [
+                _buildWebAppBar(),
+                Expanded(child: _buildChatBody()),
+              ],
+            ),
+          ),
+        ),
+        Flexible(
+          flex: 7,
+          child: Container(
+            color: Theme.of(context).colorScheme.background,
+            child: Center(
+              child: Text(
+                'Select a conversation',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    return _buildChatBody();
   }
 
   PreferredSizeWidget _buildAppBar() {
@@ -45,6 +87,32 @@ class _ScreenAdChatListState extends State<ScreenAdChatList> {
           onPressed: _loadChats,
         ),
       ],
+    );
+  }
+
+  Widget _buildWebAppBar() {
+    return Container(
+      height: kToolbarHeight,
+      decoration: BoxDecoration(
+        color: AppColors.zPrimaryColor,
+        border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Text(
+            'Messages',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: Colors.white,
+                ),
+          ),
+          const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: _loadChats,
+          ),
+        ],
+      ),
     );
   }
 

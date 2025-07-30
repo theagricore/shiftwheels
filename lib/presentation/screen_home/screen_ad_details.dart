@@ -31,10 +31,9 @@ class ScreenAdDetails extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create:
-              (context) =>
-                  AddFavouriteBloc(sl<PostRepository>())
-                    ..add(LoadFavoritesEvent(adWithUser.ad.userId)),
+          create: (context) =>
+              AddFavouriteBloc(sl<PostRepository>())
+                ..add(LoadFavoritesEvent(adWithUser.ad.userId)),
         ),
         BlocProvider(create: (context) => InterestBloc(sl<PostRepository>())),
         BlocProvider.value(value: sl<ChatBloc>()),
@@ -69,52 +68,84 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocListener(
-      listeners: [
-        BlocListener<AddFavouriteBloc, AddFavouriteState>(
-          listener: (context, state) {
-            if (state is AddFavouriteError) {
-              BasicSnackbar(
-                message: state.message,
-                backgroundColor: AppColors.zred,
-              ).show(context);
-            }
-          },
-        ),
-        BlocListener<InterestBloc, InterestState>(
-          listener: (context, state) {
-            if (state is InterestError) {
-              BasicSnackbar(
-                message: state.message,
-                backgroundColor: AppColors.zred,
-              ).show(context);
-            }
-          },
-        ),
-      ],
-      child: Scaffold(
-        backgroundColor: AppColors.zWhite,
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(64),
-          child: DeatilsAppBarWidget(),
-        ),
-        body: SingleChildScrollView(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWeb = constraints.maxWidth > 600;
+        
+        return MultiBlocListener(
+          listeners: [
+            BlocListener<AddFavouriteBloc, AddFavouriteState>(
+              listener: (context, state) {
+                if (state is AddFavouriteError) {
+                  BasicSnackbar(
+                    message: state.message,
+                    backgroundColor: AppColors.zred,
+                  ).show(context);
+                }
+              },
+            ),
+            BlocListener<InterestBloc, InterestState>(
+              listener: (context, state) {
+                if (state is InterestError) {
+                  BasicSnackbar(
+                    message: state.message,
+                    backgroundColor: AppColors.zred,
+                  ).show(context);
+                }
+              },
+            ),
+          ],
+          child: Scaffold(
+            backgroundColor: AppColors.zWhite,
+            appBar: PreferredSize(
+              preferredSize: Size.fromHeight(isWeb ? 72 : 64),
+              child: DeatilsAppBarWidget(),
+            ),
+            body: isWeb 
+                ? _buildWebLayout(context, constraints.maxWidth)
+                : _buildMobileLayout(context),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildWebLayout(BuildContext context, double maxWidth) {
+    final contentWidth = maxWidth * 0.7 > 800 ? 800 : maxWidth * 0.7;
+    
+    return Center(
+      child: SizedBox(
+        width: contentWidth.toDouble(),
+        child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildImageSection(context),
+              _buildImageSection(context, true),
               _buildActionButtons(context),
-              _buildBasicInfoSection(),
-              _buildDetailsSection(),
+              _buildBasicInfoSection(true),
+              _buildDetailsSection(true),
             ],
           ),
         ),
-        bottomNavigationBar: _buildBottomButtons(context),
       ),
     );
   }
 
-  Widget _buildImageSection(BuildContext context) {
+  Widget _buildMobileLayout(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildImageSection(context, false),
+          _buildActionButtons(context),
+          _buildBasicInfoSection(false),
+          _buildDetailsSection(false),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImageSection(BuildContext context, bool isWeb) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
     final adId = widget.adWithUser.ad.id!;
 
@@ -123,6 +154,7 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
       adId: adId,
       currentUserId: currentUserId,
       isSold: widget.adWithUser.ad.isSold,
+      isWeb: isWeb,
     );
   }
 
@@ -135,12 +167,15 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
         : FavoirateInterstButton(adId: adId, currentUserId: currentUserId);
   }
 
-  Widget _buildBasicInfoSection() {
+  Widget _buildBasicInfoSection(bool isWeb) {
     final ad = widget.adWithUser.ad;
     final textTheme = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: EdgeInsets.symmetric(
+        horizontal: isWeb ? 40 : 20,
+        vertical: isWeb ? 24 : 16,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -154,7 +189,7 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
                   style: textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: AppColors.zblack,
-                    fontSize: 18,
+                    fontSize: isWeb ? 22 : 18,
                     letterSpacing: 0.2,
                   ),
                 ),
@@ -163,29 +198,29 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
                 children: [
                   Icon(
                     Icons.access_time,
-                    size: 20,
+                    size: isWeb ? 22 : 20,
                     color: AppColors.zblack.withOpacity(0.7),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: isWeb ? 10 : 8),
                   Text(
                     timeago.format(ad.postedDate),
                     style: textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w500,
                       color: AppColors.zblack.withOpacity(0.7),
-                      fontSize: 15,
+                      fontSize: isWeb ? 16 : 15,
                     ),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 5),
+          SizedBox(height: isWeb ? 8 : 5),
           Text(
             "₹${NumberFormat.currency(locale: 'en_IN', symbol: '₹').format(ad.price)}",
             style: textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.w900,
               color: AppColors.zPrimaryColor,
-              fontSize: 20,
+              fontSize: isWeb ? 24 : 20,
             ),
           ),
         ],
@@ -193,16 +228,16 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
     );
   }
 
-  Widget _buildDetailsSection() {
+  Widget _buildDetailsSection(bool isWeb) {
     final ad = widget.adWithUser.ad;
     final userData = widget.adWithUser.userData;
 
     return Container(
       decoration: BoxDecoration(
         color: AppColors.zblack,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(32),
-          topRight: Radius.circular(32),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(isWeb ? 40 : 32),
+          topRight: Radius.circular(isWeb ? 40 : 32),
         ),
         boxShadow: [
           BoxShadow(
@@ -212,50 +247,55 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isWeb ? 32 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             "Overview",
             style: TextStyle(
-              fontSize: 24,
+              fontSize: isWeb ? 28 : 24,
               fontWeight: FontWeight.w700,
               color: AppColors.zWhite,
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: isWeb ? 24 : 20),
           OverviewGrid(
             transmission: ad.transmissionType,
             kmDriven: ad.kmDriven,
             noOfOwners: ad.noOfOwners,
             fuelType: ad.fuelType,
+            isWeb: isWeb,
           ),
           Padding(
-            padding: const EdgeInsets.only(top: 28, bottom: 20),
-            child: UserInfoWidget(userData: userData, ad: ad),
+            padding: EdgeInsets.only(
+              top: isWeb ? 32 : 28,
+              bottom: isWeb ? 24 : 20,
+            ),
+            child: UserInfoWidget(userData: userData, ad: ad,),
           ),
           Text(
             "Description",
             style: TextStyle(
-              fontSize: 24,
+              fontSize: isWeb ? 28 : 24,
               fontWeight: FontWeight.w700,
               color: AppColors.zWhite,
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: isWeb ? 16 : 12),
           Text(
             ad.description,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: isWeb ? 18 : 16,
               fontWeight: FontWeight.w400,
               color: AppColors.zWhite.withOpacity(0.9),
               height: 1.6,
               letterSpacing: 0.3,
             ),
           ),
+          _buildBottomButtons(context),
         ],
       ),
     );
@@ -322,14 +362,13 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder:
-          (context) => const Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(
-                AppColors.zPrimaryColor,
-              ),
-            ),
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(
+            AppColors.zPrimaryColor,
           ),
+        ),
+      ),
     );
 
     final chatBloc = context.read<ChatBloc>();
@@ -347,15 +386,14 @@ class _AdDetailsContentState extends State<_AdDetailsContent> {
         Navigator.of(context).pop();
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder:
-                (context) => BlocProvider.value(
-                  value: chatBloc,
-                  child: ScreenAdChat(
-                    chatId: state.chatId,
-                    otherUser: widget.adWithUser.userData,
-                    ad: ad,
-                  ),
-                ),
+            builder: (context) => BlocProvider.value(
+              value: chatBloc,
+              child: ScreenAdChat(
+                chatId: state.chatId,
+                otherUser: widget.adWithUser.userData,
+                ad: ad,
+              ),
+            ),
           ),
         );
       } else if (state is ChatError) {

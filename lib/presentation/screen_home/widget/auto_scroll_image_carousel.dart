@@ -9,6 +9,7 @@ class AutoScrollImageCarousel extends StatefulWidget {
   final String adId;
   final String currentUserId;
   final bool isSold;
+  final bool isWeb;
 
   const AutoScrollImageCarousel({
     super.key,
@@ -16,6 +17,7 @@ class AutoScrollImageCarousel extends StatefulWidget {
     required this.adId,
     required this.currentUserId,
     required this.isSold,
+    this.isWeb = false,
   });
 
   @override
@@ -70,7 +72,7 @@ class _AutoScrollImageCarouselState extends State<AutoScrollImageCarousel> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 300,
+      height: widget.isWeb ? 400 : 300,
       child: Stack(
         children: [
           PageView.builder(
@@ -106,24 +108,28 @@ class _AutoScrollImageCarouselState extends State<AutoScrollImageCarousel> {
           if (widget.isSold)
             Center(
               child: Container(
-                width: 200,
-                height: 100,
+                width: widget.isWeb ? 250 : 200,
+                height: widget.isWeb ? 120 : 100,
                 decoration: BoxDecoration(
                   color: AppColors.zred.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: AppColors.zred, width: 1.5),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.check_circle, color: AppColors.zred, size: 60),
-                    SizedBox(width: 8),
+                    Icon(
+                      Icons.check_circle, 
+                      color: AppColors.zred, 
+                      size: widget.isWeb ? 70 : 60
+                    ),
+                    SizedBox(width: widget.isWeb ? 10 : 8),
                     Text(
                       'SOLD',
                       style: TextStyle(
                         color: AppColors.zred,
                         fontWeight: FontWeight.bold,
-                        fontSize: 40,
+                        fontSize: widget.isWeb ? 45 : 40,
                       ),
                     ),
                   ],
@@ -140,8 +146,8 @@ class _AutoScrollImageCarouselState extends State<AutoScrollImageCarousel> {
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: _currentPage == index ? 20 : 8,
-                  height: 6,
+                  width: _currentPage == index ? (widget.isWeb ? 24 : 20) : (widget.isWeb ? 10 : 8),
+                  height: widget.isWeb ? 8 : 6,
                   decoration: BoxDecoration(
                     color: _currentPage == index
                         ? AppColors.zPrimaryColor

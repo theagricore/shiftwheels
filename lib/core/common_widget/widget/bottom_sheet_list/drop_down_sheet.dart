@@ -8,6 +8,7 @@ class DropdownSheet<T> extends StatelessWidget {
   final void Function(T) onSelected;
   final bool isLoading;
   final String? error;
+  final bool isWeb;
 
   const DropdownSheet({
     super.key,
@@ -17,49 +18,65 @@ class DropdownSheet<T> extends StatelessWidget {
     required this.onSelected,
     this.isLoading = false,
     this.error,
+    this.isWeb = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final textScaleFactor = MediaQuery.of(context).textScaleFactor;
 
     final backgroundColor = isDark ? AppColors.zBackGround : Colors.white;
+    final textColor = isDark ? AppColors.zWhite : AppColors.zfontColor;
 
     return Container(
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
       ),
-      padding: const EdgeInsets.all(15.0),
+      padding: EdgeInsets.all(isWeb ? 20.0 : 16.0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
-            padding: const EdgeInsets.all(5.0),
+            padding: EdgeInsets.symmetric(horizontal: isWeb ? 8.0 : 4.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   title,
-                  style: Theme.of(context).textTheme.displayLarge,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontSize: isWeb ? 20 : 22,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                  ),
                 ),
                 IconButton(
-                  icon:  Icon(Icons.close,color: AppColors.zfontColor,),
+                  icon: Icon(Icons.close, size: isWeb ? 22 : 24, color: textColor),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),
           ),
+          const SizedBox(height: 8),
+          Divider(color: AppColors.zfontColor.withOpacity(0.2)),
+          const SizedBox(height: 12),
           if (error != null)
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Text(error!),
+              child: Text(
+                error!,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.zred,
+                  fontSize: isWeb ? 14 : 16,
+                ),
+              ),
             )
           else if (isLoading)
-            const Center(
+            Center(
               child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 24.0),
+                padding: const EdgeInsets.symmetric(vertical: 24.0),
                 child: CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(
                     AppColors.zPrimaryColor,
@@ -73,14 +90,17 @@ class DropdownSheet<T> extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 24.0),
                 child: Text(
                   'No items available',
-                  style: Theme.of(context).textTheme.displaySmall,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: textColor.withOpacity(0.7),
+                    fontSize: isWeb ? 16 : 18,
+                  ),
                 ),
               ),
             )
           else
             ConstrainedBox(
               constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.6,
+                maxHeight: MediaQuery.of(context).size.height * (isWeb ? 0.5 : 0.8),
               ),
               child: ListView.builder(
                 shrinkWrap: true,
@@ -88,39 +108,43 @@ class DropdownSheet<T> extends StatelessWidget {
                 itemCount: items.length,
                 itemBuilder: (context, index) {
                   final item = items[index];
-                  return Column(
-                    children: [
-                      GestureDetector(
+                  return Padding(
+                    padding: EdgeInsets.symmetric(
+                      vertical: isWeb ? 6.0 : 8.0,
+                      horizontal: isWeb ? 4.0 : 8.0,
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
                         onTap: () {
                           onSelected(item);
                           Navigator.pop(context);
                         },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10.0,
-                            horizontal: 8.0,
+                        child: Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(
+                            vertical: isWeb ? 14.0 : 10.0,
+                            horizontal: 16.0,
                           ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppColors.zfontColor,
-                                width: 1,
-                              ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.zfontColor.withOpacity(0.2),
+                              width: 1,
                             ),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 12.0,
+                          ),
+                          child: Text(
+                            itemText(item),
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: textColor,
+                              fontSize: isWeb ? 16 : 18,
                             ),
-                            child: Center(
-                              child: Text(
-                                itemText(item),
-                                style: Theme.of(context).textTheme.displayMedium,
-                              ),
-                            ),
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ),
-                    ],
+                    ),
                   );
                 },
               ),

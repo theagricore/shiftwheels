@@ -5,12 +5,14 @@ class BottomContactBarWidget extends StatelessWidget {
   final VoidCallback onChatPressed;
   final VoidCallback onCallPressed;
   final bool isAdSold;
+  final bool isWeb;
 
   const BottomContactBarWidget({
     super.key,
     required this.onChatPressed,
     required this.onCallPressed,
     required this.isAdSold,
+    this.isWeb = false,
   });
 
   @override
@@ -26,7 +28,10 @@ class BottomContactBarWidget extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: isWeb ? 24 : 16,
+        vertical: isWeb ? 16 : 12,
+      ),
       child: Row(
         children: [
           Expanded(
@@ -35,13 +40,13 @@ class BottomContactBarWidget extends StatelessWidget {
               icon: Icon(
                 Icons.chat,
                 color: isAdSold ? Colors.grey : AppColors.zWhite,
-                size: 22,
+                size: isWeb ? 26 : 22,
               ),
               label: Text(
                 "Chat",
                 style: TextStyle(
                   color: isAdSold ? Colors.grey : AppColors.zWhite,
-                  fontSize: 16,
+                  fontSize: isWeb ? 18 : 16,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
                 ),
@@ -50,7 +55,7 @@ class BottomContactBarWidget extends StatelessWidget {
                 backgroundColor: isAdSold 
                     ? Colors.grey.withOpacity(0.5) 
                     : AppColors.zPrimaryColor,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: isWeb ? 18 : 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -58,20 +63,20 @@ class BottomContactBarWidget extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: isWeb ? 16 : 12),
           Expanded(
             child: ElevatedButton.icon(
               onPressed: isAdSold ? null : onCallPressed,
               icon: Icon(
                 Icons.call,
                 color: isAdSold ? Colors.grey : AppColors.zWhite,
-                size: 22,
+                size: isWeb ? 26 : 22,
               ),
               label: Text(
                 "Call",
                 style: TextStyle(
                   color: isAdSold ? Colors.grey : AppColors.zWhite,
-                  fontSize: 16,
+                  fontSize: isWeb ? 18 : 16,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
                 ),
@@ -80,7 +85,7 @@ class BottomContactBarWidget extends StatelessWidget {
                 backgroundColor: isAdSold
                     ? Colors.grey.withOpacity(0.5)
                     : AppColors.zPrimaryColor.withOpacity(0.9),
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: isWeb ? 18 : 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

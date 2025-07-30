@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_alert_box.dart';
@@ -49,206 +50,220 @@ class ScreenProfile extends StatelessWidget {
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: BlocBuilder<ProfileBloc, ProfileState>(
-          builder: (context, profileState) {
-            String? backgroundImageUrl;
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWeb = kIsWeb && constraints.maxWidth > 600;
 
-            if (profileState is Profileloaded &&
-                profileState.user.image != null) {
-              backgroundImageUrl = profileState.user.image;
-            }
+            return BlocBuilder<ProfileBloc, ProfileState>(
+              builder: (context, profileState) {
+                String? backgroundImageUrl;
 
-            return CustomScrollView(
-              slivers: [
-                SliverAppBar(
-                  expandedHeight: 250.0,
-                  floating: false,
-                  pinned: true,
-                  backgroundColor: Colors.transparent,
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: Stack(
-                      children: [
-                        if (backgroundImageUrl != null)
-                          Container(
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: NetworkImage(backgroundImageUrl),
-                                fit: BoxFit.cover,
-                                colorFilter: ColorFilter.mode(
-                                  Colors.black.withOpacity(0.4),
-                                  BlendMode.darken,
+                if (profileState is Profileloaded &&
+                    profileState.user.image != null) {
+                  backgroundImageUrl = profileState.user.image;
+                }
+
+                return CustomScrollView(
+                  slivers: [
+                    SliverAppBar(
+                      expandedHeight: 250.0,
+                      floating: false,
+                      pinned: true,
+                      backgroundColor: Colors.transparent,
+                      flexibleSpace: FlexibleSpaceBar(
+                        background: Stack(
+                          children: [
+                            if (backgroundImageUrl != null)
+                              Container(
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                    image: NetworkImage(backgroundImageUrl),
+                                    fit: BoxFit.cover,
+                                    colorFilter: ColorFilter.mode(
+                                      Colors.black.withOpacity(0.4),
+                                      BlendMode.darken,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            else
+                              Container(
+                                decoration: const BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppColors.zPrimaryColor,
+                                      Color.fromARGB(255, 231, 211, 99),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
                                 ),
                               ),
-                            ),
-                          )
-                        else
-                          Container(
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColors.zPrimaryColor,
-                                  Color.fromARGB(255, 231, 211, 99),
+                            Container(
+                              color: Colors.black.withOpacity(0.3),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const SizedBox(height: 50),
+                                  Center(
+                                    child: BlocConsumer<
+                                      ProfileImageBloc,
+                                      ProfileImageState
+                                    >(
+                                      listener: (context, imageState) {
+                                        if (imageState is ProfileImagePicked) {
+                                          _showImageScreen(context, imageState);
+                                        } else if (imageState
+                                            is ProfileImageError) {
+                                          BasicSnackbar(
+                                            message: imageState.message,
+                                            backgroundColor: AppColors.zred,
+                                          ).show(context);
+                                        } else if (imageState
+                                            is ProfileImageConfirmed) {
+                                          BasicSnackbar(
+                                            message:
+                                                'Profile image updated successfully',
+                                            backgroundColor: AppColors.zGreen,
+                                          ).show(context);
+                                          context.read<ProfileBloc>().add(
+                                            FetchUserProfile(),
+                                          );
+                                        }
+                                      },
+                                      builder: (context, imageState) {
+                                        return GestureDetector(
+                                          onTap: () =>
+                                              _showImageSourceDialog(context),
+                                          child: ProfileAvatar(
+                                            profileState: profileState,
+                                            imageState: imageState,
+                                            onTap: () =>
+                                                _showImageSourceDialog(context),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    profileState is Profileloaded
+                                        ? profileState.user.fullName
+                                        : 'Loading...',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineMedium
+                                        ?.copyWith(
+                                          color: AppColors.zWhite,
+                                          fontSize: isWeb ? 18 : null,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    profileState is Profileloaded
+                                        ? profileState.user.email
+                                        : 'loading...',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: AppColors.zWhite,
+                                          fontSize: isWeb ? 12 : null,
+                                        ),
+                                  ),
                                 ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
                               ),
                             ),
-                          ),
-                        Container(
-                          color: Colors.black.withOpacity(0.3),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const SizedBox(height: 50),
-                              Center(
-                                child: BlocConsumer<
-                                  ProfileImageBloc,
-                                  ProfileImageState
-                                >(
-                                  listener: (context, imageState) {
-                                    if (imageState is ProfileImagePicked) {
-                                      _showImageScreen(context, imageState);
-                                    } else if (imageState
-                                        is ProfileImageError) {
-                                      BasicSnackbar(
-                                        message: imageState.message,
-                                        backgroundColor: AppColors.zred,
-                                      ).show(context);
-                                    } else if (imageState
-                                        is ProfileImageConfirmed) {
-                                      BasicSnackbar(
-                                        message:
-                                            'Profile image updated successfully',
-                                        backgroundColor: AppColors.zGreen,
-                                      ).show(context);
-                                      context.read<ProfileBloc>().add(
-                                        FetchUserProfile(),
-                                      );
+                          ],
+                        ),
+                      ),
+                    ),
+                    SliverList(
+                      delegate: SliverChildListDelegate([
+                        _buildSectionTitle(context, 'Account Type', isWeb),
+                        BlocBuilder<PostLimitBloc, PostLimitState>(
+                          builder: (context, limitState) {
+                            if (limitState is PostLimitChecked) {
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 15),
+                                child: PremiumCard(
+                                  limit: limitState.limit,
+                                  onRefresh: () {
+                                    final currentUser =
+                                        FirebaseAuth.instance.currentUser;
+                                    if (currentUser != null) {
+                                      context.read<PostLimitBloc>().add(
+                                            CheckPostLimitEvent(
+                                                currentUser.uid),
+                                          );
                                     }
                                   },
-                                  builder: (context, imageState) {
-                                    return GestureDetector(
-                                      onTap:
-                                          () => _showImageSourceDialog(context),
-                                      child: ProfileAvatar(
-                                        profileState: profileState,
-                                        imageState: imageState,
-                                        onTap:
-                                            () =>
-                                                _showImageSourceDialog(context),
-                                      ),
-                                    );
-                                  },
                                 ),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                profileState is Profileloaded
-                                    ? profileState.user.fullName
-                                    : 'Loading...',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium
-                                    ?.copyWith(color: AppColors.zWhite),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                profileState is Profileloaded
-                                    ? profileState.user.email
-                                    : 'loading...',
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(color: AppColors.zWhite),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SliverList(
-                  delegate: SliverChildListDelegate([
-                    _buildSectionTitle(context, 'Account Type'),
-                    BlocBuilder<PostLimitBloc, PostLimitState>(
-                      builder: (context, limitState) {
-                        if (limitState is PostLimitChecked) {
-                          return Padding(
-                            padding: const EdgeInsets.only(left: 15, right: 15),
-                            child: PremiumCard(
-                              limit: limitState.limit,
-                              onRefresh: () {
-                                final currentUser =
-                                    FirebaseAuth.instance.currentUser;
-                                if (currentUser != null) {
-                                  context.read<PostLimitBloc>().add(
-                                    CheckPostLimitEvent(currentUser.uid),
-                                  );
-                                }
-                              },
-                            ),
-                          );
-                        } else if (limitState is PostLimitError) {
-                          return Text(
-                            'Error loading account status: ${limitState.message}',
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
-                    ),
-                    _buildSectionTitle(context, 'My Listings'),
-
-                    ProfileListItem(
-                      icon: Icons.favorite_outline,
-                      title: 'Saved Cars',
-                      onTap: () {},
-                    ),
-                    ProfileListItem(
-                      icon: Icons.compare,
-                      title: 'Compare',
-                      onTap: () {
-                        AppNavigator.push(context, ComparisonTabBar());
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    _buildSectionTitle(context, 'App Settings'),
-
-                    NotificationListItem(
-                      title: 'Notifications',
-                      value: true,
-                      onChanged: (val) {},
-                    ),
-                    ProfileListItem(
-                      icon: Icons.settings_outlined,
-                      title: 'App Preferences',
-                      onTap: () {},
-                    ),
-                    ProfileListItem(
-                      icon: Icons.help_outline,
-                      title: 'Help & Support',
-                      onTap: () {},
-                    ),
-                    ProfileListItem(
-                      icon: Icons.info_outline,
-                      title: 'About App',
-                      onTap: () {},
-                    ),
-                    ProfileListItem(
-                      icon: Icons.logout,
-                      title: 'Logout',
-                      isDestructive: true,
-                      onTap: () {
-                        showLogoutConfirmationDialog(
-                          context: context,
-                          onConfirm: () {
-                            context.read<AuthBloc>().add(LogoutEvent());
+                              );
+                            } else if (limitState is PostLimitError) {
+                              return Text(
+                                'Error loading account status: ${limitState.message}',
+                                style: TextStyle(fontSize: isWeb ? 12 : null),
+                              );
+                            }
+                            return const SizedBox.shrink();
                           },
-                        );
-                      },
+                        ),
+                        _buildSectionTitle(context, 'My Listings', isWeb),
+                        ProfileListItem(
+                          icon: Icons.favorite_outline,
+                          title: 'Saved Cars',
+                          onTap: () {},
+                        ),
+                        ProfileListItem(
+                          icon: Icons.compare,
+                          title: 'Compare',
+                          onTap: () {
+                            AppNavigator.push(context, ComparisonTabBar());
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        _buildSectionTitle(context, 'App Settings', isWeb),
+                        NotificationListItem(
+                          title: 'Notifications',
+                          value: true,
+                          onChanged: (val) {},
+                        ),
+                        ProfileListItem(
+                          icon: Icons.settings_outlined,
+                          title: 'App Preferences',
+                          onTap: () {},
+                        ),
+                        ProfileListItem(
+                          icon: Icons.help_outline,
+                          title: 'Help & Support',
+                          onTap: () {},
+                        ),
+                        ProfileListItem(
+                          icon: Icons.info_outline,
+                          title: 'About App',
+                          onTap: () {},
+                        ),
+                        ProfileListItem(
+                          icon: Icons.logout,
+                          title: 'Logout',
+                          isDestructive: true,
+                          onTap: () {
+                            showLogoutConfirmationDialog(
+                              context: context,
+                              onConfirm: () {
+                                context.read<AuthBloc>().add(LogoutEvent());
+                              },
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 30),
+                      ]),
                     ),
-                    const SizedBox(height: 30),
-                  ]),
-                ),
-              ],
+                  ],
+                );
+              },
             );
           },
         ),
@@ -256,14 +271,15 @@ class ScreenProfile extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTitle(BuildContext context, String title) {
+  Widget _buildSectionTitle(BuildContext context, String title, bool isWeb) {
     return Padding(
       padding: const EdgeInsets.only(left: 20, top: 24, bottom: 12),
       child: Text(
         title,
-        style: Theme.of(
-          context,
-        ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              fontSize: isWeb ? 14 : null,
+            ),
       ),
     );
   }

@@ -7,9 +7,11 @@ class PopUpSearchScreenWidget extends StatelessWidget {
   const PopUpSearchScreenWidget({
     super.key,
     required TextEditingController searchController,
+    this.isWeb = false,
   }) : _searchController = searchController;
 
   final TextEditingController _searchController;
+  final bool isWeb;
 
   @override
   Widget build(BuildContext context) {
@@ -26,19 +28,26 @@ class PopUpSearchScreenWidget extends StatelessWidget {
             }
           },
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: isWeb ? 12 : 16),
         BlocBuilder<GetLocationBloc, GetLocationState>(
           builder: (context, state) {
             if (state is GetLocationSearchResults) {
               if (state.locations.isEmpty) {
-                return Center(child: Text('No locations found'));
+                return Center(
+                  child: Text(
+                    'No locations found',
+                    style: TextStyle(fontSize: isWeb ? 14 : null),
+                  ),
+                );
               }
               return SizedBox(
                 child: ListView.separated(
                   padding: EdgeInsets.zero,
                   shrinkWrap: true,
                   itemCount: state.locations.length,
-                  separatorBuilder: (context, index) => Divider(),
+                  separatorBuilder: (context, index) => Divider(
+                    height: isWeb ? 8 : 12,
+                  ),
                   itemBuilder: (context, index) {
                     final location = state.locations[index];
                     return InkWell(
@@ -48,28 +57,32 @@ class PopUpSearchScreenWidget extends StatelessWidget {
                         );
                         Navigator.pop(context);
                       },
-
                       child: Container(
-                        height: 60,
+                        height: isWeb ? 50 : 60,
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.surface,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(isWeb ? 8 : 12),
                         ),
                         child: Row(
                           children: [
-                            const SizedBox(width: 10),
+                            SizedBox(width: isWeb ? 8 : 10),
                             Icon(
                               Icons.location_on_outlined,
                               color: Theme.of(context).primaryColor,
-                              size: 20,
+                              size: isWeb ? 18 : 20,
                             ),
-                            const SizedBox(width: 12),
-                            Text(
-                              location.address ?? 'Unknown address',
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(fontWeight: FontWeight.w500),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            SizedBox(width: isWeb ? 8 : 12),
+                            Expanded(
+                              child: Text(
+                                location.address ?? 'Unknown address',
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: isWeb ? 14 : null,
+                                    ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                         ),
@@ -84,8 +97,8 @@ class PopUpSearchScreenWidget extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(
-                      width: 20,
-                      height: 20,
+                      width: isWeb ? 18 : 20,
+                      height: isWeb ? 18 : 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation<Color>(
@@ -93,10 +106,12 @@ class PopUpSearchScreenWidget extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: isWeb ? 6 : 8),
                     Text(
                       'Searching locations...',
-                      style: Theme.of(context).textTheme.bodySmall,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontSize: isWeb ? 12 : null,
+                      ),
                     ),
                   ],
                 ),

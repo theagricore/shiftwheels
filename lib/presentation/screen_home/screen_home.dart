@@ -23,84 +23,89 @@ class ScreenHome extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<ScreenHome> {
- @override
-    Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create:
-              (context) =>
-                  AddPostBloc(sl<GetBrandUsecase>(), sl<GetModelsUsecase>())
-                    ..add(FetchBrandsEvent()),
-        ),
-        BlocProvider(
-          create: (context) => sl<GetPostAdBloc>()..add(const FetchActiveAds()),
-        ),
-      ],
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: BlocConsumer<GetPostAdBloc, GetPostAdState>(
-          listener: (context, state) {
-            if (state is GetPostAdError) {
-              BasicSnackbar(
-                message: state.message,
-                backgroundColor: AppColors.zred,
-              ).show(context);
-            }
-          },
-          builder: (context, state) {
-            final List<AdWithUserModel> ads = (state is GetPostAdLoaded)
-                ? state.ads
-                : (state is GetPostAdLoading
-                    ? (state.previousAds ?? <AdWithUserModel>[])
-                    : <AdWithUserModel>[]);
-
-            final List<AdWithUserModel> premiumAds = (state is GetPostAdLoaded)
-                ? state.premiumAds
-                : (state is GetPostAdLoading
-                    ? (state.previousPremiumAds ?? <AdWithUserModel>[])
-                    : <AdWithUserModel>[]);
-
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<GetPostAdBloc>().add(const RefreshActiveAds());
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWeb = constraints.maxWidth > 600;
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider(
+              create:
+                  (context) =>
+                      AddPostBloc(sl<GetBrandUsecase>(), sl<GetModelsUsecase>())
+                        ..add(FetchBrandsEvent()),
+            ),
+            BlocProvider(
+              create:
+                  (context) => sl<GetPostAdBloc>()..add(const FetchActiveAds()),
+            ),
+          ],
+          child: Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            body: BlocConsumer<GetPostAdBloc, GetPostAdState>(
+              listener: (context, state) {
+                if (state is GetPostAdError) {
+                  BasicSnackbar(
+                    message: state.message,
+                    backgroundColor: AppColors.zred,
+                  ).show(context);
+                }
               },
-              child: CustomScrollView(
-                slivers: [
-                  // App bar containing search bar and brand filter
-                  SliverAppBar(
-                    expandedHeight: 90.0,
-                    floating: true,
-                    pinned: true,
-                    snap: true,
-                    backgroundColor: AppColors.zPrimaryColor,
-                    elevation: 0,
-                    flexibleSpace: FlexibleSpaceBar(
-                      background: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          _buildSearchBar(context),
-                          const SizedBox(height: 10),
-                        ],
+              builder: (context, state) {
+                final List<AdWithUserModel> ads =
+                    (state is GetPostAdLoaded)
+                        ? state.ads
+                        : (state is GetPostAdLoading
+                            ? (state.previousAds ?? <AdWithUserModel>[])
+                            : <AdWithUserModel>[]);
+
+                final List<AdWithUserModel> premiumAds =
+                    (state is GetPostAdLoaded)
+                        ? state.premiumAds
+                        : (state is GetPostAdLoading
+                            ? (state.previousPremiumAds ?? <AdWithUserModel>[])
+                            : <AdWithUserModel>[]);
+
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    context.read<GetPostAdBloc>().add(const RefreshActiveAds());
+                  },
+                  child: CustomScrollView(
+                    slivers: [
+                      SliverAppBar(
+                        expandedHeight: 90.0,
+                        floating: true,
+                        pinned: true,
+                        snap: true,
+                        backgroundColor: AppColors.zPrimaryColor,
+                        elevation: 0,
+                        flexibleSpace: FlexibleSpaceBar(
+                          background: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              _buildSearchBar(context),
+                              const SizedBox(height: 10),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                      _buildBrandFilter(),
+                      _buildPremiumAdsSection(context, state, premiumAds),
+                      isWeb
+                          ? _buildAdGridWeb(context, state, ads)
+                          : _buildAdGridApp(context, state, ads),
+                    ],
                   ),
-                  // Brand filter Section
-                  _buildBrandFilter(),
-                  // Premium Ads Section
-                  _buildPremiumAdsSection(context, state, premiumAds),
-                  // Regular Ads Grid Section
-                  _buildAdGrid(context, state, ads),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 
-  /// Builds the search bar widget for the home screen.
   Widget _buildSearchBar(BuildContext context) {
     return const Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.0),
@@ -162,13 +167,12 @@ class _HomeScreenState extends State<ScreenHome> {
     }
   }
 
-  Widget _buildAdGrid(
+  Widget _buildAdGridApp(
     BuildContext context,
     GetPostAdState state,
     List<AdWithUserModel> ads,
   ) {
     if (state is GetPostAdLoading && ads.isEmpty) {
-      // Return the shimmer effect directly as a Sliver widget
       return const SimmerWidget();
     } else if (ads.isNotEmpty) {
       return SliverPadding(
@@ -205,9 +209,84 @@ class _HomeScreenState extends State<ScreenHome> {
                   'No listings available. Check back later!',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: AppColors.zfontColor.withOpacity(0.7),
-                        fontWeight: FontWeight.w500,
-                      ),
+                    color: AppColors.zfontColor.withOpacity(0.7),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } else {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+  }
+
+  Widget _buildAdGridWeb(
+    BuildContext context,
+    GetPostAdState state,
+    List<AdWithUserModel> ads,
+  ) {
+    if (state is GetPostAdLoading && ads.isEmpty) {
+      return const SimmerWidget();
+    } else if (ads.isNotEmpty) {
+      return SliverPadding(
+        padding: const EdgeInsets.only(top: 8.0),
+        sliver: SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                int crossAxisCount = 2;
+                double width = constraints.maxWidth;
+                if (width > 1200) {
+                  crossAxisCount = 5;
+                } else if (width > 900) {
+                  crossAxisCount = 4;
+                } else if (width > 600) {
+                  crossAxisCount = 3;
+                }
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: ads.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    crossAxisSpacing: 2,
+                    mainAxisSpacing: 2,
+                    childAspectRatio: 0.7,
+                  ),
+                  itemBuilder:
+                      (context, index) =>
+                          AdCard(ad: ads[index], showFavoriteBadge: false),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+    } else if (state is GetPostAdLoaded && ads.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 60.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.sentiment_dissatisfied_outlined,
+                  size: 80,
+                  color: AppColors.zfontColor.withOpacity(0.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No listings available. Check back later!',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: AppColors.zfontColor.withOpacity(0.7),
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),

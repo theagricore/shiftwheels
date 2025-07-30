@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,8 +15,8 @@ class ActiveAdWidget extends StatelessWidget {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return BlocProvider(
-      create:
-          (context) => sl<ActiveAdsBloc>()..add(LoadActiveAds(currentUserId)),
+      create: (context) =>
+          sl<ActiveAdsBloc>()..add(LoadActiveAds(currentUserId)),
       child: const _ActiveAdContent(),
     );
   }
@@ -32,13 +33,16 @@ class _ActiveAdContent extends StatelessWidget {
           if (state is ActiveAdsInitial || state is ActiveAdsLoading) {
             return _buildShimmerLoading();
           } else if (state is ActiveAdsError) {
-            return _buildError(state.message);
+            return _buildError(context, state.message);
           } else if (state is ActiveAdsLoaded) {
-            if (state.ads.isEmpty) {
-              return _buildEmpty();
-            } else {
-              return _buildAdList(context, state);
-            }
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final isWeb = kIsWeb && constraints.maxWidth > 600;
+                return state.ads.isEmpty
+                    ? _buildEmpty(isWeb)
+                    : _buildAdList(context, state, isWeb);
+              },
+            );
           } else {
             return const SizedBox();
           }
@@ -56,32 +60,55 @@ class _ActiveAdContent extends StatelessWidget {
     );
   }
 
-  Widget _buildError(String message) {
+  Widget _buildError(BuildContext context, String message) {
+    final isWeb = kIsWeb;
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [Text(message)],
+      child: Text(
+        message,
+        style: TextStyle(fontSize: isWeb ? 16 : 18),
       ),
     );
   }
 
-  Widget _buildEmpty() {
-    return const Center(child: Text('No active ads available'));
+  Widget _buildEmpty(bool isWeb) {
+    return Center(
+      child: Text(
+        'No active ads available',
+        style: TextStyle(fontSize: isWeb ? 16 : 18),
+      ),
+    );
   }
 
-  Widget _buildAdList(BuildContext context, ActiveAdsLoaded state) {
+  Widget _buildAdList(BuildContext context, ActiveAdsLoaded state, bool isWeb) {
     return RefreshIndicator(
       onRefresh: () async {
         final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
         context.read<ActiveAdsBloc>().add(LoadActiveAds(userId));
       },
-      child: ListView.builder(
-        itemCount: state.ads.length,
-        itemBuilder: (context, index) {
-          final ad = state.ads[index];
-          return ActiveAdCard(ad: ad);
-        },
-      ),
+      child: isWeb
+          ? Padding(
+              padding: const EdgeInsets.all(12),
+              child: GridView.builder(
+                itemCount: state.ads.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.67,
+                ),
+                itemBuilder: (context, index) {
+                  final ad = state.ads[index];
+                  return ActiveAdCard(ad: ad);
+                },
+              ),
+            )
+          : ListView.builder(
+              itemCount: state.ads.length,
+              itemBuilder: (context, index) {
+                final ad = state.ads[index];
+                return ActiveAdCard(ad: ad);
+              },
+            ),
     );
   }
 }

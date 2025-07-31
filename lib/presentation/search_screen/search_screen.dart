@@ -25,28 +25,44 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: SearchAppBar(
+      appBar: ScreenAppbarWidget(
         searchController: _searchController,
         onFilterPressed: () => _showFilterBottomSheet(context),
       ),
-      body: BlocBuilder<SearchBloc, SearchState>(
-        builder: (context, state) {
-          return Column(
-            children: [Expanded(child: _buildSearchResults(state))],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWeb = constraints.maxWidth > 600;
+          return BlocBuilder<SearchBloc, SearchState>(
+            builder: (context, state) {
+              return Column(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isWeb ? constraints.maxWidth * 0.1 : 0,
+                      ),
+                      child: _buildSearchResults(state, isWeb),
+                    ),
+                  ),
+                ],
+              );
+            },
           );
         },
       ),
     );
   }
 
-  Widget _buildSearchResults(SearchState state) {
+  Widget _buildSearchResults(SearchState state, bool isWeb) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     if (state is SearchLoading) {
       return Center(
         child: Container(
           child: Lottie.asset(
             'assets/images/Animation - search-w1000-h1000.json',
-            height: 40,
-            width: 40,
+            height: 200,
+            width: 200,
             fit: BoxFit.contain,
             repeat: false,
           ),
@@ -55,38 +71,81 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     if (state is SearchError) {
-      return Center(child: Text(state.message));
+      return Center(
+        child: Text(
+          state.message,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: isDarkMode ? Colors.redAccent : Colors.redAccent,
+                fontSize: isWeb ? 14 : null,
+              ),
+        ),
+      );
     }
 
     if (state is SearchLoaded) {
       final ads = state.ads;
 
       if (ads.isEmpty) {
-        return const Center(child: Text('No results found'));
+        return Center(
+          child: Text(
+            'No results found',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: isDarkMode
+                      ? Theme.of(context).colorScheme.onBackground
+                      : Colors.grey.shade700,
+                  fontSize: isWeb ? 20 : null,
+                ),
+          ),
+        );
       }
 
       return RefreshIndicator(
         onRefresh: () async {
           context.read<SearchBloc>().add(
-            SearchFilterChanged(state.currentFilter),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: ListView.builder(
-            itemCount: ads.length,
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 0),
-                child: ListAdCard(ad: ads[index]),
+                SearchFilterChanged(state.currentFilter),
               );
-            },
+        },
+        color: Theme.of(context).colorScheme.primary,
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: isWeb ? 20.0 : 6.0,
+            vertical: 8.0,
           ),
+          child: isWeb
+              ? GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: _calculateCrossAxisCount(context),
+                    childAspectRatio: 2.5,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemCount: ads.length,
+                  itemBuilder: (context, index) {
+                    return ListAdCard(ad: ads[index], isWeb: isWeb);
+                  },
+                )
+              : ListView.builder(
+                  itemCount: ads.length,
+                  itemBuilder: (context, index) {
+                    return ListAdCard(ad: ads[index], isWeb: isWeb);
+                  },
+                ),
         ),
       );
     }
 
-    return const Center(child: CircularProgressIndicator());
+    return Center(
+      child: CircularProgressIndicator(
+        color: Theme.of(context).colorScheme.primary,
+      ),
+    );
+  }
+
+  int _calculateCrossAxisCount(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width > 1200) return 3;
+    if (width > 800) return 2;
+    return 1;
   }
 
   void _showFilterBottomSheet(BuildContext context) {

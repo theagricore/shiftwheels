@@ -13,9 +13,8 @@ class CompareScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
     return BlocProvider(
-      create:
-          (context) =>
-              CompareBloc()..add(LoadFavoritesForComparison(currentUserId)),
+      create: (context) => 
+          CompareBloc()..add(LoadFavoritesForComparison(currentUserId)),
       child: const _CompareContent(),
     );
   }
@@ -37,9 +36,8 @@ class _CompareContent extends StatelessWidget {
             _showSuccessDialog(context, state);
           }
         },
-        builder:
-            (context, state) =>
-                _buildContentBasedOnState(context, state, textColor),
+        builder: (context, state) =>
+            _buildContentBasedOnState(context, state, textColor),
       ),
     );
   }
@@ -54,9 +52,21 @@ class _CompareContent extends StatelessWidget {
     } else if (state is CompareError) {
       return _buildErrorView(context, state);
     } else if (state is FavoritesLoadedForComparison) {
-      return ComparisonViewWidget(state: state);
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final isWeb = constraints.maxWidth > 600;
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaleFactor: isWeb ? 0.9 : 1.0,
+            ),
+            child: ComparisonViewWidget(
+              state: state,
+              isWeb: isWeb,
+            ),
+          );
+        },
+      );
     }
-    // Default case: handled by BlocConsumer listener for success states
     return const SizedBox();
   }
 
@@ -83,9 +93,10 @@ class _CompareContent extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               state.message,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(color: errorTextColor),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: errorTextColor,
+                    fontSize: 16,
+                  ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -100,37 +111,35 @@ class _CompareContent extends StatelessWidget {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final textColor =
         isDarkMode ? AppColors.zDarkPrimaryText : AppColors.zLightPrimaryText;
-    final message =
-        state is ComparisonSaved
-            ? 'Comparison saved successfully!'
-            : 'PDF generated and shared successfully!';
+    final message = state is ComparisonSaved
+        ? 'Comparison saved successfully!'
+        : 'PDF generated and shared successfully!';
 
     showDialog(
       context: context,
       barrierDismissible: true,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor:
-                isDarkMode ? AppColors.zDarkCardBackground : AppColors.zWhite,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+      builder: (context) => AlertDialog(
+        backgroundColor:
+            isDarkMode ? AppColors.zDarkCardBackground : AppColors.zWhite,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.check_circle, color: AppColors.zGreen, size: 60),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: textColor,
+                    fontSize: 16,
+                  ),
+              textAlign: TextAlign.center,
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.check_circle, color: AppColors.zGreen, size: 60),
-                const SizedBox(height: 16),
-                Text(
-                  message,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleMedium?.copyWith(color: textColor),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-           
-          ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -143,7 +152,4 @@ class _CompareContent extends StatelessWidget {
       title: 'Retry',
     );
   }
-
-  
 }
-

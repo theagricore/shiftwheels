@@ -17,7 +17,7 @@ import 'package:shiftwheels/domain/add_post/usecase/check_post_limit_usecase.dar
 import 'package:shiftwheels/domain/add_post/usecase/compare_cars_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/create_payment_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/deactive-ad_usecase.dart';
-import 'package:shiftwheels/domain/add_post/usecase/delete_comparisons_usecase';
+import 'package:shiftwheels/domain/add_post/usecase/delete_comparisons_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_active_ads_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_brand_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_comparison_cars_usecase.dart';
@@ -75,6 +75,7 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<CloudinaryService>(CloudinaryServiceImpl());
   sl.registerSingleton<RazorpayService>(RazorpayService());
   sl.registerSingleton<PdfService>(PdfService());
+  
 
   // Repositories
   sl.registerSingleton<AuthRepository>(AuthRepositoryImpl());

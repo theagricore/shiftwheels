@@ -62,19 +62,19 @@ class ScreenPostLimitReached extends StatelessWidget {
                           AnimatedLottieButtonWidget(
                             animationAsset:
                                 "assets/images/Animation - buttonanimation.json",
+                            label: 'Upgrade to Premium (₹100)',
                             onTap: () {
                               _navigateToPremium(context);
                             },
-                            label: 'Upgrade to Premium (₹100)',
                           ),
                           const SizedBox(height: 8),
                           AnimatedLottieButtonWidget(
                             animationAsset:
                                 "assets/images/Animation - buttob blue.json",
+                            label: 'Continue with Free Account',
                             onTap: () {
                               Navigator.pop(context);
                             },
-                            label: 'Continue with free account',
                           ),
                         ],
                       ),
@@ -96,7 +96,9 @@ class ScreenPostLimitReached extends StatelessWidget {
         builder: (context) => ScreenPayment(limit: limit, userId: limit.userId),
       ),
     ).then((success) {
-      if (success == true) Navigator.pop(context, true);
+      if (success == true) {
+        Navigator.pop(context, true);
+      }
     });
   }
 
@@ -110,7 +112,7 @@ class ScreenPostLimitReached extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Premium active until: ${_formatDate(limit.premiumExpiryDate!)}',
-            style: TextStyle(color: Colors.green),
+            style: const TextStyle(color: Colors.green),
           ),
         ],
       ],

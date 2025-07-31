@@ -4,14 +4,17 @@ import 'package:shiftwheels/data/add_post/models/ad_with_user_model.dart';
 
 class ComparisonTable extends StatelessWidget {
   final List<AdWithUserModel> selectedCars;
+  final bool isWeb;
 
-  const ComparisonTable({super.key, required this.selectedCars});
+  const ComparisonTable({
+    super.key, 
+    required this.selectedCars,
+    this.isWeb = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (selectedCars.length != 2) {
-      return Container(); 
-    }
+    if (selectedCars.length != 2) return Container();
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final tableBackgroundColor = isDarkMode ? AppColors.zDarkCardBackground : AppColors.zWhite;
@@ -21,7 +24,10 @@ class ComparisonTable extends StatelessWidget {
     final valueColor = isDarkMode ? AppColors.zDarkSecondaryText : AppColors.zLightSecondaryText;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: EdgeInsets.symmetric(
+        horizontal: isWeb ? 40 : 16,
+        vertical: isWeb ? 20 : 8,
+      ),
       decoration: BoxDecoration(
         color: tableBackgroundColor,
         border: Border.all(color: borderColor),
@@ -36,8 +42,8 @@ class ComparisonTable extends StatelessWidget {
       ),
       child: Table(
         border: TableBorder.all(color: borderColor, width: 1.0),
-        columnWidths: const {
-          0: FixedColumnWidth(130),
+        columnWidths: {
+          0: FixedColumnWidth(isWeb ? 180 : 130),
           1: FlexColumnWidth(),
           2: FlexColumnWidth(),
         },
@@ -46,22 +52,24 @@ class ComparisonTable extends StatelessWidget {
             decoration: BoxDecoration(color: headerColor),
             children: [
               Padding(
-                padding: const EdgeInsets.all(10),
+                padding: EdgeInsets.all(isWeb ? 16 : 10),
                 child: Text(
                   'Specification',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: textColor,
+                        fontSize: isWeb ? 15 : null,
                       ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(10),
+                padding: EdgeInsets.all(isWeb ? 16 : 10),
                 child: Text(
                   '${selectedCars[0].ad.brand} ${selectedCars[0].ad.model}',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: textColor,
+                        fontSize: isWeb ? 15 : null,
                       ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
@@ -69,12 +77,13 @@ class ComparisonTable extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(10),
+                padding: EdgeInsets.all(isWeb ? 16 : 10),
                 child: Text(
                   '${selectedCars[1].ad.brand} ${selectedCars[1].ad.model}',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: textColor,
+                        fontSize: isWeb ? 15 : null,
                       ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
@@ -102,10 +111,8 @@ class ComparisonTable extends StatelessWidget {
             },
             {
               'key': 'Transmission',
-              'value1':
-                  selectedCars[0].ad.transmissionType.isNotEmpty ? selectedCars[0].ad.transmissionType : 'N/A',
-              'value2':
-                  selectedCars[1].ad.transmissionType.isNotEmpty ? selectedCars[1].ad.transmissionType : 'N/A',
+              'value1': selectedCars[0].ad.transmissionType.isNotEmpty ? selectedCars[0].ad.transmissionType : 'N/A',
+              'value2': selectedCars[1].ad.transmissionType.isNotEmpty ? selectedCars[1].ad.transmissionType : 'N/A',
             },
             {
               'key': 'KM Driven',
@@ -122,7 +129,6 @@ class ComparisonTable extends StatelessWidget {
               'value1': '\$${selectedCars[0].ad.price.toStringAsFixed(2)}',
               'value2': '\$${selectedCars[1].ad.price.toStringAsFixed(2)}',
             },
-
             {
               'key': 'Posted Date',
               'value1': selectedCars[0].ad.postedDate.toLocal().toString().split(' ')[0],
@@ -132,28 +138,35 @@ class ComparisonTable extends StatelessWidget {
             return TableRow(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(10),
+                  padding: EdgeInsets.all(isWeb ? 16 : 10),
                   child: Text(
                     row['key']!,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w500,
                           color: textColor,
+                          fontSize: isWeb ? 14 : null,
                         ),
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(10),
+                  padding: EdgeInsets.all(isWeb ? 16 : 10),
                   child: Text(
-                    row['value1'] ?? 'N/A', 
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: valueColor),
+                    row['value1'] ?? 'N/A',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: valueColor,
+                          fontSize: isWeb ? 14 : null,
+                        ),
                     textAlign: TextAlign.center,
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(10),
+                  padding: EdgeInsets.all(isWeb ? 16 : 10),
                   child: Text(
-                    row['value2'] ?? 'N/A', 
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: valueColor),
+                    row['value2'] ?? 'N/A',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: valueColor,
+                          fontSize: isWeb ? 14 : null,
+                        ),
                     textAlign: TextAlign.center,
                   ),
                 ),

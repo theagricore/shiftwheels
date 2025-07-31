@@ -5,21 +5,29 @@ import 'package:shiftwheels/presentation/screen_home/screen_ad_details.dart';
 
 class ListAdCard extends StatelessWidget {
   final AdWithUserModel ad;
+  final bool isWeb;
 
-  const ListAdCard({super.key, required this.ad});
+  const ListAdCard({
+    super.key, 
+    required this.ad,
+    this.isWeb = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final isDarkMode = theme.brightness == Brightness.dark;
 
     return Card(
+      color: isDarkMode
+          ? AppColors.zDarkCardBackground
+          : AppColors.zLightCardBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppColors.zfontColor.withOpacity(0.3)),
       ),
-      elevation: 3,
+      elevation: 2,
       child: InkWell(
+        borderRadius: BorderRadius.circular(12),
         onTap: () {
           Navigator.push(
             context,
@@ -28,113 +36,185 @@ class ListAdCard extends StatelessWidget {
             ),
           );
         },
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildImageBox(colorScheme),
-            Expanded(child: _buildInfo(context)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImageBox(ColorScheme colorScheme) {
-    return Padding(
-      padding: const EdgeInsets.all(3.0),
-      child: SizedBox(
-        width: 150,
-        height: 90,
-        child: ClipRRect(
-          borderRadius: const BorderRadius.horizontal(
-            left: Radius.circular(12),
-            right: Radius.circular(12),
-          ),
-          child:
-              ad.ad.imageUrls.isNotEmpty
-                  ? Image.network(
-                    ad.ad.imageUrls.first,
-                    fit: BoxFit.cover,
-                    loadingBuilder:
-                        (context, child, loadingProgress) =>
-                            loadingProgress == null
-                                ? child
-                                : const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                    errorBuilder:
-                        (context, error, stackTrace) =>
-                            _fallbackImage(colorScheme),
-                  )
-                  : _fallbackImage(colorScheme),
-        ),
-      ),
-    );
-  }
-
-  Widget _fallbackImage(ColorScheme colorScheme) {
-    return Container(
-      color: colorScheme.surfaceVariant,
-      child: Center(
-        child: Icon(
-          Icons.car_repair,
-          size: 40,
-          color: colorScheme.onSurfaceVariant,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfo(BuildContext context) {
-    final adData = ad.ad;
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.all(12.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${adData.brand} ${adData.model} (${adData.year})',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Padding(
+          padding: const EdgeInsets.all(5.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _buildImageBox(context, isDarkMode),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '₹${adData.price.toStringAsFixed(2)}',
-                      style: TextStyle(color: AppColors.zPrimaryColor),
-                    ),
-                    const SizedBox(height: 4),
-                    Text('${adData.kmDriven} km',style: Theme.of(context).textTheme.labelSmall,),
+                    _buildTitleSection(context, isDarkMode),
+                    const SizedBox(height: 8),
+                    isWeb ? SizedBox() : _buildPriceAndDetailsSection(context, isDarkMode)
                   ],
                 ),
               ),
-              Container(
-                height: 30,
-                width: 70,
-                decoration: BoxDecoration(
-                  color: AppColors.zPrimaryColor,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(
-                    "Details",
-                    style: TextStyle(
-                      color: AppColors.zblack,
-                      fontWeight: FontWeight.w500,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageBox(BuildContext context, bool isDarkMode) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Container(
+      width: isWeb ? 200 : 160,
+      height: isWeb ? 120 : 90,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: isDarkMode
+            ? colorScheme.surfaceVariant.withOpacity(0.2)
+            : colorScheme.surfaceVariant,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: ad.ad.imageUrls.isNotEmpty
+            ? Image.network(
+                ad.ad.imageUrls.first,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                          : null,
+                      color: AppColors.zPrimaryColor,
                     ),
-                  ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) =>
+                    _fallbackImage(colorScheme, isDarkMode),
+              )
+            : _fallbackImage(colorScheme, isDarkMode),
+      ),
+    );
+  }
+
+  Widget _fallbackImage(ColorScheme colorScheme, bool isDarkMode) {
+    return Center(
+      child: Icon(
+        Icons.car_repair,
+        size: 40,
+        color: isDarkMode
+            ? colorScheme.onSurfaceVariant.withOpacity(0.6)
+            : colorScheme.onSurfaceVariant,
+      ),
+    );
+  }
+
+  Widget _buildTitleSection(BuildContext context, bool isDarkMode) {
+    final adData = ad.ad;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '${adData.brand} ${adData.model}',
+          style: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: isDarkMode
+                ? AppColors.zDarkPrimaryText
+                : AppColors.zLightPrimaryText,
+            fontSize: isWeb ? 16 : null,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Icon(
+              Icons.calendar_today,
+              size: isWeb ? 16 : 14,
+              color: isDarkMode
+                  ? AppColors.zDarkSecondaryText
+                  : AppColors.zLightSecondaryText,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              '${adData.year}',
+              style: textTheme.bodySmall?.copyWith(
+                color: isDarkMode
+                    ? AppColors.zDarkSecondaryText
+                    : AppColors.zLightSecondaryText,
+                fontSize: isWeb ? 12 : null,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Icon(
+              Icons.speed,
+              size: isWeb ? 16 : 14,
+              color: isDarkMode
+                  ? AppColors.zDarkSecondaryText
+                  : AppColors.zLightSecondaryText,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              '${adData.kmDriven} km',
+              style: textTheme.bodySmall?.copyWith(
+                color: isDarkMode
+                    ? AppColors.zDarkSecondaryText
+                    : AppColors.zLightSecondaryText,
+                fontSize: isWeb ? 12 : null,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPriceAndDetailsSection(BuildContext context, bool isDarkMode) {
+    final adData = ad.ad;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            '₹${adData.price.toStringAsFixed(0)}',
+            style: textTheme.titleMedium?.copyWith(
+              color: AppColors.zPrimaryColor,
+              fontWeight: FontWeight.w700,
+              fontSize: isWeb ? 18 : null,
+            ),
+          ),
+          Container(
+            height: isWeb ? 36 : 32,
+            width: isWeb ? 90 : 80,
+            decoration: BoxDecoration(
+              color: AppColors.zPrimaryColor,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.zPrimaryColor.withOpacity(0.2),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                "Details",
+                style: textTheme.labelLarge?.copyWith(
+                  color: AppColors.zblack,
+                  fontWeight: FontWeight.w600,
+                  fontSize: isWeb ? 14 : null,
                 ),
               ),
-            ],
+            ),
           ),
         ],
       ),

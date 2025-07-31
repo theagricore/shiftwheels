@@ -10,6 +10,7 @@ class FilledCarSlot extends StatelessWidget {
   final Color textColor;
   final Color subtitleColor;
   final Color placeholderColor;
+  final bool isWeb;
 
   const FilledCarSlot({
     super.key,
@@ -17,6 +18,7 @@ class FilledCarSlot extends StatelessWidget {
     required this.textColor,
     required this.subtitleColor,
     required this.placeholderColor,
+    this.isWeb = false,
   });
 
   @override
@@ -29,11 +31,11 @@ class FilledCarSlot extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             child: CachedNetworkImage(
               imageUrl: car.ad.imageUrls.first,
-              height: 120,
+              height: isWeb ? 180 : 120,
               width: double.infinity,
               fit: BoxFit.cover,
               placeholder: (context, url) => Container(
-                height: 120,
+                height: isWeb ? 180 : 120,
                 color: placeholderColor,
                 child: const Center(
                   child: CircularProgressIndicator(
@@ -43,13 +45,13 @@ class FilledCarSlot extends StatelessWidget {
                 ),
               ),
               errorWidget: (context, url, error) => Container(
-                height: 120,
+                height: isWeb ? 180 : 120,
                 color: placeholderColor,
                 child: Center(
                   child: Icon(
                     Icons.broken_image,
                     color: subtitleColor,
-                    size: 40,
+                    size: isWeb ? 50 : 40,
                   ),
                 ),
               ),
@@ -57,23 +59,24 @@ class FilledCarSlot extends StatelessWidget {
           )
         else
           Container(
-            height: 120,
+            height: isWeb ? 180 : 120,
             width: double.infinity,
             color: placeholderColor,
             child: Center(
               child: Icon(
                 Icons.no_photography,
                 color: subtitleColor,
-                size: 40,
+                size: isWeb ? 50 : 40,
               ),
             ),
           ),
-        const SizedBox(height: 10),
+        SizedBox(height: isWeb ? 16 : 10),
         Text(
           '${car.ad.brand} ${car.ad.model}',
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: textColor,
+                fontSize: isWeb ? 18 : null,
               ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -83,20 +86,24 @@ class FilledCarSlot extends StatelessWidget {
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: AppColors.zGreen,
                 fontWeight: FontWeight.w600,
+                fontSize: isWeb ? 18 : null,
               ),
         ),
         Text(
           'Year: ${car.ad.year}',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: subtitleColor),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: subtitleColor,
+                fontSize: isWeb ? 14 : null,
+              ),
         ),
         const Spacer(),
         Align(
           alignment: Alignment.centerRight,
           child: IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.cancel,
               color: AppColors.zred,
-              size: 24,
+              size: isWeb ? 30 : 24,
             ),
             onPressed: () {
               context.read<CompareBloc>().add(SelectCarForComparison(car, false));

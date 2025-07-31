@@ -9,14 +9,18 @@ import 'package:shiftwheels/presentation/compare_screen/widget/filled_car_slot.d
 
 class ComparisonViewWidget extends StatelessWidget {
   final FavoritesLoadedForComparison state;
+  final bool isWeb;
 
-  const ComparisonViewWidget({super.key, required this.state});
+  const ComparisonViewWidget({
+    super.key, 
+    required this.state,
+    this.isWeb = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final textColor =
-        isDarkMode ? AppColors.zDarkPrimaryText : AppColors.zLightPrimaryText;
+    final textColor = isDarkMode ? AppColors.zDarkPrimaryText : AppColors.zLightPrimaryText;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -26,23 +30,24 @@ class ComparisonViewWidget extends StatelessWidget {
       color: AppColors.zPrimaryColor,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(vertical: 20),
+        padding: EdgeInsets.symmetric(vertical: isWeb ? 30 : 20),
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              padding: EdgeInsets.symmetric(horizontal: isWeb ? 40 : 24),
               child: Text(
                 'Select two cars to compare',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                      fontSize: isWeb ? 22 : null,
+                    ),
                 textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(height: 30),
+            SizedBox(height: isWeb ? 40 : 30),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: EdgeInsets.symmetric(horizontal: isWeb ? 40 : 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -51,12 +56,12 @@ class ComparisonViewWidget extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 30),
+            SizedBox(height: isWeb ? 40 : 30),
             if (state.selectedCars.length == 2) ...[
-              ComparisonTable(selectedCars: state.selectedCars),
-              const SizedBox(height: 30),
+              ComparisonTable(selectedCars: state.selectedCars, isWeb: isWeb),
+              SizedBox(height: isWeb ? 40 : 30),
               _buildGeneratePdfButton(context),
-              const SizedBox(height: 16),
+              SizedBox(height: isWeb ? 24 : 16),
               _buildSaveComparisonButton(context),
             ],
             if (state.favorites.isEmpty && state.selectedCars.isEmpty)
@@ -69,28 +74,35 @@ class ComparisonViewWidget extends StatelessWidget {
 
   Widget _buildGeneratePdfButton(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      padding: EdgeInsets.symmetric(horizontal: isWeb ? 40 : 24),
       child: SizedBox(
-        width: double.infinity, 
+        width: double.infinity,
         child: ElevatedButton.icon(
           onPressed: () {
             context.read<CompareBloc>().add(
-              GenerateAndSharePdf(state.selectedCars),
-            );
+                  GenerateAndSharePdf(state.selectedCars),
+                );
           },
-          icon: const Icon(
+          icon: Icon(
             Icons.picture_as_pdf,
             color: AppColors.zDarkPrimaryText,
+            size: isWeb ? 28 : 24,
           ),
-          label: const Text(
+          label: Text(
             'Generate and Share Comparison PDF',
-            style: TextStyle(color: AppColors.zDarkPrimaryText),
+            style: TextStyle(
+              color: AppColors.zDarkPrimaryText,
+              fontSize: isWeb ? 16 : null,
+            ),
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.zPrimaryColor,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            padding: EdgeInsets.symmetric(
+              horizontal: isWeb ? 24 : 20,
+              vertical: isWeb ? 18 : 15,
+            ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
@@ -101,25 +113,35 @@ class ComparisonViewWidget extends StatelessWidget {
   Widget _buildSaveComparisonButton(BuildContext context) {
     final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      padding: EdgeInsets.symmetric(horizontal: isWeb ? 40 : 24),
       child: SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(
           onPressed: () {
             context.read<CompareBloc>().add(
-              SaveComparison(userId, state.selectedCars),
-            );
+                  SaveComparison(userId, state.selectedCars),
+                );
           },
-          icon: const Icon(Icons.save, color: AppColors.zDarkPrimaryText),
-          label: const Text(
+          icon: Icon(
+            Icons.save,
+            color: AppColors.zDarkPrimaryText,
+            size: isWeb ? 28 : 24,
+          ),
+          label: Text(
             'Save Comparison',
-            style: TextStyle(color: AppColors.zDarkPrimaryText),
+            style: TextStyle(
+              color: AppColors.zDarkPrimaryText,
+              fontSize: isWeb ? 16 : null,
+            ),
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.zPrimaryColor,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            padding: EdgeInsets.symmetric(
+              horizontal: isWeb ? 24 : 20,
+              vertical: isWeb ? 18 : 15,
+            ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
@@ -129,18 +151,16 @@ class ComparisonViewWidget extends StatelessWidget {
 
   Widget _buildEmptyFavoritesMessage(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final subtitleColor =
-        isDarkMode
-            ? AppColors.zDarkSecondaryText
-            : AppColors.zLightSecondaryText;
+    final subtitleColor = isDarkMode ? AppColors.zDarkSecondaryText : AppColors.zLightSecondaryText;
 
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: EdgeInsets.all(isWeb ? 32 : 24),
       child: Text(
         'No favorite cars added yet. Add some cars to your favorites to compare them!',
-        style: Theme.of(
-          context,
-        ).textTheme.bodyLarge?.copyWith(color: subtitleColor),
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: subtitleColor,
+              fontSize: isWeb ? 16 : null,
+            ),
         textAlign: TextAlign.center,
       ),
     );
@@ -150,28 +170,21 @@ class ComparisonViewWidget extends StatelessWidget {
     final isSlotFilled = slotIndex < state.selectedCars.length;
     final car = isSlotFilled ? state.selectedCars[slotIndex] : null;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDarkMode ? AppColors.zDarkCardBackground : AppColors.zWhite;
-    final borderColor =
-        isDarkMode ? AppColors.zDarkCardBorder : AppColors.zLightCardBorder;
-    final textColor =
-        isDarkMode ? AppColors.zDarkPrimaryText : AppColors.zLightPrimaryText;
-    final subtitleColor =
-        isDarkMode
-            ? AppColors.zDarkSecondaryText
-            : AppColors.zLightSecondaryText;
-    final placeholderColor =
-        isDarkMode ? AppColors.zDarkGrey : AppColors.zGrey.shade200;
+    final backgroundColor = isDarkMode ? AppColors.zDarkCardBackground : AppColors.zWhite;
+    final borderColor = isDarkMode ? AppColors.zDarkCardBorder : AppColors.zLightCardBorder;
+    final textColor = isDarkMode ? AppColors.zDarkPrimaryText : AppColors.zLightPrimaryText;
+    final subtitleColor = isDarkMode ? AppColors.zDarkSecondaryText : AppColors.zLightSecondaryText;
+    final placeholderColor = isDarkMode ? AppColors.zDarkGrey : AppColors.zGrey.shade200;
 
     return GestureDetector(
       onTap: () {
         FavoritesBottomSheet.show(context, state, slotIndex);
       },
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.41,
-        height: 266,
-        margin: const EdgeInsets.all(8),
-        padding: const EdgeInsets.all(12),
+        width: isWeb ? 300 : MediaQuery.of(context).size.width * 0.41,
+        height: isWeb ? 320 : 266,
+        margin: EdgeInsets.all(isWeb ? 12 : 8),
+        padding: EdgeInsets.all(isWeb ? 16 : 12),
         decoration: BoxDecoration(
           color: backgroundColor,
           border: Border.all(
@@ -181,24 +194,21 @@ class ComparisonViewWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color:
-                  isDarkMode
-                      ? Colors.black.withOpacity(0.3)
-                      : Colors.grey.withOpacity(0.1),
+              color: isDarkMode ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.1),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-        child:
-            isSlotFilled
-                ? FilledCarSlot(
-                  car: car!,
-                  textColor: textColor,
-                  subtitleColor: subtitleColor,
-                  placeholderColor: placeholderColor,
-                )
-                : _buildEmptyCarSlot(context, subtitleColor),
+        child: isSlotFilled
+            ? FilledCarSlot(
+                car: car!,
+                textColor: textColor,
+                subtitleColor: subtitleColor,
+                placeholderColor: placeholderColor,
+                isWeb: isWeb,
+              )
+            : _buildEmptyCarSlot(context, subtitleColor),
       ),
     );
   }
@@ -207,13 +217,17 @@ class ComparisonViewWidget extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.add_circle_outline, size: 50),
-        const SizedBox(height: 12),
+        Icon(
+          Icons.add_circle_outline,
+          size: isWeb ? 60 : 50,
+        ),
+        SizedBox(height: isWeb ? 16 : 12),
         Text(
           'Tap to select car',
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: subtitleColor),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: subtitleColor,
+                fontSize: isWeb ? 16 : null,
+              ),
           textAlign: TextAlign.center,
         ),
       ],

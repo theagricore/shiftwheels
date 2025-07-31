@@ -5,7 +5,7 @@ import 'package:shiftwheels/data/add_post/data_source/pdf_service.dart';
 import 'package:shiftwheels/data/add_post/models/ad_with_user_model.dart';
 import 'package:shiftwheels/data/add_post/models/comparison_model.dart';
 import 'package:shiftwheels/domain/add_post/usecase/compare_cars_usecase.dart';
-import 'package:shiftwheels/domain/add_post/usecase/delete_comparisons_usecase';
+import 'package:shiftwheels/domain/add_post/usecase/delete_comparisons_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_comparison_cars_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_saved_comparisons_usecase.dart';
 import 'package:shiftwheels/domain/add_post/usecase/save_comparison_usecase.dart';

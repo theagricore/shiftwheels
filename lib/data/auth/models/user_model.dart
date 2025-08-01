@@ -6,7 +6,7 @@ class UserModel {
   final String? uid;
   final String? createdAt;
   final String? image;
-  final bool isBlocked;  // Added field for blocking functionality
+  final bool isBlocked; 
 
   UserModel({
     this.fullName,
@@ -16,7 +16,7 @@ class UserModel {
     this.uid,
     this.createdAt,
     this.image,
-    this.isBlocked = false,  // Default to false
+    this.isBlocked = false,  
   });
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
@@ -29,7 +29,7 @@ class UserModel {
         uid: _parseString(map['uid']),
         createdAt: _parseString(map['createdAt']),
         image: _parseImageUrl(map['image']) ?? 'https://example.com/default-profile.jpg',
-        isBlocked: map['isBlocked'] as bool? ?? false,  // Handle null case
+        isBlocked: map['isBlocked'] as bool? ?? false,  
       );
     } catch (e) {
       print('Error parsing UserModel: $e');
@@ -60,7 +60,7 @@ class UserModel {
       'uid': uid,
       'createdAt': createdAt,
       'image': image,
-      'isBlocked': isBlocked,  // Include in serialization
+      'isBlocked': isBlocked, 
     };
   }
 
@@ -72,7 +72,7 @@ class UserModel {
     String? uid,
     String? createdAt,
     String? image,
-    bool? isBlocked,  // Added to copyWith
+    bool? isBlocked, 
   }) {
     return UserModel(
       fullName: fullName ?? this.fullName,
@@ -82,7 +82,7 @@ class UserModel {
       uid: uid ?? this.uid,
       createdAt: createdAt ?? this.createdAt,
       image: image ?? this.image,
-      isBlocked: isBlocked ?? this.isBlocked,  // Include in copy
+      isBlocked: isBlocked ?? this.isBlocked,  
     );
   }
 

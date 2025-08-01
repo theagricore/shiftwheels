@@ -873,66 +873,25 @@ class PostFirebaseServiceImpl extends FirebasePostService {
     PaymentModel payment,
   ) async {
     try {
+      if (payment.userId.isEmpty) {
+        return Left('User ID cannot be empty');
+      }
+      if (payment.userEmail.isEmpty) {
+        return Left('User email cannot be empty');
+      }
+      if (payment.amount <= 0) {
+        return Left('Payment amount must be greater than zero');
+      }
+      if (payment.paymentType.isEmpty) {
+        return Left('Payment type cannot be empty');
+      }
+
       final docRef = await _firestore
           .collection('payments')
           .add(payment.toMap());
       return Right(docRef.id);
     } on FirebaseException catch (e) {
-      return Left('Firebase error: ${e.message}');
-    } catch (e) {
-      return Left('Unexpected error: ${e.toString()}');
-    }
-  }
-
-  @override
-  Future<Either<String, UserPostLimit>> getUserPostLimit(String userId) async {
-    try {
-      final doc =
-          await _firestore.collection('user_post_limits').doc(userId).get();
-
-      if (!doc.exists) {
-        final resetDate = DateTime.now().add(const Duration(days: 30));
-        final newLimit = UserPostLimit(
-          userId: userId,
-          postCount: 0,
-          resetDate: resetDate,
-        );
-
-        await _firestore
-            .collection('user_post_limits')
-            .doc(userId)
-            .set(newLimit.toMap());
-        return Right(newLimit);
-      }
-
-      final limit = UserPostLimit.fromMap(doc.data()!);
-
-      if (DateTime.now().isAfter(limit.resetDate)) {
-        final newResetDate = DateTime.now().add(const Duration(days: 30));
-        await _firestore.collection('user_post_limits').doc(userId).update({
-          'postCount': 0,
-          'resetDate': newResetDate.toIso8601String(),
-        });
-        return Right(limit.copyWith(postCount: 0, resetDate: newResetDate));
-      }
-
-      return Right(limit);
-    } on FirebaseException catch (e) {
-      return Left('Firebase error: ${e.message}');
-    } catch (e) {
-      return Left('Unexpected error: ${e.toString()}');
-    }
-  }
-
-  @override
-  Future<Either<String, void>> incrementPostCount(String userId) async {
-    try {
-      await _firestore.collection('user_post_limits').doc(userId).update({
-        'postCount': FieldValue.increment(1),
-      });
-      return const Right(null);
-    } on FirebaseException catch (e) {
-      return Left('Firebase error: ${e.message}');
+      return Left('Firebase error: ${e.message ?? 'Unknown Firestore error'}');
     } catch (e) {
       return Left('Unexpected error: ${e.toString()}');
     }
@@ -972,6 +931,20 @@ class PostFirebaseServiceImpl extends FirebasePostService {
         }
       }
 
+      return const Right(null);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Either<String, void>> incrementPostCount(String userId) async {
+    try {
+      await _firestore.collection('user_post_limits').doc(userId).update({
+        'postCount': FieldValue.increment(1),
+      });
       return const Right(null);
     } on FirebaseException catch (e) {
       return Left('Firebase error: ${e.message}');
@@ -1176,6 +1149,46 @@ class PostFirebaseServiceImpl extends FirebasePostService {
       return Left('Firebase error: ${e.message}');
     } catch (e) {
       return Left('Failed to delete comparison: ${e.toString()}');
+    }
+  }
+  
+  @override
+  Future<Either<String, UserPostLimit>> getUserPostLimit(String userId) async {
+    try {
+      final doc =
+          await _firestore.collection('user_post_limits').doc(userId).get();
+
+      if (!doc.exists) {
+        final resetDate = DateTime.now().add(const Duration(days: 30));
+        final newLimit = UserPostLimit(
+          userId: userId,
+          postCount: 0,
+          resetDate: resetDate,
+        );
+
+        await _firestore
+            .collection('user_post_limits')
+            .doc(userId)
+            .set(newLimit.toMap());
+        return Right(newLimit);
+      }
+
+      final limit = UserPostLimit.fromMap(doc.data()!);
+
+      if (DateTime.now().isAfter(limit.resetDate)) {
+        final newResetDate = DateTime.now().add(const Duration(days: 30));
+        await _firestore.collection('user_post_limits').doc(userId).update({
+          'postCount': 0,
+          'resetDate': newResetDate.toIso8601String(),
+        });
+        return Right(limit.copyWith(postCount: 0, resetDate: newResetDate));
+      }
+
+      return Right(limit);
+    } on FirebaseException catch (e) {
+      return Left('Firebase error: ${e.message}');
+    } catch (e) {
+      return Left('Unexpected error: ${e.toString()}');
     }
   }
 }

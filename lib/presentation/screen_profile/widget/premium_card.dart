@@ -23,24 +23,25 @@ class PremiumCard extends StatelessWidget {
     return '${date.day}/${date.month}/${date.year}';
   }
 
-@override
-Widget build(BuildContext context) {
-  return BlocProvider(
-    create: (context) => PremiumCardBloc(),
-    child: Card(
-      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-      elevation: 10,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: limit.isPremiumActive
-            ? _buildPremiumAccountCard(context)
-            : _buildFreeAccountCard(context),
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => PremiumCardBloc(),
+      child: Card(
+        margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+        elevation: 10,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child:
+              limit.isPremiumActive
+                  ? _buildPremiumAccountCard(context)
+                  : _buildFreeAccountCard(context),
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildPremiumAccountCard(BuildContext context) {
     const int standardPremiumDurationInDays = 30;
@@ -52,9 +53,10 @@ Widget build(BuildContext context) {
     final int totalDurationForProgressBar = standardPremiumDurationInDays;
     final int daysRemaining = expiryDate.difference(now).inDays;
 
-    double progress = totalDurationForProgressBar > 0
-        ? daysRemaining / totalDurationForProgressBar
-        : 0.0;
+    double progress =
+        totalDurationForProgressBar > 0
+            ? daysRemaining / totalDurationForProgressBar
+            : 0.0;
 
     if (progress < 0) {
       progress = 0;
@@ -180,10 +182,11 @@ Widget build(BuildContext context) {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ScreenPayment(
-                  limit: limit,
-                  userId: limit.userId,
-                ),
+                builder:
+                    (context) => ScreenPayment(
+                      limit: limit,
+                      userId: limit.userId,
+                    ),
               ),
             ).then((_) {
               if (onRefresh != null) onRefresh!();
@@ -231,9 +234,10 @@ Widget build(BuildContext context) {
                   child: LinearProgressIndicator(
                     value: postProgress,
                     backgroundColor: Colors.grey.shade300,
-                    color: postsRemaining <= 1
-                        ? Colors.red.shade600
-                        : AppColors.zGold,
+                    color:
+                        postsRemaining <= 1
+                            ? Colors.red.shade600
+                            : AppColors.zGold,
                     minHeight: 8,
                   ),
                 ),
@@ -257,7 +261,7 @@ Widget build(BuildContext context) {
 
 class _AnimatedLines extends StatelessWidget {
   final List<String> lines;
-  
+
   const _AnimatedLines({required this.lines});
 
   @override
@@ -266,13 +270,12 @@ class _AnimatedLines extends StatelessWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PremiumCardBloc>().add(StartTextAnimation(lines));
     });
-    
+
     return BlocBuilder<PremiumCardBloc, PremiumCardState>(
       builder: (context, state) {
-        final currentText = state is PremiumCardTextChanged 
-            ? state.currentText 
-            : lines.first;
-        
+        final currentText =
+            state is PremiumCardTextChanged ? state.currentText : lines.first;
+
         return SizedBox(
           height: 20,
           child: AnimatedSwitcher(
@@ -283,7 +286,10 @@ class _AnimatedLines extends StatelessWidget {
                   begin: const Offset(0, 1),
                   end: Offset.zero,
                 ).animate(
-                  CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
                 ),
                 child: FadeTransition(opacity: animation, child: child),
               );

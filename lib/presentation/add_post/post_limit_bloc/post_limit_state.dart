@@ -1,4 +1,3 @@
-// post_limit_state.dart
 part of 'post_limit_bloc.dart';
 
 abstract class PostLimitState extends Equatable {

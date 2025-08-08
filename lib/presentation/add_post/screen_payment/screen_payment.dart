@@ -21,21 +21,42 @@ class ScreenPayment extends StatefulWidget {
   final String userId;
 
   const ScreenPayment({Key? key, required this.limit, required this.userId})
-    : super(key: key);
+      : super(key: key);
 
   @override
   State<ScreenPayment> createState() => _ScreenPaymentState();
 }
 
-class _ScreenPaymentState extends State<ScreenPayment> {
+class _ScreenPaymentState extends State<ScreenPayment>
+    with TickerProviderStateMixin {
   bool _isProcessingPayment = false;
   final double _premiumAmount = 100.0;
   UserModel? _userModel;
+
+  late final AnimationController _bgAnimationController;
+  late final AnimationController _iconAnimationController;
 
   @override
   void initState() {
     super.initState();
     _fetchUserData();
+
+    _bgAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 6), 
+    )..repeat();
+
+    _iconAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3), 
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _bgAnimationController.dispose();
+    _iconAnimationController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchUserData() async {
@@ -84,124 +105,102 @@ class _ScreenPaymentState extends State<ScreenPayment> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: BasicAppbar(),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          bool isWeb = kIsWeb;
-          double titleFont = isWeb ? 24 : 30;
-          double bodyFont = isWeb ? 13 : 14;
-          double benefitFont = isWeb ? 14 : 16;
-
-          return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.orange.shade800.withOpacity(0.9),
-                  Colors.orange.shade400.withOpacity(0.9),
-                ],
-              ),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Lottie.asset(
+              'assets/images/Animation - yellow.json',
+              fit: BoxFit.cover,
+              repeat: false,
+              controller: _bgAnimationController,
             ),
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: Lottie.asset(
-                      'assets/images/Animation - yellow.json',
-                      fit: BoxFit.cover,
-                      repeat: false,
+          ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              bool isWeb = kIsWeb;
+              double titleFont = isWeb ? 24 : 30;
+              double bodyFont = isWeb ? 13 : 14;
+              double benefitFont = isWeb ? 14 : 16;
+
+              return SingleChildScrollView(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: isWeb ? 600 : double.infinity,
+                      minHeight: constraints.maxHeight,
                     ),
-                  ),
-                ),
-                SingleChildScrollView(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: isWeb ? 600 : double.infinity,
-                      ),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: kToolbarHeight + 20),
-                          Container(
-                            height: 200,
-                            width: 200,
-                            alignment: Alignment.center,
-                            child: Lottie.asset(
-                              'assets/images/Animation - Premium-icon.json',
-                              fit: BoxFit.contain,
-                              repeat: false,
-                            ),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: kToolbarHeight + 20),
+                        Container(
+                          height: 200,
+                          width: 200,
+                          alignment: Alignment.center,
+                          child: Lottie.asset(
+                            'assets/images/Animation - Premium-icon.json',
+                            fit: BoxFit.contain,
+                            repeat: true,
+                            controller: _iconAnimationController,
                           ),
-                          const SizedBox(height: 20),
-                          Text(
-                            "Upgrade to Premium",
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          "Upgrade to Premium",
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            fontSize: titleFont,
+                            color: AppColors.zWhite,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(
+                            "Get unlimited posts for 30 days by upgrading to premium for just ₹100",
                             textAlign: TextAlign.center,
                             style: GoogleFonts.inter(
-                              fontSize: titleFont,
+                              fontSize: bodyFont,
                               color: AppColors.zWhite,
-                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(height: 10),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildPremiumBenefits(benefitFont),
+                        const SizedBox(height: 30),
+                        if (_isProcessingPayment)
+                          const CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          )
+                        else
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Text(
-                              "Get unlimited posts for 30 days by upgrading to premium for just ₹100",
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.inter(
-                                fontSize: bodyFont,
-                                color: AppColors.zWhite,
-                              ),
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            child: AnimatedLottieButtonWidget(
+                              animationAsset:
+                                  "assets/images/Animation -Premium.json",
+                              onTap: _initiatePremiumPayment,
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          _buildPremiumBenefits(benefitFont),
-                          const SizedBox(height: 30),
-                          if (_isProcessingPayment)
-                            const CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            )
-                          else
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 40,
-                              ),
-                              child: AnimatedLottieButtonWidget(
-                                animationAsset:
-                                    "assets/images/Animation -Premium.json",
-                                onTap: _initiatePremiumPayment,
-                              ),
-                            ),
-                          const SizedBox(height: 16),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text(
-                              "Cancel",
-                              style: Theme.of(
-                                context,
-                              ).textTheme.bodyLarge?.copyWith(
-                                color: Colors.white,
-                                shadows: [
-                                  Shadow(
-                                    blurRadius: 5,
-                                    color: Colors.black.withOpacity(0.3),
-                                  ),
-                                ],
-                              ),
-                            ),
+                        const SizedBox(height: 16),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(
+                            "Cancel",
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(color: Colors.white),
                           ),
-                          const SizedBox(height: 30),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 30),
+                      ],
                     ),
                   ),
                 ),
-              ],
-            ),
-          );
-        },
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -212,7 +211,6 @@ class _ScreenPaymentState extends State<ScreenPayment> {
         message: 'User data or email not available',
         backgroundColor: AppColors.zred,
       );
-
       return;
     }
 
@@ -220,7 +218,7 @@ class _ScreenPaymentState extends State<ScreenPayment> {
 
     try {
       final paymentModel = PaymentModel(
-        id: '', 
+        id: '',
         userId: widget.userId,
         userName: _userModel!.fullName ?? 'Unknown',
         userEmail: _userModel!.email!,
@@ -252,9 +250,8 @@ class _ScreenPaymentState extends State<ScreenPayment> {
                 description: 'Premium upgrade for ${paymentModel.userName}',
                 email: paymentModel.userEmail,
                 amount: _premiumAmount,
-                onSuccess:
-                    (paymentId) =>
-                        _handlePaymentSuccess(firestorePaymentId, paymentId),
+                onSuccess: (paymentId) =>
+                    _handlePaymentSuccess(firestorePaymentId, paymentId),
                 onFailure: (error) {
                   BasicSnackbar(
                     message: 'Web payment failed: $error',
@@ -276,11 +273,10 @@ class _ScreenPaymentState extends State<ScreenPayment> {
               razorpay.openCheckOut(
                 amount: _premiumAmount,
                 description: 'Premium upgrade for ${paymentModel.userName}',
-                onSuccess:
-                    (razorpayPaymentId) => _handlePaymentSuccess(
-                      firestorePaymentId,
-                      razorpayPaymentId,
-                    ),
+                onSuccess: (razorpayPaymentId) => _handlePaymentSuccess(
+                  firestorePaymentId,
+                  razorpayPaymentId,
+                ),
                 onFailure: (error) {
                   BasicSnackbar(
                     message: 'Mobile payment failed: $error',
@@ -304,7 +300,6 @@ class _ScreenPaymentState extends State<ScreenPayment> {
         message: 'Error initiating payment: $e',
         backgroundColor: AppColors.zred,
       );
-
       setState(() => _isProcessingPayment = false);
     }
   }
@@ -328,7 +323,6 @@ class _ScreenPaymentState extends State<ScreenPayment> {
             message: 'Payment verification failed: $error',
             backgroundColor: AppColors.zred,
           );
-
           setState(() => _isProcessingPayment = false);
         },
         (_) async {
@@ -336,7 +330,6 @@ class _ScreenPaymentState extends State<ScreenPayment> {
             message: 'Payment successful! You are now a premium user.',
             backgroundColor: AppColors.zGreen,
           );
-
           Navigator.pop(context, true);
         },
       );
@@ -345,7 +338,6 @@ class _ScreenPaymentState extends State<ScreenPayment> {
         message: 'Error processing payment: $e',
         backgroundColor: AppColors.zred,
       );
-
       setState(() => _isProcessingPayment = false);
     }
   }
@@ -368,17 +360,15 @@ class _ScreenPaymentState extends State<ScreenPayment> {
               Text(
                 "Premium Benefits",
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               const SizedBox(height: 12),
               _buildBenefitItem("✓ Unlimited posts for 30 days", fontSize),
               _buildBenefitItem("✓ No monthly posting limits", fontSize),
               _buildBenefitItem(
-                "✓ Priority listing in search results",
-                fontSize,
-              ),
+                  "✓ Priority listing in search results", fontSize),
               _buildBenefitItem("✓ Premium badge on your profile", fontSize),
               _buildBenefitItem("✓ No ads in the app", fontSize),
             ],
@@ -398,7 +388,13 @@ class _ScreenPaymentState extends State<ScreenPayment> {
           Expanded(
             child: Text(
               text,
-              style: TextStyle(color: Colors.white, fontSize: fontSize),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: fontSize,
+                shadows: [
+                  Shadow(blurRadius: 3, color: Colors.black.withOpacity(0.3)),
+                ],
+              ),
             ),
           ),
         ],

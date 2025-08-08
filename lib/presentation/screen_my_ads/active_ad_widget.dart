@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shiftwheels/presentation/screen_home/widget/simmer%20effect.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/active_ads_bloc/active_ads_bloc.dart';
+import 'package:shiftwheels/presentation/screen_my_ads/mark_as_sold_bloc/mark_as_sold_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/widget/active_ad_card.dart';
 import 'package:shiftwheels/service_locater/service_locater.dart';
 
@@ -14,9 +15,15 @@ class ActiveAdWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-    return BlocProvider(
-      create: (context) =>
-          sl<ActiveAdsBloc>()..add(LoadActiveAds(currentUserId)),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => sl<ActiveAdsBloc>()..add(LoadActiveAds(currentUserId)),
+        ),
+        BlocProvider(
+          create: (context) => sl<MarkAsSoldBloc>(),
+        ),
+      ],
       child: const _ActiveAdContent(),
     );
   }
@@ -27,26 +34,36 @@ class _ActiveAdContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
     return Scaffold(
-      body: BlocBuilder<ActiveAdsBloc, ActiveAdsState>(
-        builder: (context, state) {
-          if (state is ActiveAdsInitial || state is ActiveAdsLoading) {
-            return _buildShimmerLoading();
-          } else if (state is ActiveAdsError) {
-            return _buildError(context, state.message);
-          } else if (state is ActiveAdsLoaded) {
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                final isWeb = kIsWeb && constraints.maxWidth > 600;
-                return state.ads.isEmpty
-                    ? _buildEmpty(isWeb)
-                    : _buildAdList(context, state, isWeb);
-              },
-            );
-          } else {
-            return const SizedBox();
+      body: BlocListener<MarkAsSoldBloc, MarkAsSoldState>(
+        listener: (context, state) {
+          if (state is MarkAsSoldSuccess) {
+            context.read<ActiveAdsBloc>().add(LoadActiveAds(currentUserId));
+          } else if (state is MarkAsSoldError) {
           }
         },
+        child: BlocBuilder<ActiveAdsBloc, ActiveAdsState>(
+          builder: (context, state) {
+            if (state is ActiveAdsInitial || state is ActiveAdsLoading) {
+              return _buildShimmerLoading();
+            } else if (state is ActiveAdsError) {
+              return _buildError(context, state.message);
+            } else if (state is ActiveAdsLoaded) {
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final isWeb = kIsWeb && constraints.maxWidth > 600;
+                  return state.ads.isEmpty
+                      ? _buildEmpty(isWeb)
+                      : _buildAdList(context, state, isWeb);
+                },
+              );
+            } else {
+              return const SizedBox();
+            }
+          },
+        ),
       ),
     );
   }

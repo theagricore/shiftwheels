@@ -118,7 +118,7 @@ class MyApp extends StatelessWidget {
             ),
           ],
           child: MaterialApp(
-            title: 'Shift Wheels',
+            title: 'ShiftWheels',
             theme: ZAppTheme.lightTheme,
             darkTheme: ZAppTheme.darkTheme,
             themeMode: ThemeMode.system,

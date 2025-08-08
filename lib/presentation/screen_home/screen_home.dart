@@ -176,7 +176,7 @@ class _HomeScreenState extends State<ScreenHome> {
       return const SimmerWidget();
     } else if (ads.isNotEmpty) {
       return SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 10.0),
+        padding: const EdgeInsets.only(top: 20,left: 10,right: 10),
         sliver: SliverGrid(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,

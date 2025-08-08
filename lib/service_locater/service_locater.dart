@@ -75,7 +75,6 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<CloudinaryService>(CloudinaryServiceImpl());
   sl.registerSingleton<RazorpayService>(RazorpayService());
   sl.registerSingleton<PdfService>(PdfService());
-  
 
   // Repositories
   sl.registerSingleton<AuthRepository>(AuthRepositoryImpl());
@@ -148,12 +147,12 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<GetPremiumAdsUsecase>(
     GetPremiumAdsUsecase(sl<PostRepository>()),
   );
-    sl.registerSingleton<CompareCarsUseCase>(
+  sl.registerSingleton<CompareCarsUseCase>(
     CompareCarsUseCase(sl<PostRepository>()),
   );
   sl.registerSingleton<MarkAsSoldUsecase>(
-  MarkAsSoldUsecase(sl<PostRepository>()),
-);
+    MarkAsSoldUsecase(sl<PostRepository>()),
+  );
   sl.registerSingleton<SaveComparisonUseCase>(
     SaveComparisonUseCase(sl<PostRepository>()),
   );
@@ -164,8 +163,8 @@ Future<void> initializeDependencies() async {
     GetComparisonCarsUseCase(sl<PostRepository>()),
   );
   sl.registerSingleton<DeleteComparisonUseCase>(
-  DeleteComparisonUseCase(sl<PostRepository>()),
-);
+    DeleteComparisonUseCase(sl<PostRepository>()),
+  );
 
   // Blocs
   sl.registerFactory<GoogleAuthBloc>(() => GoogleAuthBloc());
@@ -210,6 +209,7 @@ Future<void> initializeDependencies() async {
     () => ActiveAdsBloc(
       getUserActiveAds: sl<GetUserActiveAdsUsecase>(),
       deactivateAd: sl<DeactivateAdUsecase>(),
+      markAsSold: sl<MarkAsSoldUsecase>(),
     ),
   );
   sl.registerFactory<UpdateAdBloc>(
@@ -231,5 +231,7 @@ Future<void> initializeDependencies() async {
   sl.registerFactory<ProfileImageBloc>(() => ProfileImageBloc());
   sl.registerFactory<CompareBloc>(() => CompareBloc());
   sl.registerFactory<CallBloc>(() => CallBloc());
-  sl.registerFactory<MarkAsSoldBloc>(() => MarkAsSoldBloc(sl<MarkAsSoldUsecase>()));
+  sl.registerFactory<MarkAsSoldBloc>(
+    () => MarkAsSoldBloc(sl<MarkAsSoldUsecase>()),
+  );
 }

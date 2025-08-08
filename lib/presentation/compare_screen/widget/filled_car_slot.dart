@@ -86,17 +86,10 @@ class FilledCarSlot extends StatelessWidget {
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: AppColors.zGreen,
                 fontWeight: FontWeight.w600,
-                fontSize: isWeb ? 18 : null,
+                fontSize: isWeb ? 13 : null,
               ),
         ),
-        Text(
-          'Year: ${car.ad.year}',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: subtitleColor,
-                fontSize: isWeb ? 14 : null,
-              ),
-        ),
-        const Spacer(),
+       
         Align(
           alignment: Alignment.centerRight,
           child: IconButton(

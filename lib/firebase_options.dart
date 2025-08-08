@@ -67,7 +67,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '472779404725',
     projectId: 'shiftwheels-8019f',
     storageBucket: 'shiftwheels-8019f.firebasestorage.app',
-    iosBundleId: 'com.example.shiftwheels',
+    iosBundleId: 'com.abhijith.shiftwheels',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

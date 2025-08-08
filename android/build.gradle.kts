@@ -19,3 +19,21 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+buildscript {
+    // Define versions in one place
+    extra.apply {
+        set("kotlin_version", "1.9.22")  // Match Flutter's expected version
+        set("agp_version", "8.3.0")      // Android Gradle Plugin version
+    }
+
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("com.android.tools.build:gradle:${rootProject.extra["agp_version"]}")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${rootProject.extra["kotlin_version"]}")
+        classpath("com.google.gms:google-services:4.4.1")  // For Firebase
+    }
+}

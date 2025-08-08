@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/data/add_post/models/ad_with_user_model.dart';
@@ -387,8 +388,9 @@ class ComparisonItemWidget extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+String _formatDate(DateTime? date) {
+    if (date == null) return '';
+    return DateFormat('dd MMM yyyy').format(date);
   }
 }
 

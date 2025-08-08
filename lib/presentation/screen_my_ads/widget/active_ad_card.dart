@@ -10,7 +10,6 @@ import 'package:shiftwheels/core/config/theme/app_colors.dart';
 import 'package:shiftwheels/data/add_post/models/ad_with_user_model.dart';
 import 'package:shiftwheels/data/add_post/models/ads_model.dart';
 import 'package:shiftwheels/domain/add_post/usecase/get_interested_users_usecase.dart';
-import 'package:shiftwheels/domain/add_post/usecase/mark_as_sold_usecase.dart';
 import 'package:shiftwheels/presentation/screen_home/screen_ad_details.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/active_ads_bloc/active_ads_bloc.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/mark_as_sold_bloc/mark_as_sold_bloc.dart';
@@ -70,7 +69,10 @@ class _ActiveAdCardState extends State<ActiveAdCard>
     });
   }
 
-  void _showInterestedUsersBottomSheet(BuildContext context, String adId) async {
+  void _showInterestedUsersBottomSheet(
+    BuildContext context,
+    String adId,
+  ) async {
     final getInterestedUsersUsecase = sl<GetInterestedUsersUsecase>();
     final result = await getInterestedUsersUsecase(param: adId);
 
@@ -88,9 +90,7 @@ class _ActiveAdCardState extends State<ActiveAdCard>
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          builder: (context) => InterestedUsersBottomSheet(
-            users: users,
-          ),
+          builder: (context) => InterestedUsersBottomSheet(users: users),
         );
       },
     );
@@ -100,15 +100,16 @@ class _ActiveAdCardState extends State<ActiveAdCard>
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MultiBlocProvider(
-          providers: [
-            BlocProvider.value(
-              value: BlocProvider.of<ActiveAdsBloc>(context),
+        builder:
+            (context) => MultiBlocProvider(
+              providers: [
+                BlocProvider.value(
+                  value: BlocProvider.of<ActiveAdsBloc>(context),
+                ),
+                BlocProvider(create: (_) => sl<UpdateAdBloc>()),
+              ],
+              child: ScreenEditAd(ad: ad),
             ),
-            BlocProvider(create: (_) => sl<UpdateAdBloc>()),
-          ],
-          child: ScreenEditAd(ad: ad),
-        ),
       ),
     ).then((_) {
       final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
@@ -130,160 +131,173 @@ class _ActiveAdCardState extends State<ActiveAdCard>
         final padding = isWeb ? 24.0 : 16.0;
         final imageAspectRatio = isWeb ? 2.0 : 1.8;
 
-        return MultiBlocProvider(
-          providers: [
-            BlocProvider(
-              create: (context) => MarkAsSoldBloc(sl<MarkAsSoldUsecase>()),
-            ),
-          ],
-          child: BlocListener<MarkAsSoldBloc, MarkAsSoldState>(
-            listener: (context, state) {
-              if (state is MarkAsSoldSuccess) {
-                final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
-                context.read<ActiveAdsBloc>().add(LoadActiveAds(userId));
-                BasicSnackbar(
-                  message: 'Ad marked as sold successfully',
-                  backgroundColor: Colors.green,
-                ).show(context);
-              } else if (state is MarkAsSoldError) {
-                BasicSnackbar(
-                  message: state.message,
-                  backgroundColor: AppColors.zred,
-                ).show(context);
-              }
-            },
-            child: Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: cardWidth),
-                child: GestureDetector(
-                  onTap: () {
-                    AppNavigator.push(context, ScreenAdDetails(adWithUser: widget.ad));
-                  },
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      side: BorderSide(
-                        color: isDarkMode
-                            ? AppColors.zDarkCardBorder.withOpacity(0.5)
-                            : AppColors.zLightCardBorder.withOpacity(0.5),
-                        width: 1.0,
-                      ),
+        return BlocListener<MarkAsSoldBloc, MarkAsSoldState>(
+          listener: (context, state) {
+            if (state is MarkAsSoldError) {
+              BasicSnackbar(
+                message: state.message,
+                backgroundColor: AppColors.zred,
+              ).show(context);
+            } else if (state is MarkAsSoldSuccess) {
+              BasicSnackbar(
+                message: 'Ad marked as sold successfully',
+                backgroundColor: Colors.green,
+              ).show(context);
+            }
+          },
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: cardWidth),
+              child: GestureDetector(
+                onTap: () {
+                  AppNavigator.push(
+                    context,
+                    ScreenAdDetails(adWithUser: widget.ad),
+                  );
+                },
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    side: BorderSide(
+                      color:
+                          isDarkMode
+                              ? AppColors.zDarkCardBorder.withOpacity(0.5)
+                              : AppColors.zLightCardBorder.withOpacity(0.5),
+                      width: 1.0,
                     ),
-                    margin: EdgeInsets.symmetric(horizontal: isWeb ? 24 : 16, vertical: 12),
-                    elevation: 10,
-                    color: isDarkMode ? AppColors.zDarkCardBackground : AppColors.zWhite,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: Column(
-                        children: [
-                          _buildHeroImageSection(context, adData, isDarkMode, imageAspectRatio),
-                          Padding(
-                            padding: EdgeInsets.all(padding),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (adData.isSold) ...[
-                                  _buildSoldBadge(context, textScaleFactor),
-                                  SizedBox(height: isWeb ? 12 : 8),
-                                ],
-                                Text(
-                                  '${adData.brand} ${adData.model}',
-                                  style: theme.textTheme.headlineMedium?.copyWith(
-                                    fontWeight: FontWeight.w900,
-                                    color: isDarkMode
-                                        ? AppColors.zDarkPrimaryText
-                                        : AppColors.zLightPrimaryText,
-                                    letterSpacing: -0.5,
-                                    fontSize: isWeb ? 20 : 24,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                SizedBox(height: isWeb ? 12 : 10),
-                                Text(
-                                  '₹${NumberFormat('#,##,###').format(adData.price)}',
-                                  style: theme.textTheme.headlineSmall?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.zPrimaryColor,
-                                    fontSize: isWeb ? 18 : 22,
-                                  ),
-                                ),
-                                SizedBox(height: isWeb ? 12 : 10),
-                                Wrap(
-                                  spacing: isWeb ? 12.0 : 8.0,
-                                  runSpacing: isWeb ? 12.0 : 8.0,
-                                  children: [
-                                    _buildDetailChip(
-                                      context,
-                                      icon: Icons.calendar_today_outlined,
-                                      label: "${adData.year}",
-                                      isDarkMode: isDarkMode,
-                                      textScaleFactor: textScaleFactor,
-                                    ),
-                                    _buildDetailChip(
-                                      context,
-                                      icon: Icons.local_gas_station_outlined,
-                                      label: adData.fuelType,
-                                      isDarkMode: isDarkMode,
-                                      textScaleFactor: textScaleFactor,
-                                    ),
-                                    _buildDetailChip(
-                                      context,
-                                      icon: Icons.settings_outlined,
-                                      label: adData.transmissionType,
-                                      isDarkMode: isDarkMode,
-                                      textScaleFactor: textScaleFactor,
-                                    ),
-                                    _buildDetailChip(
-                                      context,
-                                      icon: Icons.speed_outlined,
-                                      label: "${adData.kmDriven} KM",
-                                      isDarkMode: isDarkMode,
-                                      textScaleFactor: textScaleFactor,
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: isWeb ? 24 : 20),
-                                Row(
-                                  children: [
-                                    _buildCountBubble(
-                                      context,
-                                      icon: Icons.favorite_border,
-                                      color: AppColors.zred,
-                                      count: adData.favoritedByUsers.length,
-                                      onTap: () {},
-                                      isDarkMode: isDarkMode,
-                                      textScaleFactor: textScaleFactor,
-                                    ),
-                                    SizedBox(width: isWeb ? 24 : 16),
-                                    _buildCountBubble(
-                                      context,
-                                      icon: Icons.handshake_outlined,
-                                      color: AppColors.zBlue,
-                                      count: adData.interestedUsers.length,
-                                      onTap: () => _showInterestedUsersBottomSheet(context, adData.id!),
-                                      isDarkMode: isDarkMode,
-                                      textScaleFactor: textScaleFactor,
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: isWeb ? 32 : 24),
-                                if (!adData.isSold) ...[
-                                  Align(
-                                    alignment: Alignment.center,
-                                    child: CustomSwipeButton(
-                                      onSwipe: () {
-                                        context.read<MarkAsSoldBloc>().add(MarkAdAsSoldEvent(adData.id!));
-                                      },
-                                      buttonText: "Mark as Sold",
-                                    ),
-                                  ),
-                                ],
+                  ),
+                  margin: EdgeInsets.symmetric(
+                    horizontal: isWeb ? 24 : 16,
+                    vertical: 12,
+                  ),
+                  elevation: 10,
+                  color:
+                      isDarkMode
+                          ? AppColors.zDarkCardBackground
+                          : AppColors.zWhite,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Column(
+                      children: [
+                        _buildHeroImageSection(
+                          context,
+                          adData,
+                          isDarkMode,
+                          imageAspectRatio,
+                        ),
+                        Padding(
+                          padding: EdgeInsets.all(padding),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (adData.isSold) ...[
+                                _buildSoldBadge(context, textScaleFactor),
+                                SizedBox(height: isWeb ? 12 : 8),
                               ],
-                            ),
+                              Text(
+                                '${adData.brand} ${adData.model}',
+                                style: theme.textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  color:
+                                      isDarkMode
+                                          ? AppColors.zDarkPrimaryText
+                                          : AppColors.zLightPrimaryText,
+                                  letterSpacing: -0.5,
+                                  fontSize: isWeb ? 20 : 24,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: isWeb ? 12 : 10),
+                              Text(
+                                '₹${NumberFormat('#,##,###').format(adData.price)}',
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.zPrimaryColor,
+                                  fontSize: isWeb ? 18 : 22,
+                                ),
+                              ),
+                              SizedBox(height: isWeb ? 12 : 10),
+                              Wrap(
+                                spacing: isWeb ? 12.0 : 8.0,
+                                runSpacing: isWeb ? 12.0 : 8.0,
+                                children: [
+                                  _buildDetailChip(
+                                    context,
+                                    icon: Icons.calendar_today_outlined,
+                                    label: "${adData.year}",
+                                    isDarkMode: isDarkMode,
+                                    textScaleFactor: textScaleFactor,
+                                  ),
+                                  _buildDetailChip(
+                                    context,
+                                    icon: Icons.local_gas_station_outlined,
+                                    label: adData.fuelType,
+                                    isDarkMode: isDarkMode,
+                                    textScaleFactor: textScaleFactor,
+                                  ),
+                                  _buildDetailChip(
+                                    context,
+                                    icon: Icons.settings_outlined,
+                                    label: adData.transmissionType,
+                                    isDarkMode: isDarkMode,
+                                    textScaleFactor: textScaleFactor,
+                                  ),
+                                  _buildDetailChip(
+                                    context,
+                                    icon: Icons.speed_outlined,
+                                    label: "${adData.kmDriven} KM",
+                                    isDarkMode: isDarkMode,
+                                    textScaleFactor: textScaleFactor,
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: isWeb ? 24 : 20),
+                              Row(
+                                children: [
+                                  _buildCountBubble(
+                                    context,
+                                    icon: Icons.favorite_border,
+                                    color: AppColors.zred,
+                                    count: adData.favoritedByUsers.length,
+                                    onTap: () {},
+                                    isDarkMode: isDarkMode,
+                                    textScaleFactor: textScaleFactor,
+                                  ),
+                                  SizedBox(width: isWeb ? 24 : 16),
+                                  _buildCountBubble(
+                                    context,
+                                    icon: Icons.handshake_outlined,
+                                    color: AppColors.zBlue,
+                                    count: adData.interestedUsers.length,
+                                    onTap:
+                                        () => _showInterestedUsersBottomSheet(
+                                          context,
+                                          adData.id!,
+                                        ),
+                                    isDarkMode: isDarkMode,
+                                    textScaleFactor: textScaleFactor,
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: isWeb ? 32 : 24),
+                              if (!adData.isSold) ...[
+                                Align(
+                                  alignment: Alignment.center,
+                                  child: CustomSwipeButton(
+                                    onSwipe: () {
+                                      context.read<MarkAsSoldBloc>().add(
+                                        MarkAdAsSoldEvent(adData.id!),
+                                      );
+                                    },
+                                    buttonText: "Mark as Sold",
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -306,7 +320,11 @@ class _ActiveAdCardState extends State<ActiveAdCard>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.check_circle, color: Colors.red, size: 18 * textScaleFactor),
+          Icon(
+            Icons.check_circle,
+            color: Colors.red,
+            size: 18 * textScaleFactor,
+          ),
           const SizedBox(width: 8),
           Text(
             'SOLD',
@@ -332,7 +350,11 @@ class _ActiveAdCardState extends State<ActiveAdCard>
   }
 
   Widget _buildHeroImageSection(
-      BuildContext context, AdsModel adData, bool isDarkMode, double imageAspectRatio) {
+    BuildContext context,
+    AdsModel adData,
+    bool isDarkMode,
+    double imageAspectRatio,
+  ) {
     return Stack(
       children: [
         AspectRatio(
@@ -342,16 +364,23 @@ class _ActiveAdCardState extends State<ActiveAdCard>
             child: Image.network(
               adData.imageUrls.first,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                color: isDarkMode ? AppColors.zGrey[900] : AppColors.zGrey[100],
-                child: Center(
-                  child: Icon(
-                    Icons.broken_image_outlined,
-                    color: isDarkMode ? AppColors.zGrey[700] : AppColors.zGrey[400],
-                    size: 100,
+              errorBuilder:
+                  (_, __, ___) => Container(
+                    color:
+                        isDarkMode
+                            ? AppColors.zGrey[900]
+                            : AppColors.zGrey[100],
+                    child: Center(
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        color:
+                            isDarkMode
+                                ? AppColors.zGrey[700]
+                                : AppColors.zGrey[400],
+                        size: 100,
+                      ),
+                    ),
                   ),
-                ),
-              ),
             ),
           ),
         ),
@@ -383,10 +412,10 @@ class _ActiveAdCardState extends State<ActiveAdCard>
             child: Text(
               "Posted: ${_formatDate(adData.postedDate)}",
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: AppColors.zblack,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
+                color: AppColors.zblack,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
             ),
           ),
         ),
@@ -412,10 +441,7 @@ class _ActiveAdCardState extends State<ActiveAdCard>
                       const SizedBox(height: 8),
                       Text(
                         DateFormat('MMM dd, yyyy').format(adData.soldDate!),
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.white70, fontSize: 14),
                       ),
                     ],
                   ],
@@ -435,7 +461,9 @@ class _ActiveAdCardState extends State<ActiveAdCard>
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: (isDarkMode ? AppColors.zDarkBackground : AppColors.zWhite)
+                      color: (isDarkMode
+                              ? AppColors.zDarkBackground
+                              : AppColors.zWhite)
                           .withOpacity(0.85),
                       shape: BoxShape.circle,
                       boxShadow: [
@@ -448,7 +476,10 @@ class _ActiveAdCardState extends State<ActiveAdCard>
                     ),
                     child: Icon(
                       _showActions ? Icons.close : Icons.more_horiz,
-                      color: isDarkMode ? AppColors.zDarkIconColor : AppColors.zIconColor,
+                      color:
+                          isDarkMode
+                              ? AppColors.zDarkIconColor
+                              : AppColors.zIconColor,
                       size: 24,
                     ),
                   ),
@@ -484,9 +515,9 @@ class _ActiveAdCardState extends State<ActiveAdCard>
                               showDeleteConfirmationDialog(
                                 context: context,
                                 onConfirm: () {
-                                  context
-                                      .read<ActiveAdsBloc>()
-                                      .add(DeactivateAd(adData.id!));
+                                  context.read<ActiveAdsBloc>().add(
+                                    DeactivateAd(adData.id!),
+                                  );
                                 },
                               );
                             },
@@ -538,12 +569,13 @@ class _ActiveAdCardState extends State<ActiveAdCard>
             Text(
               label,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isDarkMode
+                color:
+                    isDarkMode
                         ? AppColors.zDarkPrimaryText
                         : AppColors.zLightPrimaryText,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14 * textScaleFactor,
-                  ),
+                fontWeight: FontWeight.w600,
+                fontSize: 14 * textScaleFactor,
+              ),
             ),
           ],
         ),
@@ -561,12 +593,16 @@ class _ActiveAdCardState extends State<ActiveAdCard>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: isDarkMode ? AppColors.zDarkCountButton : AppColors.zLightCountButton,
+        color:
+            isDarkMode
+                ? AppColors.zDarkCountButton
+                : AppColors.zLightCountButton,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isDarkMode
-              ? AppColors.zDarkCardBorder.withOpacity(0.4)
-              : AppColors.zLightCardBorder.withOpacity(0.6),
+          color:
+              isDarkMode
+                  ? AppColors.zDarkCardBorder.withOpacity(0.4)
+                  : AppColors.zLightCardBorder.withOpacity(0.6),
           width: 0.6,
         ),
       ),
@@ -576,21 +612,23 @@ class _ActiveAdCardState extends State<ActiveAdCard>
           Icon(
             icon,
             size: 15 * textScaleFactor,
-            color: isDarkMode
-                ? AppColors.zDarkSecondaryText
-                : AppColors.zLightSecondaryText,
+            color:
+                isDarkMode
+                    ? AppColors.zDarkSecondaryText
+                    : AppColors.zLightSecondaryText,
           ),
           const SizedBox(width: 6),
           Flexible(
             child: Text(
               label,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: isDarkMode
+                color:
+                    isDarkMode
                         ? AppColors.zDarkSecondaryText
                         : AppColors.zLightSecondaryText,
-                    fontSize: 12 * textScaleFactor,
-                    fontWeight: FontWeight.w500,
-                  ),
+                fontSize: 12 * textScaleFactor,
+                fontWeight: FontWeight.w500,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -632,10 +670,10 @@ class _ActiveAdCardState extends State<ActiveAdCard>
             Text(
               count.toString(),
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                    fontSize: 14 * textScaleFactor,
-                  ),
+                fontWeight: FontWeight.bold,
+                color: color,
+                fontSize: 14 * textScaleFactor,
+              ),
             ),
           ],
         ),

@@ -10,6 +10,8 @@ import 'package:shiftwheels/presentation/add_post/post_limit_bloc/post_limit_blo
 import 'package:shiftwheels/presentation/auth/auth_bloc/auth_bloc.dart';
 import 'package:shiftwheels/presentation/auth/screens/signin_screen.dart';
 import 'package:shiftwheels/presentation/compare_screen/widget/comparison_tab_bar.dart';
+import 'package:shiftwheels/presentation/privacy_policy/privacy_policy.dart';
+import 'package:shiftwheels/presentation/privacy_policy/terms_conditions.dart';
 import 'package:shiftwheels/presentation/screen_profile/ProfileBloc/profile_bloc.dart';
 import 'package:shiftwheels/presentation/screen_profile/profile_image_bloc/profile_image_bloc.dart';
 import 'package:shiftwheels/presentation/screen_profile/widget/full_image_dialog.dart';
@@ -225,26 +227,26 @@ class ScreenProfile extends StatelessWidget {
                         ),
                         const SizedBox(height: 10),
                         _buildSectionTitle(context, 'App Settings', isWeb),
-                        NotificationListItem(
-                          title: 'Notifications',
-                          value: true,
-                          onChanged: (val) {},
-                        ),
                         ProfileListItem(
                           icon: Icons.settings_outlined,
                           title: 'App Preferences',
                           onTap: () {},
                         ),
                         ProfileListItem(
-                          icon: Icons.help_outline,
-                          title: 'Help & Support',
-                          onTap: () {},
+                          icon: Icons.privacy_tip_outlined,
+                          title: 'privacy policy',
+                          onTap: () {
+                              AppNavigator.push(context, PrivacyPolicyScreen());
+                          },
                         ),
                         ProfileListItem(
-                          icon: Icons.info_outline,
-                          title: 'About App',
-                          onTap: () {},
+                          icon: Icons.description,
+                          title: 'Terms & Conditions',
+                          onTap: () {
+                              AppNavigator.push(context, TermsConditionPage());
+                          },
                         ),
+                        
                         ProfileListItem(
                           icon: Icons.logout,
                           title: 'Logout',

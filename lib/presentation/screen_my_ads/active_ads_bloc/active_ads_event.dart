@@ -24,3 +24,12 @@ class DeactivateAd extends ActiveAdsEvent {
   @override
   List<Object> get props => [adId];
 }
+
+class MarkAdAsSold extends ActiveAdsEvent {
+  final String adId;
+  
+  const MarkAdAsSold(this.adId);
+
+  @override
+  List<Object> get props => [adId];
+}

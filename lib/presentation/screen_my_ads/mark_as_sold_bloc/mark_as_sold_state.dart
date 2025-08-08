@@ -11,7 +11,14 @@ class MarkAsSoldInitial extends MarkAsSoldState {}
 
 class MarkAsSoldLoading extends MarkAsSoldState {}
 
-class MarkAsSoldSuccess extends MarkAsSoldState {}
+class MarkAsSoldSuccess extends MarkAsSoldState {
+  final String adId;
+
+  const MarkAsSoldSuccess({required this.adId});
+
+  @override
+  List<Object> get props => [adId];
+}
 
 class MarkAsSoldError extends MarkAsSoldState {
   final String message;

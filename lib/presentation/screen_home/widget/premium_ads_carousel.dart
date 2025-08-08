@@ -156,7 +156,7 @@ class PremiumAdsCarousel extends StatelessWidget {
                                 colors: [
                                   Colors.transparent,
                                   Colors.transparent,
-                                  Colors.black.withOpacity(0.85),
+                                  Colors.black.withOpacity(0.40),
                                 ],
                               ),
                             ),
@@ -227,16 +227,7 @@ class PremiumAdsCarousel extends StatelessWidget {
                             right: 0,
                             child: Container(
                               padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.transparent,
-                                    Colors.black.withOpacity(0.9),
-                                  ],
-                                ),
-                              ),
+                            
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [

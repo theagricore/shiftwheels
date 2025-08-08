@@ -20,7 +20,7 @@ class MarkAsSoldBloc extends Bloc<MarkAsSoldEvent, MarkAsSoldState> {
     final result = await markAsSoldUsecase(param: event.adId);
     result.fold(
       (error) => emit(MarkAsSoldError(error)),
-      (_) => emit(MarkAsSoldSuccess()),
+      (_) => emit(MarkAsSoldSuccess(adId: event.adId)),
     );
   }
 }

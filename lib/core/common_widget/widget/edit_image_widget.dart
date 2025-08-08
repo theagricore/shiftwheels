@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
@@ -49,21 +48,32 @@ class EditImageWidget extends StatelessWidget {
       padding: const EdgeInsets.only(right: 8.0),
       child: Stack(
         children: [
-          isNetworkImage
-              ? Image.network(
-                  imagePath,
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _buildPlaceholder(),
-                )
-              : Image.file(
-                  File(imagePath),
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _buildPlaceholder(),
-                ),
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.zPrimaryColor, width: 1),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: isNetworkImage
+                  ? Image.network(
+                      imagePath,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                    )
+                  : Image.file(
+                      File(imagePath),
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                    ),
+            ),
+          ),
           Positioned(
             top: 4,
             right: 4,

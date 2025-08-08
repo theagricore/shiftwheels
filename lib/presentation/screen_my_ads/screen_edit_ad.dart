@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftwheels/core/common_widget/basic_app_bar.dart';
@@ -7,6 +8,8 @@ import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
 import 'package:shiftwheels/core/common_widget/widget/bottom_sheet_list/bottom_sheet_selector.dart';
 import 'package:shiftwheels/core/common_widget/widget/edit_image_widget.dart';
 import 'package:shiftwheels/core/common_widget/widget/transmission_type_selecter.dart';
+import 'package:shiftwheels/core/common_widget/widget/year_picker_widget.dart';
+import 'package:shiftwheels/data/add_post/data_source/cloudinary_service.dart';
 import 'package:shiftwheels/data/add_post/models/ads_model.dart';
 import 'package:shiftwheels/data/add_post/models/brand_model.dart';
 import 'package:shiftwheels/data/add_post/models/fuels_model.dart';
@@ -16,6 +19,7 @@ import 'package:shiftwheels/presentation/add_post/get_images_bloc/get_images_blo
 import 'package:shiftwheels/presentation/add_post/seat_type_bloc/seat_type_bloc.dart';
 import 'package:shiftwheels/presentation/add_post/seat_type_bloc/seat_type_state.dart';
 import 'package:shiftwheels/presentation/screen_my_ads/update_ad_bloc/update_ad_bloc.dart';
+import 'package:shiftwheels/service_locater/service_locater.dart';
 
 class ScreenEditAd extends StatefulWidget {
   final AdsModel ad;
@@ -39,15 +43,20 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController priceController = TextEditingController();
 
+  final CloudinaryService _cloudinaryService = sl<CloudinaryService>();
+  late final UpdateAdBloc _updateAdBloc;
+  bool _isLocalLoading = false; // Local state for immediate loading feedback
+
   @override
   void initState() {
     super.initState();
+    _updateAdBloc = context.read<UpdateAdBloc>();
     yearController.text = widget.ad.year.toString();
     kmController.text = widget.ad.kmDriven.toString();
     noOfOwnersController.text = widget.ad.noOfOwners.toString();
     descriptionController.text = widget.ad.description;
     priceController.text = widget.ad.price.toStringAsFixed(2);
-    imagePaths = widget.ad.imageUrls;
+    imagePaths = List.from(widget.ad.imageUrls);
     selectedBrand = BrandModel(id: '', brandName: widget.ad.brand);
     selectedModel = widget.ad.model;
     selectedFuel = FuelsModel(id: '', fuels: widget.ad.fuelType);
@@ -55,7 +64,6 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AddPostBloc>().add(FetchBrandsEvent());
       context.read<GetFuelsBloc>().add(FetchFuels());
-      // Fetch models for the preselected brand
       if (selectedBrand != null && selectedBrand!.id!.isNotEmpty) {
         context.read<AddPostBloc>().add(FetchModelsEvent(selectedBrand!.id!));
       }
@@ -164,7 +172,6 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
   Widget _buildModelBottomSheet() {
     return BlocBuilder<AddPostBloc, AddPostState>(
       builder: (context, state) {
-        // Ensure the displayText shows the selectedModel or falls back to widget.ad.model
         final displayText = selectedModel ?? widget.ad.model;
 
         return BottomSheetSelector<String>(
@@ -194,17 +201,21 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
   Widget _buildFuelsBottomSheet() {
     return BlocBuilder<GetFuelsBloc, GetFuelsState>(
       builder: (context, state) {
+        FuelsModel? currentSelectedFuel;
+
         if (state is GetFuelsLoaded) {
-          final exactFuel = state.fuels.firstWhere(
-            (fuel) => fuel.fuels == widget.ad.fuelType,
+          currentSelectedFuel = state.fuels.firstWhere(
+            (fuel) => fuel.fuels == (selectedFuel?.fuels ?? widget.ad.fuelType),
             orElse: () => FuelsModel(id: '', fuels: widget.ad.fuelType),
           );
-          selectedFuel = exactFuel;
+        } else {
+          currentSelectedFuel = selectedFuel ??
+              FuelsModel(id: '', fuels: widget.ad.fuelType);
         }
 
         return BottomSheetSelector<FuelsModel>(
           title: 'Select Fuel Type',
-          displayText: selectedFuel?.fuels ?? widget.ad.fuelType,
+          displayText: currentSelectedFuel.fuels ?? 'Unknown',
           onTapFetchEvent: (context) =>
               context.read<GetFuelsBloc>().add(FetchFuels()),
           selectorBloc: context.read<GetFuelsBloc>(),
@@ -236,10 +247,9 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
   }
 
   Widget _buildYearWidget() {
-    return TextFormFieldWidget(
+    return YearPickerWidget(
       label: "Year*",
       controller: yearController,
-      keyboardType: TextInputType.number,
     );
   }
 
@@ -292,58 +302,132 @@ class _ScreenEditAdState extends State<ScreenEditAd> {
     return BlocConsumer<UpdateAdBloc, UpdateAdState>(
       listener: (context, state) {
         if (state is AdUpdated) {
-          BasicSnackbar(
-            message: "Ad updated successfully",
-            backgroundColor: Colors.green,
-          ).show(context);
-          Navigator.pop(context);
+          if (mounted) {
+            BasicSnackbar(
+              message: "Ad updated successfully",
+              backgroundColor: Colors.green,
+            ).show(context);
+            Navigator.pop(context);
+          }
         } else if (state is UpdateAdError) {
-          BasicSnackbar(
-            message: state.message,
-            backgroundColor: Colors.red,
-          ).show(context);
+          if (mounted) {
+            BasicSnackbar(
+              message: state.message,
+              backgroundColor: Colors.red,
+            ).show(context);
+          }
         }
       },
       builder: (context, state) {
         return BasicElevatedAppButton(
-          onPressed: () => _saveChanges(context),
-          isLoading: state is UpdateAdLoading,
+          onPressed: (_isLocalLoading || state is UpdateAdLoading)
+              ? () {}
+              : () => _saveChanges(context),
+          isLoading: _isLocalLoading || state is UpdateAdLoading,
           title: "Save Changes",
         );
       },
     );
   }
 
-  void _saveChanges(BuildContext context) {
-    if (_formKey.currentState!.validate()) {
-      final year = int.tryParse(yearController.text);
-      final kmDriven = int.tryParse(kmController.text);
-      final noOfOwners = int.tryParse(noOfOwnersController.text);
-      final price = double.tryParse(priceController.text);
-      final transmissionType = context.read<SeatTypeBloc>().state.transmissionType;
+  Future<void> _saveChanges(BuildContext context) async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
-      if (year == null || kmDriven == null || noOfOwners == null || price == null) {
+    setState(() {
+      _isLocalLoading = true; // Show loading immediately
+    });
+
+    final year = int.tryParse(yearController.text);
+    final kmDriven = int.tryParse(kmController.text);
+    final noOfOwners = int.tryParse(noOfOwnersController.text);
+    final price = double.tryParse(priceController.text);
+    final transmissionType = context.read<SeatTypeBloc>().state.transmissionType;
+
+    if (year == null || kmDriven == null || noOfOwners == null || price == null) {
+      if (mounted) {
+        setState(() {
+          _isLocalLoading = false;
+        });
         BasicSnackbar(
           message: 'Please fill all required fields with valid values',
           backgroundColor: Colors.red,
         ).show(context);
+      }
+      return;
+    }
+
+    // Identify local file paths and upload them to Cloudinary
+    List<String> updatedImageUrls = [];
+    List<File> imagesToUpload = [];
+
+    for (String path in imagePaths) {
+      if (path.startsWith('http')) {
+        // Keep existing Cloudinary URLs
+        updatedImageUrls.add(path);
+      } else {
+        // Local file path, needs to be uploaded
+        imagesToUpload.add(File(path));
+      }
+    }
+
+    if (imagesToUpload.isNotEmpty) {
+      final uploadResult = await _cloudinaryService.uploadImages(imagesToUpload);
+      if (!mounted) {
+        setState(() {
+          _isLocalLoading = false;
+        });
         return;
       }
-
-      final updatedAd = widget.ad.copyWith(
-        brand: selectedBrand?.brandName ?? widget.ad.brand,
-        model: selectedModel ?? widget.ad.model,
-        fuelType: selectedFuel?.fuels ?? widget.ad.fuelType,
-        transmissionType: transmissionType,
-        year: year,
-        kmDriven: kmDriven,
-        noOfOwners: noOfOwners,
-        description: descriptionController.text,
-        imageUrls: imagePaths,
-        price: price,
+      uploadResult.fold(
+        (error) {
+          setState(() {
+            _isLocalLoading = false;
+          });
+          BasicSnackbar(
+            message: error,
+            backgroundColor: Colors.red,
+          ).show(context);
+          return;
+        },
+        (urls) {
+          updatedImageUrls.addAll(urls);
+        },
       );
+    }
 
-      context.read<UpdateAdBloc>().add(UpdateAd(updatedAd));
+    if (updatedImageUrls.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _isLocalLoading = false;
+        });
+        BasicSnackbar(
+          message: 'Please select at least one image',
+          backgroundColor: Colors.red,
+        ).show(context);
+      }
+      return;
+    }
+
+    final updatedAd = widget.ad.copyWith(
+      brand: selectedBrand?.brandName ?? widget.ad.brand,
+      model: selectedModel ?? widget.ad.model,
+      fuelType: selectedFuel?.fuels ?? widget.ad.fuelType,
+      transmissionType: transmissionType,
+      year: year,
+      kmDriven: kmDriven,
+      noOfOwners: noOfOwners,
+      description: descriptionController.text,
+      imageUrls: updatedImageUrls,
+      price: price,
+    );
+
+    if (mounted) {
+      setState(() {
+        _isLocalLoading = false; // Reset local loading before dispatching
+      });
+      _updateAdBloc.add(UpdateAd(updatedAd));
     }
   }
 }

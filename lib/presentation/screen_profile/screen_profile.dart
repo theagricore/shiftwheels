@@ -25,6 +25,51 @@ class ScreenProfile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return BlocListener<AuthBloc, AuthState>(
+      listener: _handleAuthState,
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: LayoutBuilder(
+          builder: (context, constraints) => _buildBody(context, constraints),
+        ),
+      ),
+    );
+  }
+
+  void _handleAuthState(BuildContext context, AuthState state) {
+    if (state is AuthInitial) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        AppNavigator.pushAndRemoveUntil(context, SigninScreen());
+      });
+      BasicSnackbar(
+        message: 'Logged out successfully',
+        backgroundColor: AppColors.zGreen,
+      ).show(context);
+    } else if (state is AuthFailure) {
+      BasicSnackbar(
+        message: state.errorMessage,
+        backgroundColor: AppColors.zred,
+      ).show(context);
+    }
+  }
+
+  Widget _buildBody(BuildContext context, BoxConstraints constraints) {
+    _fetchInitialData(context);
+    final isWeb = kIsWeb && constraints.maxWidth > 600;
+
+    return BlocBuilder<ProfileBloc, ProfileState>(
+      builder: (context, profileState) {
+        return CustomScrollView(
+          slivers: [
+            _buildSliverAppBar(context, profileState, isWeb),
+            _buildSliverList(context, profileState, isWeb),
+          ],
+        );
+      },
+    );
+  }
+
+  void _fetchInitialData(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null) {
@@ -32,244 +77,165 @@ class ScreenProfile extends StatelessWidget {
         context.read<ProfileBloc>().add(FetchUserProfile());
       }
     });
+  }
 
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is AuthInitial) {
-          Future.delayed(const Duration(milliseconds: 500), () {
-            AppNavigator.pushAndRemoveUntil(context, SigninScreen());
-          });
-          BasicSnackbar(
-            message: 'Logged out successfully',
-            backgroundColor: AppColors.zGreen,
-          ).show(context);
-        } else if (state is AuthFailure) {
-          BasicSnackbar(
-            message: state.errorMessage,
-            backgroundColor: AppColors.zred,
-          ).show(context);
-        }
-      },
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWeb = kIsWeb && constraints.maxWidth > 600;
+  SliverAppBar _buildSliverAppBar(
+      BuildContext context, ProfileState profileState, bool isWeb) {
+    String? backgroundImageUrl =
+        profileState is Profileloaded && profileState.user.image != null
+            ? profileState.user.image
+            : null;
 
-            return BlocBuilder<ProfileBloc, ProfileState>(
-              builder: (context, profileState) {
-                String? backgroundImageUrl;
-
-                if (profileState is Profileloaded &&
-                    profileState.user.image != null) {
-                  backgroundImageUrl = profileState.user.image;
-                }
-
-                return CustomScrollView(
-                  slivers: [
-                    SliverAppBar(
-                      expandedHeight: 250.0,
-                      floating: false,
-                      pinned: true,
-                      backgroundColor: Colors.transparent,
-                      flexibleSpace: FlexibleSpaceBar(
-                        background: Stack(
-                          children: [
-                            if (backgroundImageUrl != null)
-                              Container(
-                                decoration: BoxDecoration(
-                                  image: DecorationImage(
-                                    image: NetworkImage(backgroundImageUrl),
-                                    fit: BoxFit.cover,
-                                    colorFilter: ColorFilter.mode(
-                                      Colors.black.withOpacity(0.4),
-                                      BlendMode.darken,
-                                    ),
-                                  ),
-                                ),
-                              )
-                            else
-                              Container(
-                                decoration: const BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      AppColors.zPrimaryColor,
-                                      Color.fromARGB(255, 231, 211, 99),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                ),
-                              ),
-                            Container(
-                              color: Colors.black.withOpacity(0.3),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const SizedBox(height: 50),
-                                  Center(
-                                    child: BlocConsumer<
-                                      ProfileImageBloc,
-                                      ProfileImageState
-                                    >(
-                                      listener: (context, imageState) {
-                                        if (imageState is ProfileImagePicked) {
-                                          _showImageScreen(context, imageState);
-                                        } else if (imageState
-                                            is ProfileImageError) {
-                                          BasicSnackbar(
-                                            message: imageState.message,
-                                            backgroundColor: AppColors.zred,
-                                          ).show(context);
-                                        } else if (imageState
-                                            is ProfileImageConfirmed) {
-                                          BasicSnackbar(
-                                            message:
-                                                'Profile image updated successfully',
-                                            backgroundColor: AppColors.zGreen,
-                                          ).show(context);
-                                          context.read<ProfileBloc>().add(
-                                            FetchUserProfile(),
-                                          );
-                                        }
-                                      },
-                                      builder: (context, imageState) {
-                                        return GestureDetector(
-                                          onTap: () =>
-                                              _showImageSourceDialog(context),
-                                          child: ProfileAvatar(
-                                            profileState: profileState,
-                                            imageState: imageState,
-                                            onTap: () =>
-                                                _showImageSourceDialog(context),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    profileState is Profileloaded
-                                        ? profileState.user.fullName
-                                        : 'Loading...',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineMedium
-                                        ?.copyWith(
-                                          color: AppColors.zWhite,
-                                          fontSize: isWeb ? 18 : null,
-                                        ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    profileState is Profileloaded
-                                        ? profileState.user.email
-                                        : 'loading...',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          color: AppColors.zWhite,
-                                          fontSize: isWeb ? 12 : null,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SliverList(
-                      delegate: SliverChildListDelegate([
-                        _buildSectionTitle(context, 'Account Type', isWeb),
-                        BlocBuilder<PostLimitBloc, PostLimitState>(
-                          builder: (context, limitState) {
-                            if (limitState is PostLimitChecked) {
-                              return Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 15),
-                                child: PremiumCard(
-                                  limit: limitState.limit,
-                                  onRefresh: () {
-                                    final currentUser =
-                                        FirebaseAuth.instance.currentUser;
-                                    if (currentUser != null) {
-                                      context.read<PostLimitBloc>().add(
-                                            CheckPostLimitEvent(
-                                                currentUser.uid),
-                                          );
-                                    }
-                                  },
-                                ),
-                              );
-                            } else if (limitState is PostLimitError) {
-                              return Text(
-                                'Error loading account status: ${limitState.message}',
-                                style: TextStyle(fontSize: isWeb ? 12 : null),
-                              );
-                            }
-                            return const SizedBox.shrink();
-                          },
-                        ),
-                        _buildSectionTitle(context, 'My Listings', isWeb),
-                        ProfileListItem(
-                          icon: Icons.favorite_outline,
-                          title: 'Saved Cars',
-                          onTap: () {},
-                        ),
-                        ProfileListItem(
-                          icon: Icons.compare,
-                          title: 'Compare',
-                          onTap: () {
-                            AppNavigator.push(context, ComparisonTabBar());
-                          },
-                        ),
-                        const SizedBox(height: 10),
-                        _buildSectionTitle(context, 'App Settings', isWeb),
-                        ProfileListItem(
-                          icon: Icons.settings_outlined,
-                          title: 'App Preferences',
-                          onTap: () {},
-                        ),
-                        ProfileListItem(
-                          icon: Icons.privacy_tip_outlined,
-                          title: 'privacy policy',
-                          onTap: () {
-                              AppNavigator.push(context, PrivacyPolicyScreen());
-                          },
-                        ),
-                        ProfileListItem(
-                          icon: Icons.description,
-                          title: 'Terms & Conditions',
-                          onTap: () {
-                              AppNavigator.push(context, TermsConditionPage());
-                          },
-                        ),
-                        
-                        ProfileListItem(
-                          icon: Icons.logout,
-                          title: 'Logout',
-                          isDestructive: true,
-                          onTap: () {
-                            showLogoutConfirmationDialog(
-                              context: context,
-                              onConfirm: () {
-                                context.read<AuthBloc>().add(LogoutEvent());
-                              },
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 30),
-                      ]),
-                    ),
-                  ],
-                );
-              },
-            );
-          },
+    return SliverAppBar(
+      expandedHeight: 250.0,
+      floating: false,
+      pinned: true,
+      backgroundColor: Colors.transparent,
+      flexibleSpace: FlexibleSpaceBar(
+        background: Stack(
+          children: [
+            _buildBackgroundImage(backgroundImageUrl),
+            _buildProfileHeader(context, profileState, isWeb),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBackgroundImage(String? backgroundImageUrl) {
+    return backgroundImageUrl != null
+        ? Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: NetworkImage(backgroundImageUrl),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.black.withOpacity(0.4),
+                  BlendMode.darken,
+                ),
+              ),
+            ),
+          )
+        : Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.zPrimaryColor,
+                  Color.fromARGB(255, 231, 211, 99),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          );
+  }
+
+  Widget _buildProfileHeader(
+      BuildContext context, ProfileState profileState, bool isWeb) {
+    return Container(
+      color: Colors.black.withOpacity(0.3),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(height: 50),
+          _buildProfileAvatar(context, profileState),
+          const SizedBox(height: 10),
+          Text(
+            profileState is Profileloaded ? profileState.user.fullName : 'Loading...',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: AppColors.zWhite,
+                  fontSize: isWeb ? 18 : null,
+                ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            profileState is Profileloaded ? profileState.user.email : 'loading...',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.zWhite,
+                  fontSize: isWeb ? 12 : null,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileAvatar(BuildContext context, ProfileState profileState) {
+    return BlocConsumer<ProfileImageBloc, ProfileImageState>(
+      listener: (context, imageState) {
+        if (imageState is ProfileImagePicked) {
+          _showImageScreen(context, imageState);
+        } else if (imageState is ProfileImageError) {
+          BasicSnackbar(
+            message: imageState.message,
+            backgroundColor: AppColors.zred,
+          ).show(context);
+        } else if (imageState is ProfileImageConfirmed) {
+          BasicSnackbar(
+            message: 'Profile image updated successfully',
+            backgroundColor: AppColors.zGreen,
+          ).show(context);
+          context.read<ProfileBloc>().add(FetchUserProfile());
+        }
+      },
+      builder: (context, imageState) {
+        return GestureDetector(
+          onTap: () => _showImageSourceDialog(context),
+          child: ProfileAvatar(
+            profileState: profileState,
+            imageState: imageState,
+            onTap: () => _showImageSourceDialog(context),
+          ),
+        );
+      },
+    );
+  }
+
+  SliverList _buildSliverList(
+      BuildContext context, ProfileState profileState, bool isWeb) {
+    return SliverList(
+      delegate: SliverChildListDelegate([
+        _buildSectionTitle(context, 'Account Type', isWeb),
+        _buildPremiumCard(context, isWeb),
+        _buildSectionTitle(context, 'My Listings', isWeb),
+        ProfileListItem(
+          icon: Icons.favorite_outline,
+          title: 'Saved Cars',
+          onTap: () {},
+        ),
+        ProfileListItem(
+          icon: Icons.compare,
+          title: 'Compare',
+          onTap: () => AppNavigator.push(context, ComparisonTabBar()),
+        ),
+        const SizedBox(height: 10),
+        _buildSectionTitle(context, 'App Settings', isWeb),
+        ProfileListItem(
+          icon: Icons.settings_outlined,
+          title: 'App Preferences',
+          onTap: () {},
+        ),
+        ProfileListItem(
+          icon: Icons.privacy_tip_outlined,
+          title: 'Privacy Policy',
+          onTap: () => AppNavigator.push(context, PrivacyPolicyScreen()),
+        ),
+        ProfileListItem(
+          icon: Icons.description,
+          title: 'Terms & Conditions',
+          onTap: () => AppNavigator.push(context, TermsConditionPage()),
+        ),
+        ProfileListItem(
+          icon: Icons.logout,
+          title: 'Logout',
+          isDestructive: true,
+          onTap: () => showLogoutConfirmationDialog(
+            context: context,
+            onConfirm: () => context.read<AuthBloc>().add(LogoutEvent()),
+          ),
+        ),
+        const SizedBox(height: 30),
+      ]),
     );
   }
 
@@ -286,6 +252,33 @@ class ScreenProfile extends StatelessWidget {
     );
   }
 
+  Widget _buildPremiumCard(BuildContext context, bool isWeb) {
+    return BlocBuilder<PostLimitBloc, PostLimitState>(
+      builder: (context, limitState) {
+        if (limitState is PostLimitChecked) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            child: PremiumCard(
+              limit: limitState.limit,
+              onRefresh: () {
+                final currentUser = FirebaseAuth.instance.currentUser;
+                if (currentUser != null) {
+                  context.read<PostLimitBloc>().add(CheckPostLimitEvent(currentUser.uid));
+                }
+              },
+            ),
+          );
+        } else if (limitState is PostLimitError) {
+          return Text(
+            'Error loading account status: ${limitState.message}',
+            style: TextStyle(fontSize: isWeb ? 12 : null),
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
   void _showImageSourceDialog(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -296,10 +289,7 @@ class ScreenProfile extends StatelessWidget {
     );
   }
 
-  Future<void> _showImageScreen(
-    BuildContext context,
-    ProfileImagePicked imageState,
-  ) {
+  Future<void> _showImageScreen(BuildContext context, ProfileImagePicked imageState) {
     return showDialog(
       context: context,
       builder: (_) => FullImageDialog(image: imageState.image),

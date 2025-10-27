@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:shiftwheels/core/config/helper/navigator/utility/date_utils.dart';
 import 'package:shiftwheels/data/add_post/models/ads_model.dart';
 import 'package:shiftwheels/data/add_post/models/message_model.dart';
 import 'package:shiftwheels/data/auth/models/user_model.dart';
@@ -160,7 +161,7 @@ class ScreenAdChat extends StatelessWidget {
     for (final message in messages) {
       final msgDate = DateFormat('yyyy-MM-dd').format(message.timestamp);
       if (lastDate != msgDate) {
-        chatItems.add(getDateTag(message.timestamp));
+        chatItems.add(DateUtilsClass.getDateTag(message.timestamp));
         lastDate = msgDate;
       }
       chatItems.add(message);
@@ -198,45 +199,5 @@ class ScreenAdChat extends StatelessWidget {
       otherUser: otherUser,
       chatId: chatId,
     );
-  }
-
-  String getDateTag(DateTime messageDate) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
-    final msgDate = DateTime(
-      messageDate.year,
-      messageDate.month,
-      messageDate.day,
-    );
-
-    if (msgDate == today) {
-      return 'Today';
-    } else if (msgDate == yesterday) {
-      return 'Yesterday';
-    } else {
-      return '${messageDate.day.toString().padLeft(2, '0')} '
-          '${_getMonthName(messageDate.month)} '
-          '${messageDate.year}';
-    }
-  }
-
-  String _getMonthName(int month) {
-    const months = [
-      '',
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return months[month];
   }
 }

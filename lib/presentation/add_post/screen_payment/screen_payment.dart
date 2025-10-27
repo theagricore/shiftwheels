@@ -4,24 +4,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shiftwheels/core/common_widget/basic_app_bar.dart';
 import 'package:shiftwheels/core/common_widget/widget/animated_lottie_button_widget.dart';
-import 'package:shiftwheels/core/common_widget/widget/basic_snakbar.dart';
+import 'package:shiftwheels/core/config/helper/navigator/utility/payment_controller.dart';
 import 'package:shiftwheels/core/config/theme/app_colors.dart';
-import 'package:shiftwheels/data/add_post/data_source/razorpay_service.dart';
-import 'package:shiftwheels/data/add_post/data_source/razorpay_interface.dart';
-import 'package:shiftwheels/data/add_post/models/payment_model.dart';
 import 'package:shiftwheels/data/add_post/models/user_post_limit.dart';
-import 'package:shiftwheels/data/auth/models/user_model.dart';
-import 'package:shiftwheels/domain/add_post/usecase/create_payment_usecase.dart';
-import 'package:shiftwheels/domain/add_post/usecase/update_payment_status_usecase.dart';
-import 'package:shiftwheels/domain/auth/usecase/get_user_data_usecase.dart';
-import 'package:shiftwheels/service_locater/service_locater.dart';
 
 class ScreenPayment extends StatefulWidget {
   final UserPostLimit limit;
   final String userId;
 
   const ScreenPayment({Key? key, required this.limit, required this.userId})
-      : super(key: key);
+    : super(key: key);
 
   @override
   State<ScreenPayment> createState() => _ScreenPaymentState();
@@ -29,26 +21,23 @@ class ScreenPayment extends StatefulWidget {
 
 class _ScreenPaymentState extends State<ScreenPayment>
     with TickerProviderStateMixin {
-  bool _isProcessingPayment = false;
-  final double _premiumAmount = 100.0;
-  UserModel? _userModel;
-
   late final AnimationController _bgAnimationController;
   late final AnimationController _iconAnimationController;
+  final PaymentController _controller = PaymentController();
 
   @override
   void initState() {
     super.initState();
-    _fetchUserData();
+    _controller.fetchUserData(() => setState(() {}));
 
     _bgAnimationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 6), 
+      duration: const Duration(seconds: 6),
     )..repeat();
 
     _iconAnimationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 3), 
+      duration: const Duration(seconds: 3),
     )..repeat();
   }
 
@@ -57,47 +46,6 @@ class _ScreenPaymentState extends State<ScreenPayment>
     _bgAnimationController.dispose();
     _iconAnimationController.dispose();
     super.dispose();
-  }
-
-  Future<void> _fetchUserData() async {
-    try {
-      final result = await sl<GetUserDataUsecase>().call();
-
-      result.fold(
-        (error) {
-          BasicSnackbar(
-            message: 'Failed to fetch user data: $error',
-            backgroundColor: AppColors.zred,
-          );
-        },
-        (userData) {
-          try {
-            final userModel = UserModel(
-              fullName: userData['fullName'] as String?,
-              email: userData['email'] as String?,
-              phoneNo: userData['phoneNo'] as String?,
-              uid: userData['uid'] as String?,
-              image: userData['image'] as String?,
-              isBlocked: userData['isBlocked'] as bool? ?? false,
-            );
-
-            setState(() {
-              _userModel = userModel;
-            });
-          } catch (e) {
-            BasicSnackbar(
-              message: 'Error parsing user data: $e',
-              backgroundColor: AppColors.zred,
-            );
-          }
-        },
-      );
-    } catch (e) {
-      BasicSnackbar(
-        message: 'Unexpected error: $e',
-        backgroundColor: AppColors.zred,
-      );
-    }
   }
 
   @override
@@ -168,7 +116,7 @@ class _ScreenPaymentState extends State<ScreenPayment>
                         const SizedBox(height: 20),
                         _buildPremiumBenefits(benefitFont),
                         const SizedBox(height: 30),
-                        if (_isProcessingPayment)
+                        if (_controller.isProcessing)
                           const CircularProgressIndicator(
                             valueColor: AlwaysStoppedAnimation<Color>(
                               Colors.white,
@@ -180,7 +128,17 @@ class _ScreenPaymentState extends State<ScreenPayment>
                             child: AnimatedLottieButtonWidget(
                               animationAsset:
                                   "assets/images/Animation -Premium.json",
-                              onTap: _initiatePremiumPayment,
+                              onTap:
+                                  () => _controller.initiatePremiumPayment(
+                                    widget.userId,
+                                    (value) => setState(
+                                      () =>
+                                          _controller.isProcessingPayment =
+                                              value,
+                                    ),
+                                    (success) =>
+                                        Navigator.pop(context, success),
+                                  ),
                             ),
                           ),
                         const SizedBox(height: 16),
@@ -205,143 +163,6 @@ class _ScreenPaymentState extends State<ScreenPayment>
     );
   }
 
-  Future<void> _initiatePremiumPayment() async {
-    if (_userModel == null || _userModel!.email == null) {
-      BasicSnackbar(
-        message: 'User data or email not available',
-        backgroundColor: AppColors.zred,
-      );
-      return;
-    }
-
-    setState(() => _isProcessingPayment = true);
-
-    try {
-      final paymentModel = PaymentModel(
-        id: '',
-        userId: widget.userId,
-        userName: _userModel!.fullName ?? 'Unknown',
-        userEmail: _userModel!.email!,
-        userPhone: _userModel!.phoneNo,
-        adId: 'premium_upgrade',
-        amount: _premiumAmount,
-        paymentDate: DateTime.now(),
-        paymentType: 'premium_upgrade',
-        userImageUrl: _userModel!.image,
-      );
-
-      final paymentResult = await sl<CreatePaymentUsecase>().call(
-        param: paymentModel,
-      );
-
-      await paymentResult.fold(
-        (error) async {
-          BasicSnackbar(
-            message: 'Payment initiation failed: $error',
-            backgroundColor: AppColors.zred,
-          );
-          setState(() => _isProcessingPayment = false);
-        },
-        (firestorePaymentId) async {
-          if (kIsWeb) {
-            try {
-              openRazorpayWebCheckout(
-                name: paymentModel.userName,
-                description: 'Premium upgrade for ${paymentModel.userName}',
-                email: paymentModel.userEmail,
-                amount: _premiumAmount,
-                onSuccess: (paymentId) =>
-                    _handlePaymentSuccess(firestorePaymentId, paymentId),
-                onFailure: (error) {
-                  BasicSnackbar(
-                    message: 'Web payment failed: $error',
-                    backgroundColor: AppColors.zred,
-                  );
-                  setState(() => _isProcessingPayment = false);
-                },
-              );
-            } catch (e) {
-              BasicSnackbar(
-                message: 'Web payment initialization failed: $e',
-                backgroundColor: AppColors.zred,
-              );
-              setState(() => _isProcessingPayment = false);
-            }
-          } else {
-            try {
-              final razorpay = sl<RazorpayService>();
-              razorpay.openCheckOut(
-                amount: _premiumAmount,
-                description: 'Premium upgrade for ${paymentModel.userName}',
-                onSuccess: (razorpayPaymentId) => _handlePaymentSuccess(
-                  firestorePaymentId,
-                  razorpayPaymentId,
-                ),
-                onFailure: (error) {
-                  BasicSnackbar(
-                    message: 'Mobile payment failed: $error',
-                    backgroundColor: AppColors.zred,
-                  );
-                  setState(() => _isProcessingPayment = false);
-                },
-              );
-            } catch (e) {
-              BasicSnackbar(
-                message: 'Mobile payment initialization failed: $e',
-                backgroundColor: AppColors.zred,
-              );
-              setState(() => _isProcessingPayment = false);
-            }
-          }
-        },
-      );
-    } catch (e) {
-      BasicSnackbar(
-        message: 'Error initiating payment: $e',
-        backgroundColor: AppColors.zred,
-      );
-      setState(() => _isProcessingPayment = false);
-    }
-  }
-
-  Future<void> _handlePaymentSuccess(
-    String firestorePaymentId,
-    String razorpayPaymentId,
-  ) async {
-    try {
-      final updateResult = await sl<UpdatePaymentStatusUsecase>().call(
-        param: UpdatePaymentParams(
-          paymentId: firestorePaymentId,
-          status: 'Success',
-          transactionId: razorpayPaymentId,
-        ),
-      );
-
-      await updateResult.fold(
-        (error) async {
-          BasicSnackbar(
-            message: 'Payment verification failed: $error',
-            backgroundColor: AppColors.zred,
-          );
-          setState(() => _isProcessingPayment = false);
-        },
-        (_) async {
-          BasicSnackbar(
-            message: 'Payment successful! You are now a premium user.',
-            backgroundColor: AppColors.zGreen,
-          );
-          Navigator.pop(context, true);
-        },
-      );
-    } catch (e) {
-      BasicSnackbar(
-        message: 'Error processing payment: $e',
-        backgroundColor: AppColors.zred,
-      );
-      setState(() => _isProcessingPayment = false);
-    }
-  }
-
   Widget _buildPremiumBenefits(double fontSize) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -360,15 +181,17 @@ class _ScreenPaymentState extends State<ScreenPayment>
               Text(
                 "Premium Benefits",
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 12),
               _buildBenefitItem("✓ Unlimited posts for 30 days", fontSize),
               _buildBenefitItem("✓ No monthly posting limits", fontSize),
               _buildBenefitItem(
-                  "✓ Priority listing in search results", fontSize),
+                "✓ Priority listing in search results",
+                fontSize,
+              ),
               _buildBenefitItem("✓ Premium badge on your profile", fontSize),
               _buildBenefitItem("✓ No ads in the app", fontSize),
             ],

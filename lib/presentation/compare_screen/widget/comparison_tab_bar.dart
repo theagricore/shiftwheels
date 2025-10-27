@@ -55,19 +55,19 @@ class ComparisonTabBar extends StatelessWidget {
                         isDarkMode
                             ? AppColors.zDarkPrimaryText
                             : AppColors
-                                .zLightPrimaryText, // Theme-aware title color
-                    fontSize: isWeb ? 24 : null, // Adjust font size for web
+                                .zLightPrimaryText, 
+                    fontSize: isWeb ? 24 : null, 
                   ),
                 ),
                 bottom: PreferredSize(
                   preferredSize: Size.fromHeight(
                     isWeb ? 64 : 56,
-                  ), // Increased height for tabs
+                  ), 
                   child: Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal:
-                          isWeb ? 32 : 16, // Adjusted horizontal padding
-                      vertical: isWeb ? 10 : 8, // Adjusted vertical padding
+                          isWeb ? 32 : 16, 
+                      vertical: isWeb ? 10 : 8, 
                     ),
                     child: Container(
                       decoration: BoxDecoration(
@@ -75,10 +75,10 @@ class ComparisonTabBar extends StatelessWidget {
                             isDarkMode
                                 ? AppColors.zDarkCardBackground
                                 : AppColors
-                                    .zWhite, // Theme-aware background for tab container
+                                    .zWhite, 
                         borderRadius: BorderRadius.circular(
                           14,
-                        ), // Rounded corners for the tab container
+                        ), 
                         boxShadow: [
                           BoxShadow(
                             color: (isDarkMode
@@ -92,42 +92,41 @@ class ComparisonTabBar extends StatelessWidget {
                         ],
                       ),
                       child: TabBar(
-                        // Removed the line by using a custom indicator
                         indicator: BoxDecoration(
                           borderRadius: BorderRadius.circular(
                             12,
-                          ), // Rounded indicator
-                          color: AppColors.zPrimaryColor, // Active tab color
+                          ),
+                          color: AppColors.zPrimaryColor, 
                         ),
                         labelColor:
                             AppColors
-                                .zblack, // Active label color (always black for contrast on primary)
+                                .zblack, 
                         unselectedLabelColor:
                             isDarkMode
                                 ? AppColors.zDarkSecondaryText
-                                : AppColors.zfontColor, // Inactive label color
+                                : AppColors.zfontColor, 
                         labelStyle: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700, // Bolder active label
+                          fontWeight: FontWeight.w700, 
                           fontSize:
                               isWeb
                                   ? 17
-                                  : null, // Slightly larger font for clarity
+                                  : null, 
                         ),
                         unselectedLabelStyle: textTheme.titleMedium?.copyWith(
                           fontWeight:
                               FontWeight
-                                  .w500, // Medium weight for inactive label
+                                  .w500, 
                           fontSize: isWeb ? 17 : null,
                         ),
                         indicatorSize:
                             TabBarIndicatorSize
-                                .tab, // Make indicator fill the tab
+                                .tab, 
                         dividerColor:
                             Colors
-                                .transparent, // Remove divider line between tabs
+                                .transparent, 
                         splashBorderRadius: BorderRadius.circular(
                           12,
-                        ), // Splash effect matches indicator
+                        ),
                         tabs: const [
                           Tab(text: 'New Comparison'),
                           Tab(text: 'Saved Comparisons'),
